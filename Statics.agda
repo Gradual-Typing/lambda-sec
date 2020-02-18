@@ -5,7 +5,7 @@ open import Data.Nat using (ℕ; zero; suc)
 open import Data.Empty using (⊥; ⊥-elim)
 
 
--- import directly from plfa
+
 infix  4 _⊢_
 infix  4 _∋_
 infixl 5 _,_
@@ -20,19 +20,24 @@ infixl 8 _`∨_
 infix  9 `true_
 infix  9 `false_
 infix  9 `_
-infix  9 S_  -- construct for ∋
+infix  9 S_         -- constructor for ∋
 infix  9 #_
 
 
+-- labels:
+--   for simplicity we only have low and high for now.
 data ℒ : Set where
   L : ℒ
   H : ℒ
 
+
 mutual
+  -- types
   data 𝕋 : Set where
     _⇒_ : 𝕊 → 𝕊 → 𝕋
     `𝔹  : 𝕋
 
+  -- security types: types with label snapped on
   data 𝕊 : Set where
     _/_ : 𝕋 → ℒ → 𝕊
 
@@ -44,14 +49,14 @@ data Context : Set where
 
 data _∋_ : Context → 𝕊 → Set where
 
-  Z : ∀ {Γ A}
+  Z : ∀ {Γ s}
       ---------
-    → Γ , A ∋ A
+    → Γ , s ∋ s
 
-  S_ : ∀ {Γ A B}
-    → Γ ∋ A
+  S_ : ∀ {Γ s s′}
+    → Γ ∋ s
       ---------
-    → Γ , B ∋ A
+    → Γ , s′ ∋ s
 
 
 -- least upper bound / join:
@@ -65,7 +70,7 @@ H ⊔ H = H
 _⊔ₛ_ : 𝕊 → ℒ → 𝕊
 (s / 𝓁₁) ⊔ₛ 𝓁₂ = s / (𝓁₁ ⊔ 𝓁₂)
 
--- partial ordering of label
+-- partial ordering of labels
 data _⊑_ : ℒ → ℒ → Set where
 
   lrefl : ∀ {𝓁 : ℒ} → 𝓁 ⊑ 𝓁
@@ -121,17 +126,17 @@ data _⊢_ : Context → 𝕊 → Set where
     → Γ ⊢ `𝔹 / 𝓁
 
   -- VAR:
-  `_ : ∀ {Γ A}
-    → Γ ∋ A
+  `_ : ∀ {Γ s}
+    → Γ ∋ s
       -----
-    → Γ ⊢ A
+    → Γ ⊢ s
 
   -- FUN:
-  ƛ_⇒_  : ∀ {Γ A B}
+  ƛ_⇒_  : ∀ {Γ s₁ s₂}
     → (𝓁 : ℒ)
-    → Γ , A ⊢ B
+    → Γ , s₁ ⊢ s₂
       ---------
-    → Γ ⊢ (A ⇒ B) / 𝓁
+    → Γ ⊢ (s₁ ⇒ s₂) / 𝓁
 
   -- BINOPs:
   _`∧_ : ∀ {Γ 𝓁₁ 𝓁₂}
@@ -147,31 +152,31 @@ data _⊢_ : Context → 𝕊 → Set where
     → Γ ⊢ `𝔹 / (𝓁₁ ⊔ 𝓁₂)
 
   -- APP:
-  _·_ : ∀ {Γ A B 𝓁}
-    → Γ ⊢ (A ⇒ B) / 𝓁
-    → Γ ⊢ A
+  _·_ : ∀ {Γ s₁ s₂ 𝓁}
+    → Γ ⊢ (s₁ ⇒ s₂) / 𝓁
+    → Γ ⊢ s₁
       ---------
-    → Γ ⊢ B ⊔ₛ 𝓁
+    → Γ ⊢ s₂ ⊔ₛ 𝓁
 
   -- COND:
-  if : ∀ {Γ A 𝓁}
+  if : ∀ {Γ s 𝓁}
     → Γ ⊢ `𝔹 / 𝓁
-    → Γ ⊢ A ⊔ₛ 𝓁
-    → Γ ⊢ A ⊔ₛ 𝓁
+    → Γ ⊢ s ⊔ₛ 𝓁
+    → Γ ⊢ s ⊔ₛ 𝓁
       ----------
-    → Γ ⊢ A ⊔ₛ 𝓁
+    → Γ ⊢ s ⊔ₛ 𝓁
 
   -- SUB:
-  sub : ∀ {Γ A B}
-    → Γ ⊢ A
-    → ⊢ A ≤ₛ B
+  sub : ∀ {Γ s₁ s₂}
+    → Γ ⊢ s₁
+    → ⊢ s₁ ≤ₛ s₂
       --------
-    → Γ ⊢ B
+    → Γ ⊢ s₂
 
 
 
 lookup : Context → ℕ → 𝕊
-lookup (Γ , A) zero     =  A
+lookup (Γ , s) zero     =  s
 lookup (Γ , _) (suc n)  =  lookup Γ n
 lookup ∅       _        =  ⊥-elim impossible
   where postulate impossible : ⊥
