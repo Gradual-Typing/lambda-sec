@@ -27,8 +27,8 @@ infix  9 #_
 -- labels:
 --   for simplicity we only have low and high for now.
 data ℒ : Set where
-  L : ℒ
-  H : ℒ
+  𝐿 : ℒ
+  𝐻 : ℒ
 
 
 mutual
@@ -61,10 +61,10 @@ data _∋_ : Context → 𝕊 → Set where
 
 -- least upper bound / join:
 _⊔_ : ℒ → ℒ → ℒ
-L ⊔ L = L
-L ⊔ H = H
-H ⊔ L = H
-H ⊔ H = H
+𝐿 ⊔ 𝐿 = 𝐿
+𝐿 ⊔ 𝐻 = 𝐻
+𝐻 ⊔ 𝐿 = 𝐻
+𝐻 ⊔ 𝐻 = 𝐻
 
 -- label stamping
 _⊔ₛ_ : 𝕊 → ℒ → 𝕊
@@ -75,7 +75,7 @@ data _⊑_ : ℒ → ℒ → Set where
 
   lrefl : ∀ {𝓁 : ℒ} → 𝓁 ⊑ 𝓁
 
-  L⊑H : L ⊑ H
+  𝐿⊑𝐻 : 𝐿 ⊑ 𝐻
 
 -- subtyping as a relation:
 mutual
@@ -183,10 +183,10 @@ lookup ∅       _        =  ⊥-elim impossible
 
 
 -- test
-_ : ∅ , (`𝔹 / H ⇒ `𝔹 / H) / L , `𝔹 / L ∋ `𝔹 / L
+_ : ∅ , (`𝔹 / 𝐻 ⇒ `𝔹 / 𝐻) / 𝐿 , `𝔹 / 𝐿 ∋ `𝔹 / 𝐿
 _ = Z
 
-_ : ∅ , (`𝔹 / H ⇒ `𝔹 / H) / L , `𝔹 / L ∋ (`𝔹 / H ⇒ `𝔹 / H) / L
+_ : ∅ , (`𝔹 / 𝐻 ⇒ `𝔹 / 𝐻) / 𝐿 , `𝔹 / 𝐿 ∋ (`𝔹 / 𝐻 ⇒ `𝔹 / 𝐻) / 𝐿
 _ = S Z
 
 count : ∀ {Γ} → (n : ℕ) → Γ ∋ lookup Γ n
