@@ -18,6 +18,7 @@ infix  5 ƛ_/_
 infixl 7 _·_
 infixl 8 _`∧_
 infixl 8 _`∨_
+infix  9 val_
 infix  9 `true/_
 infix  9 `false/_
 infix  9 `_
@@ -133,6 +134,10 @@ data _⊢ᵥ_ where
       ---------
     → Γ ⊢ᵥ (s₁ ⇒ s₂) / 𝓁
 
+_⊔ᵥ_ : ∀ {Γ s} → Γ ⊢ᵥ s → (𝓁 : ℒ) → Γ ⊢ᵥ (s ⊔ₛ 𝓁)
+(`true/ 𝓁₁)  ⊔ᵥ 𝓁   = `true/  (𝓁₁ ⊔ 𝓁)
+(`false/ 𝓁₁) ⊔ᵥ 𝓁   = `false/ (𝓁₁ ⊔ 𝓁)
+(ƛ N / 𝓁₁)   ⊔ᵥ 𝓁   = ƛ N   / (𝓁₁ ⊔ 𝓁)
 
 -- intrinsically-typed terms inhibit a typing judgement
 data _⊢ₑ_ where
