@@ -1,8 +1,9 @@
 module Statics where
 
 
-open import Data.Nat using (ℕ; zero; suc)
+open import Data.Nat using (ℕ; zero; suc; _≤_; z≤n; s≤s) renaming (_⊔_ to _⊔ₙ_)
 open import Data.Empty using (⊥; ⊥-elim)
+open import Relation.Nullary using (Dec; yes; no; ¬_)
 
 
 
@@ -28,10 +29,18 @@ infix  9 #_
 
 -- labels:
 --   for simplicity we only have low and high for now.
-data ℒ : Set where
-  𝐿 : ℒ
-  𝐻 : ℒ
+-- data ℒ : Set where
+--   𝐿 : ℒ
+--   𝐻 : ℒ
 
+data ℒ : Set where
+  Label : ℕ → ℒ
+
+𝐿 : ℒ
+𝐿 = Label 0
+
+𝐻 : ℒ
+𝐻 = Label 1
 
 mutual
   -- types
@@ -63,10 +72,7 @@ data _∋_ : Context → 𝕊 → Set where
 
 -- least upper bound / join:
 _⊔_ : ℒ → ℒ → ℒ
-𝐿 ⊔ 𝐿 = 𝐿
-𝐿 ⊔ 𝐻 = 𝐻
-𝐻 ⊔ 𝐿 = 𝐻
-𝐻 ⊔ 𝐻 = 𝐻
+(Label n) ⊔ (Label n′) = Label (n ⊔ₙ n′)
 
 -- label stamping
 _⊔ₛ_ : 𝕊 → ℒ → 𝕊
@@ -75,9 +81,28 @@ _⊔ₛ_ : 𝕊 → ℒ → 𝕊
 -- partial ordering of labels
 data _⊑_ : ℒ → ℒ → Set where
 
-  lrefl : ∀ {𝓁 : ℒ} → 𝓁 ⊑ 𝓁
+  ⊑-l : ∀ {n , n′ : ℕ}
+      → n ≤ n′
+      → (Label n) ⊑ (Label n′)
 
-  𝐿⊑𝐻 : 𝐿 ⊑ 𝐻
+𝐿⊑𝐻 : 𝐿 ⊑ 𝐻
+𝐿⊑𝐻 = ⊑-l {0} {1} z≤n
+
+≤-dec : (n : ℕ) → (n′ : ℕ) → Dec (n ≤ n′)
+≤-dec zero zero = yes z≤n
+≤-dec zero (suc n′) = yes z≤n
+≤-dec (suc n) zero = no λ ()
+≤-dec (suc n) (suc n′) with ≤-dec n n′
+... | yes n≤n′ = yes (s≤s n≤n′)
+... | no ¬n≤n′ = no λ {(s≤s n≤n′) → ¬n≤n′ n≤n′}
+
+
+-- label comparison is decidable
+⊑-dec : (𝓁 : ℒ) → (𝓁′ : ℒ) → Dec (𝓁 ⊑ 𝓁′)
+⊑-dec (Label n) (Label n′) with ≤-dec n n′
+... | yes n≤n′ = yes (⊑-l {n} {n′} n≤n′)
+... | no ¬n≤n′ = no λ {(⊑-l n≤n′) → ¬n≤n′ n≤n′ }
+
 
 -- subtyping as a relation:
 mutual
@@ -176,7 +201,7 @@ data _⊢ₑ_ where
     → Γ ⊢ₑ t₂ / (𝓁₂ ⊔ 𝓁)
 
   -- COND:
-  if : ∀ {Γ t 𝓁′ 𝓁}
+  if : ∀ {Γ t 𝓁 𝓁′}
     → Γ ⊢ₑ `𝔹 / 𝓁′
     → Γ ⊢ₑ t / (𝓁 ⊔ 𝓁′)
     → Γ ⊢ₑ t / (𝓁 ⊔ 𝓁′)
