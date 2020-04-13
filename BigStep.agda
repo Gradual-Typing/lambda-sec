@@ -108,18 +108,6 @@ subst-dist-· : ∀ {Γ Δ t₁ t₂ 𝓁₁ 𝓁₂ 𝓁}
   → substₑ σ (M · N) ≡ (substₑ σ M) · (substₑ σ N)
 subst-dist-· σ M N = refl
 
--- rename-ext : ∀ {Γ A B}
---   → (M : Γ ⊢ₑ B)
---   → (N : Γ ⊢ₑ A)
---   → (renameₑ S_ M) [ N ] ≡ M
--- rename-ext {Γ} {A} {B} (` x) N = refl
--- rename-ext {Γ} {A} {B} (val x) N = {!!}
--- rename-ext (M₁ `∧ M₂) N rewrite subst-dist-∧ (σ₀ N) (renameₑ S_ M₁) (renameₑ S_ M₂) | rename-ext M₁ N | rename-ext M₂ N = refl
--- rename-ext (M₁ `∨ M₂) N = {!!}
--- rename-ext (M₁ · M₂) N rewrite subst-dist-· (σ₀ N) (renameₑ S_ M₁) (renameₑ S_ M₂) | rename-ext M₁ N | rename-ext M₂ N = refl
--- rename-ext {Γ} {A} {.(_ / (_ ⊔ _))} (if M M₁ M₂) N = {!!}
--- rename-ext {Γ} {A} {B} (sub M x) N = {!!}
-
 
 _⟦∧⟧_ : ∀ {𝓁ₘ 𝓁ₙ}
       → (M : ∅ ⊢ᵥ `𝔹 / 𝓁ₘ)
