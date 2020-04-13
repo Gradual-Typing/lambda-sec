@@ -346,6 +346,22 @@ fundamental {t = ((t₁ / 𝓁₁) ⇒ (t₂ / 𝓁₂))} σ₁ σ₂ (val (ƛ N
       let σ₁•N⇓v₁″ = (subst (λ □ → □ ⇓ v₁″) (exts-sub-cons σ₁ N (val v₁′)) ⇓v₁″) in
       let σ₂•N⇓v₂″ = (subst (λ □ → □ ⇓ v₂″) (exts-sub-cons σ₂ N (val v₂′)) ⇓v₂″) in
       let ih = fundamental {ζ = ζ} (σ₁ • (val v₁′)) (σ₂ • (val v₂′)) N σ₁•≈σ₂• σ₁•N⇓v₁″ σ₂•N⇓v₂″ in value-stamp 𝓁 ih}
+fundamental {ζ = ζ} σ₁ σ₂ (_·_ {t₁ = t₁} {t₂} {𝓁₁} {𝓁₂} {𝓁} L N) σ₁≈σ₂
+  (⇓-app {Vₙ = Vₙ₁} {V = V₁} {M′ = M₁} σ₁L⇓ƛM₁ σ₁N⇓Vₙ₁ M₁[Vₙ₁]⇓V₁) (⇓-app {Vₙ = Vₙ₂} {V = V₂} {M′ = M₂} σ₂L⇓ƛM₂ σ₂N⇓Vₙ₂ M₂[Vₙ₂]⇓V₂)
+  with ⊑-dec 𝓁 ζ
+... | yes 𝓁⊑ζ =
+  let σ₁L≈σ₂L = fundamental σ₁ σ₂ L σ₁≈σ₂ in
+  let σ₁N≈σ₂N = fundamental σ₁ σ₂ N σ₁≈σ₂ in
+  let ƛM₁≈ƛM₂ = σ₁L≈σ₂L σ₁L⇓ƛM₁ σ₂L⇓ƛM₂ in
+  let Vₙ₁≈Vₙ₂ = σ₁N≈σ₂N σ₁N⇓Vₙ₁ σ₂N⇓Vₙ₂ in
+  let ƛM₁·Vₙ₁≈ƛM₂·Vₙ₂ = ƛM₁≈ƛM₂ 𝓁⊑ζ Vₙ₁≈Vₙ₂ in
+  let ƛM₁·Vₙ₁⇓V₁ = ⇓-app {𝓁 = 𝓁} {Vₙ = Vₙ₁} {V = V₁} {M′ = M₁} ⇓-val ⇓-val M₁[Vₙ₁]⇓V₁ in
+  let ƛM₂·Vₙ₂⇓V₂ = ⇓-app {𝓁 = 𝓁} {Vₙ = Vₙ₂} {V = V₂} {M′ = M₂} ⇓-val ⇓-val M₂[Vₙ₂]⇓V₂ in
+    ƛM₁·Vₙ₁≈ƛM₂·Vₙ₂ ƛM₁·Vₙ₁⇓V₁ ƛM₂·Vₙ₂⇓V₂
+-- 𝓁 ⊑ ζ means that we can see nothing ...
+... | no ¬𝓁⊑ζ with t₂
+...   | `𝔹 = λ 𝓁₂⊔𝓁⊑ζ → ⊥-elim (¬𝓁⊑ζ (proj₂ (⊔-⊑-inv 𝓁₂⊔𝓁⊑ζ)))
+...   | (_ / _) ⇒ (_ / _) = λ 𝓁₂⊔𝓁⊑ζ → ⊥-elim (¬𝓁⊑ζ (proj₂ (⊔-⊑-inv 𝓁₂⊔𝓁⊑ζ)))
 
 
 
