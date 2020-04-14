@@ -271,29 +271,30 @@ true≢false : ∀ {Γ 𝓁} {M : Γ ⊢ᵥ `𝔹 / 𝓁} {N : Γ ⊢ᵥ `𝔹 /
 true≢false refl refl ()
 
 
-value-stamp : ∀ {t 𝓁 ζ v₁ v₂}
+-- Value stamping ⊔ᵥ preserves the logical relation ≈ᵥ .
+value-stamp-pres : ∀ {t 𝓁 ζ v₁ v₂}
   → (𝓁′ : ℒ)
   → t / 𝓁 ⦂ v₁ ≈ᵥ⦅ ζ ⦆ v₂
     -----------------------------------------------
   → t / (𝓁 ⊔ 𝓁′) ⦂ (v₁ ⊔ᵥ 𝓁′) ≈ᵥ⦅ ζ ⦆ (v₂ ⊔ᵥ 𝓁′)
-value-stamp {𝓁 = 𝓁} {v₁ = `true/ 𝓁} {v₂ = `true/ 𝓁} 𝓁′ v₁≈v₂ = λ _ → refl
-value-stamp {𝓁 = 𝓁} {v₁ = `true/ 𝓁} {v₂ = `false/ 𝓁} 𝓁′ v₁≈v₂ 𝓁⊔𝓁′⊑ζ =
+value-stamp-pres {𝓁 = 𝓁} {v₁ = `true/ 𝓁} {v₂ = `true/ 𝓁} 𝓁′ v₁≈v₂ = λ _ → refl
+value-stamp-pres {𝓁 = 𝓁} {v₁ = `true/ 𝓁} {v₂ = `false/ 𝓁} 𝓁′ v₁≈v₂ 𝓁⊔𝓁′⊑ζ =
   let 𝓁⊑ζ = ⊑-relax 𝓁⊔𝓁′⊑ζ in
   let eq = v₁≈v₂ 𝓁⊑ζ in
     ⊥-elim (true≢false refl refl eq)
-value-stamp {𝓁 = 𝓁} {v₁ = `false/ 𝓁} {v₂ = `true/ 𝓁} 𝓁′ v₁≈v₂ 𝓁⊔𝓁′⊑ζ =
+value-stamp-pres {𝓁 = 𝓁} {v₁ = `false/ 𝓁} {v₂ = `true/ 𝓁} 𝓁′ v₁≈v₂ 𝓁⊔𝓁′⊑ζ =
   let 𝓁⊑ζ = ⊑-relax 𝓁⊔𝓁′⊑ζ in
   let eq = v₁≈v₂ 𝓁⊑ζ in
     ⊥-elim (true≢false refl refl (sym eq))
-value-stamp {𝓁 = 𝓁} {v₁ = `false/ 𝓁} {v₂ = `false/ 𝓁} 𝓁′ v₁≈v₂ = λ _ → refl
-value-stamp {(t₁ / 𝓁₁) ⇒ (t₂ / 𝓁₂)} {𝓁} {ζ} {ƛ M / 𝓁} {ƛ N / 𝓁} 𝓁′ v₁≈v₂ with ⊑-dec 𝓁′ ζ | ⊑-dec 𝓁 ζ
+value-stamp-pres {𝓁 = 𝓁} {v₁ = `false/ 𝓁} {v₂ = `false/ 𝓁} 𝓁′ v₁≈v₂ = λ _ → refl
+value-stamp-pres {(t₁ / 𝓁₁) ⇒ (t₂ / 𝓁₂)} {𝓁} {ζ} {ƛ M / 𝓁} {ƛ N / 𝓁} 𝓁′ v₁≈v₂ with ⊑-dec 𝓁′ ζ | ⊑-dec 𝓁 ζ
 ... | yes 𝓁′⊑ζ | yes 𝓁⊑ζ =  λ 𝓁⊔𝓁′⊑ζ {v₁′} {v₂′} v₁′≈v₂′ →
   λ {(⇓-app {V = v₁} ⇓-val ⇓-val ⇓v₁) (⇓-app {V = v₂} ⇓-val ⇓-val ⇓v₂) →
     let h = v₁≈v₂ 𝓁⊑ζ v₁′≈v₂′ in
     let ⇓v₃ = ⇓-app {M = val (ƛ M / 𝓁)} {N = val v₁′} ⇓-val ⇓-val ⇓v₁ in
     let ⇓v₄ = ⇓-app {M = val (ƛ N / 𝓁)} {N = val v₂′} ⇓-val ⇓-val ⇓v₂ in
     let h′ = h ⇓v₃ ⇓v₄ in
-    let h″ = value-stamp 𝓁′ h′ in
+    let h″ = value-stamp-pres 𝓁′ h′ in
       subst (λ □ → □) eq h″
   }
   where
@@ -335,7 +336,7 @@ fundamental {t = ((t₁ / 𝓁₁) ⇒ (t₂ / 𝓁₂))} σ₁ σ₂ (val (ƛ N
       let σ₁•≈σ₂• = ≈ₛ-• {Γ} {t₁} {𝓁₁} {ζ} {val v₁′} {val v₂′} σ₁ σ₂ σ₁≈σ₂ (≈ᵥ→≈ₑ v₁′≈v₂′) in
       let σ₁•N⇓v₁″ = (subst (λ □ → □ ⇓ v₁″) (exts-sub-cons σ₁ N (val v₁′)) ⇓v₁″) in
       let σ₂•N⇓v₂″ = (subst (λ □ → □ ⇓ v₂″) (exts-sub-cons σ₂ N (val v₂′)) ⇓v₂″) in
-      let ih = fundamental {ζ = ζ} (σ₁ • (val v₁′)) (σ₂ • (val v₂′)) N σ₁•≈σ₂• σ₁•N⇓v₁″ σ₂•N⇓v₂″ in value-stamp 𝓁 ih}
+      let ih = fundamental {ζ = ζ} (σ₁ • (val v₁′)) (σ₂ • (val v₂′)) N σ₁•≈σ₂• σ₁•N⇓v₁″ σ₂•N⇓v₂″ in value-stamp-pres 𝓁 ih}
 fundamental {ζ = ζ} σ₁ σ₂ (_·_ {t₁ = t₁} {t₂} {𝓁₁} {𝓁₂} {𝓁} L N) σ₁≈σ₂
   (⇓-app {Vₙ = Vₙ₁} {V = V₁} {M′ = M₁} σ₁L⇓ƛM₁ σ₁N⇓Vₙ₁ M₁[Vₙ₁]⇓V₁) (⇓-app {Vₙ = Vₙ₂} {V = V₂} {M′ = M₂} σ₂L⇓ƛM₂ σ₂N⇓Vₙ₂ M₂[Vₙ₂]⇓V₂)
   with ⊑-dec 𝓁 ζ
