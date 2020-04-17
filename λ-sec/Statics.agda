@@ -2,6 +2,7 @@ module Statics where
 
 
 open import Data.Nat using (ℕ; zero; suc; _≤_; z≤n; s≤s) renaming (_⊔_ to _⊔ₙ_)
+open import Data.Nat.Properties using (≤-refl)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 
@@ -87,6 +88,9 @@ data _⊑_ : ℒ → ℒ → Set where
 
 𝐿⊑𝐻 : 𝐿 ⊑ 𝐻
 𝐿⊑𝐻 = ⊑-l {0} {1} z≤n
+
+⊑-refl : ∀ {𝓁} → 𝓁 ⊑ 𝓁
+⊑-refl {Label n} = ⊑-l {n} {n} ≤-refl
 
 ≤-dec : (n : ℕ) → (n′ : ℕ) → Dec (n ≤ n′)
 ≤-dec zero zero = yes z≤n
