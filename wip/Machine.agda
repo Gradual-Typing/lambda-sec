@@ -6,40 +6,43 @@ open import Data.List using (List; []; _∷_)
 open import Data.Maybe
 
 
--- types
--- infixr 6 _⇒_
--- infix  7 _/_
 
+-- Types:
+infixr 6 [_]_⇒_
+infix  6 _ref
+infix  7 _/_
+-- Terms:
 infix  4 `ref[_]_
 infix  5 ƛ[_]_
 infix  6 _`/_
 infixl 7 _·_
 infixl 8 _`∧_
 infixl 8 _`∨_
--- Assignment is right associative.
-infixr 9 _:=_
+infixr 9 _:=_   -- Assignment is right associative.
 
 data ℒ : Set where
-  Label : ℕ → ℒ
+  label : ℕ → ℒ
 
 -- Examples: low and high.
 𝐿 : ℒ
-𝐿 = Label 0
+𝐿 = label 0
 
 𝐻 : ℒ
-𝐻 = Label 1
+𝐻 = label 1
 
 mutual
-  -- types
+  -- Types
   data 𝕋 : Set where
-    _⇒_ : 𝕊 → 𝕊 → 𝕋
-    `𝔹  : 𝕋
+    [_]_⇒_   : ℒ → 𝕊 → 𝕊 → 𝕋
+    `𝔹      : 𝕋
+    `⊤       : 𝕋
+    _ref     : 𝕊 → 𝕋
 
-  -- security types: types with label snapped on
+  -- Security types: types with label snapped on
   data 𝕊 : Set where
     _/_ : 𝕋 → ℒ → 𝕊
 
--- typing context
+-- Typing context
 Context : Set
 Context = List 𝕊
 
@@ -53,6 +56,7 @@ data Op : Set where
   op-true       : Op
   op-false      : Op
   op-unit       : Op
+  op-memory     : ℕ → 𝕊 → Op    -- memory reference
   op-app        : Op        -- ·
   op-if         : Op
   op-and        : Op        -- ∧
@@ -61,13 +65,13 @@ data Op : Set where
   op-deref      : Op        -- `deref
   op-assign     : Op        -- :=
   op-label      : ℒ → Op    -- / (label annotation)
-  -- TODO: memory location
 
 sig : Op → List ℕ
 sig (op-lam pc)        = 2 ∷ []
 sig op-true            = []
 sig op-false           = []
 sig op-unit            = []
+sig (op-memory n s)    = []
 sig op-app             = 0 ∷ 0 ∷ []
 sig op-if              = 0 ∷ 0 ∷ 0 ∷ []
 sig op-and             = 0 ∷ 0 ∷ []
@@ -75,7 +79,7 @@ sig op-or              = 0 ∷ 0 ∷ []
 sig (op-ref s)         = 0 ∷ []
 sig op-deref           = 0 ∷ []
 sig op-assign          = 0 ∷ 0 ∷ []
-sig (op-label 𝓁)  = 0 ∷ []
+sig (op-label 𝓁)       = 0 ∷ []
 
 -- We're using the ABT library.
 open Syntax Op sig
@@ -87,6 +91,7 @@ pattern ƛ[_]_ pc N    = (op-lam pc) ⦅ cons (bind (bind (ast N))) nil ⦆     
 pattern `true         = op-true ⦅ nil ⦆                                                  -- `true
 pattern `false        = op-false ⦅ nil ⦆                                                 -- `false
 pattern `⟨⟩           = op-unit ⦅ nil ⦆                                                  -- `⟨⟩
+pattern mem n s       = (op-memory n s) ⦅ nil ⦆                                          -- mem n s
 pattern _·_ L M       = op-app ⦅ cons (ast L) (cons (ast M) nil) ⦆                       -- L · M
 pattern if L M N      = op-if ⦅ cons (ast L) (cons (ast M) (cons (ast N) nil)) ⦆         -- if L M N
 pattern _`∧_ M N      = op-and ⦅ cons (ast M) (cons (ast N) nil) ⦆                       -- M `∧ N
@@ -94,9 +99,10 @@ pattern _`∨_ M N      = op-or ⦅ cons (ast M) (cons (ast N) nil) ⦆         
 pattern `ref[_]_ s M  = (op-ref s) ⦅ cons (ast M) nil ⦆                                  -- `ref[ s ] M
 pattern ! M           = op-deref ⦅ cons (ast M) nil ⦆                                    -- ! M
 pattern _:=_ L M      = op-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆                    -- L := M
-pattern _`/_ V 𝓁       = (op-label 𝓁) ⦅ cons (ast V) nil ⦆                               -- V `/ 𝓁
+pattern _`/_ V 𝓁      = (op-label 𝓁) ⦅ cons (ast V) nil ⦆                                -- V `/ 𝓁
 
--- Memory is a map from location Lˢ to values.
--- data Memory : Set where
---   `∅ : Memory
---   _;_⦂_ : Memory → 𝕊 → Value → Memory
+data Cell : Set where
+  _↦_ : 𝕊 → Term → Cell
+
+Memory : Set
+Memory = List Cell
