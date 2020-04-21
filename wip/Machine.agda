@@ -6,6 +6,8 @@ open import Data.Nat.Properties using (≤-refl)
 open import Data.List using (List; []; _∷_)
 open import Data.Maybe
 open import Relation.Nullary using (Dec; yes; no; ¬_)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl)
 
 
 
@@ -171,4 +173,3 @@ data Cell : Set where
 
 Memory : Set
 Memory = List Cell
-
