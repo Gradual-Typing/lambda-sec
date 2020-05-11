@@ -7,6 +7,10 @@ open import Data.Maybe
 import Syntax
 
 infixr 6 _[_]⇒[_]_
+infixl 7 _·_
+infixl 8 _`⊔_  -- join
+infixl 8 _`⊓_  -- meet
+infixl 9 _`⊑_  -- label leq
 
 data ℒ : Set where
   l : ℕ → ℒ
@@ -42,6 +46,9 @@ nth (x ∷ ls) (suc k) = nth ls k
 -- We're using the ABT library.
 data Op : Set where
   op-let : Op
+  op-true       : Op
+  op-false      : Op
+  op-unit       : Op
   op-if  : Op
   op-lam : ℒ̂ → Op
   op-app : Op
@@ -53,11 +60,19 @@ data Op : Set where
   op-ref-label : Op
   op-lab-label : Op
   op-pc-label : Op
+  op-label : ℒ → Op       -- Note that although we have first class labels, they cannot be ¿
+  op-label-join : Op
+  op-label-meet : Op
+  op-label-leq : Op
+  op-unlabel : Op
   op-to-label : ℒ → Op
   op-to-label-dyn : Op
 
 sig : Op → List ℕ
 sig op-let      = 0 ∷ 1 ∷ []
+sig op-true            = []
+sig op-false           = []
+sig op-unit            = []
 sig op-if       = 0 ∷ 0 ∷ []
 sig (op-lam 𝓁̂)  = 1 ∷ []
 sig op-app      = 0 ∷ 0 ∷ []
@@ -69,6 +84,11 @@ sig op-eq-ref   = 0 ∷ 0 ∷ []
 sig op-ref-label = 0 ∷ []
 sig op-lab-label = 0 ∷ []
 sig op-pc-label  = []
+sig (op-label 𝓁) = []
+sig op-label-join = 0 ∷ 0 ∷ []
+sig op-label-meet = 0 ∷ 0 ∷ []
+sig op-label-leq = 0 ∷ 0 ∷ []
+sig op-unlabel = 0 ∷ []
 sig (op-to-label 𝓁) = 0 ∷ []
 sig op-to-label-dyn = 0 ∷ 0 ∷ []
 
@@ -77,6 +97,9 @@ open Syntax.OpSig Op sig
   renaming (ABT to Term)
 
 pattern `let M N = op-let ⦅ cons (ast M) (cons (bind (ast N)) nil) ⦆
+pattern `true = op-true ⦅ nil ⦆
+pattern `false = op-false ⦅ nil ⦆
+pattern `tt = op-unit ⦅ nil ⦆
 pattern `if  M N = op-if  ⦅ cons (ast M) (cons (ast N) nil) ⦆
 pattern ƛ 𝓁̂ N = (op-lam 𝓁̂) ⦅ cons (bind (ast N)) nil ⦆
 pattern _·_ `x `y = op-app ⦅ cons (ast `x) (cons (ast `y) nil) ⦆
@@ -88,5 +111,10 @@ pattern eq-ref `x `y = op-eq-ref ⦅ cons (ast `x) (cons (ast `y) nil) ⦆
 pattern ref-label `x = op-ref-label ⦅ cons (ast `x) nil ⦆
 pattern lab-label `x = op-lab-label ⦅ cons (ast `x) nil ⦆
 pattern pc-label = op-pc-label ⦅ nil ⦆
+pattern label 𝓁 = (op-label 𝓁) ⦅ nil ⦆
+pattern _`⊔_ `x `y = op-label-join ⦅ cons (ast `x) (cons (ast `y) nil) ⦆
+pattern _`⊓_ `x `y = op-label-meet ⦅ cons (ast `x) (cons (ast `y) nil) ⦆
+pattern _`⊑_ `x `y = op-label-leq ⦅ cons (ast `x) (cons (ast `y) nil) ⦆
+pattern unlabel `x = op-unlabel ⦅ cons (ast `x) nil ⦆
 pattern to-label 𝓁 M = (op-to-label 𝓁) ⦅ cons (ast M) nil ⦆
 pattern to-label-dyn `x M = op-to-label-dyn ⦅ cons (ast `x) (cons (ast M) nil) ⦆
