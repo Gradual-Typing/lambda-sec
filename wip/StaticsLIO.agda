@@ -52,7 +52,7 @@ data Op : Set where
   op-false      : Op
   op-unit       : Op
   op-if  : Op
-  op-lam : ℒ̂ → Op
+  op-lam : Op
   op-app : Op
   op-get : Op
   op-set : Op
@@ -76,7 +76,7 @@ sig op-true            = []
 sig op-false           = []
 sig op-unit            = []
 sig op-if       = 0 ∷ 0 ∷ 0 ∷ []
-sig (op-lam 𝓁̂)  = 1 ∷ []
+sig op-lam      = 1 ∷ []
 sig op-app      = 0 ∷ 0 ∷ []
 sig op-get      = 0 ∷ []
 sig op-set      = 0 ∷ 0 ∷ []
@@ -102,8 +102,8 @@ pattern `let M N = op-let ⦅ cons (ast M) (cons (bind (ast N)) nil) ⦆
 pattern `true = op-true ⦅ nil ⦆
 pattern `false = op-false ⦅ nil ⦆
 pattern `tt = op-unit ⦅ nil ⦆
-pattern `if `x M N = op-if  ⦅ cons (ast `x) (cons (ast M) (cons (ast N) nil)) ⦆
-pattern ƛ 𝓁̂ N = (op-lam 𝓁̂) ⦅ cons (bind (ast N)) nil ⦆
+pattern if `x M N = op-if  ⦅ cons (ast `x) (cons (ast M) (cons (ast N) nil)) ⦆
+pattern ƛ N = op-lam ⦅ cons (bind (ast N)) nil ⦆
 pattern _·_ `x `y = op-app ⦅ cons (ast `x) (cons (ast `y) nil) ⦆
 pattern get `x = op-get ⦅ cons (ast `x) nil ⦆
 pattern set `x `y = op-set ⦅ cons (ast `x) (cons (ast `y) nil) ⦆
@@ -326,4 +326,50 @@ data _[_,_]⊢_⦂_ : Context → ℒ̂ → ℒ̂ → Term → 𝕋 → Set wher
     → Γ [ 𝓁̂₁ , 𝓁̂₂′ ]⊢ N ⦂ T′
     → T ⋎ T′ ≜ T″
       --------------------------------------- If
-    → Γ [ 𝓁̂₁ , 𝓁̂₂ ⊔̂ 𝓁̂₂′ ]⊢ `if (` x) M N ⦂ T″
+    → Γ [ 𝓁̂₁ , 𝓁̂₂ ⊔̂ 𝓁̂₂′ ]⊢ if (` x) M N ⦂ T″
+
+  ⊢get : ∀ {Γ x T 𝓁̂₁ 𝓁̂}
+    → nth Γ x ≡ just (Ref 𝓁̂ T)
+      --------------------------------- Get
+    → Γ [ 𝓁̂₁ , 𝓁̂₁ ⊔̂ 𝓁̂ ]⊢ get (` x) ⦂ T
+
+  ⊢set : ∀ {Γ x y T T′ 𝓁̂₁ 𝓁̂}
+    → nth Γ x ≡ just (Ref 𝓁̂ T)
+    → nth Γ y ≡ just T′
+    → T′ <: T  -- the heap location need to be more secure
+    → 𝓁̂₁ ⊑̂ 𝓁̂  -- cannot observe the control flow since the heap location is more sensitive
+      ----------------------------------- Set
+    → Γ [ 𝓁̂₁ , 𝓁̂₁ ]⊢ set (` x) (` y) ⦂ `⊤
+
+  ⊢new : ∀ {Γ y T 𝓁̂₁ 𝓁}
+    → nth Γ y ≡ just T
+    → 𝓁̂₁ ⊑̂ (l̂ 𝓁)
+      ---------------------------------------- New
+    → Γ [ 𝓁̂₁ , 𝓁̂₁ ]⊢ new 𝓁 (` y) ⦂ Ref (l̂ 𝓁) T
+
+  ⊢new-dyn : ∀ {Γ x y T 𝓁̂₁}
+    → nth Γ x ≡ just `ℒ
+    → nth Γ y ≡ just T
+      -------------------------------------------- NewDyn
+    → Γ [ 𝓁̂₁ , 𝓁̂₁ ]⊢ new-dyn (` x) (` y) ⦂ Ref ¿ T
+
+  ⊢eq-ref : ∀ {Γ x y T₁ T₂ 𝓁̂₁ 𝓁̂₂ 𝓁̂}
+    → nth Γ x ≡ just (Ref 𝓁̂₁ T₁)
+    → nth Γ y ≡ just (Ref 𝓁̂₂ T₂)
+    → T₁ <: T₂
+    → T₂ <: T₁
+      ------------------------------------- EqRef
+    → Γ [ 𝓁̂ , 𝓁̂ ]⊢ eq-ref (` x) (` y) ⦂ `𝔹
+
+  ⊢ƛ : ∀ {Γ T S N 𝓁̂₁ 𝓁̂₂ 𝓁̂}
+    → T ∷ Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ N ⦂ S
+      ------------------------------------ Fun
+    → Γ [ 𝓁̂ , 𝓁̂ ]⊢ ƛ N ⦂ T [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] S
+
+  ⊢· : ∀ {Γ x y T T′ S 𝓁̂₁ 𝓁̂₁′ 𝓁̂₂}
+    → nth Γ x ≡ just (T [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] S)
+    → nth Γ y ≡ just T′
+    → T′ <: T
+    → 𝓁̂₁′ ⊑̂ 𝓁̂₁
+      --------------------------------- App
+    → Γ [ 𝓁̂₁′ , 𝓁̂₂ ]⊢ (` x) · (` y) ⦂ S
