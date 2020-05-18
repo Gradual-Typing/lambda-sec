@@ -390,3 +390,10 @@ data _[_,_]⊢_⦂_ : Context → ℒ̂ → ℒ̂ → Term → 𝕋 → Set wher
     → Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T
       --------------------------------------------- ToLabDyn
     → Γ [ 𝓁̂₁ , 𝓁̂₁ ]⊢ to-label-dyn (` x) M ⦂ Lab ¿ T
+
+
+data Cell : Set where
+  _,_↦_ : 𝕋 → ℒ̂ → Term → Cell
+
+Store : Set
+Store = List Cell
