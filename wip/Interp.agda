@@ -19,6 +19,7 @@ Store = List Cell
 Env : Set
 Env = List Term
 
+-- Machine configuration
 MachConf : Set
 MachConf = Store × Term × ℒ̂
 
@@ -30,5 +31,10 @@ data Error : Set where
 data Result (X : Set) : Set where
   error : Error → Result X
   result : X → Result X
+
+-- Bind
+_>>=_ : Result MachConf → (MachConf → Result MachConf) → Result MachConf
+(error err) >>= _ = error err
+(result x) >>= f = f x
 
 𝒱 : Env → MachConf → Result MachConf
