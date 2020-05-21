@@ -1,6 +1,8 @@
 module Interp where
 
-open import Data.Product using (_×_; ∃; ∃-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl; sym; cong; cong₂)
+open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.List using (List; []; _∷_)
 open import Data.Maybe using (Maybe; just; nothing)
 
@@ -16,14 +18,20 @@ data Cell : Set where
 Store : Set
 Store = List Cell
 
-Env : Set
-Env = List Term
+mutual
+  -- A closure is a term with an env
+  data Clos : Set where
+    clos : Term → Env → Clos
 
--- Machine configuration
-MachConf : Set
-MachConf = Store × Term × ℒ̂
+  Env : Set
+  Env = List Clos
+
+-- Machine configuration after eval
+Conf : Set
+Conf = Store × Clos × ℒ̂
 
 data Error : Set where
+  stuck : Error
   castError : Error
   NSUError : Error
   storeOutofBound : Error
@@ -33,8 +41,15 @@ data Result (X : Set) : Set where
   result : X → Result X
 
 -- Bind
-_>>=_ : Result MachConf → (MachConf → Result MachConf) → Result MachConf
+_>>=_ : Result Conf → (Conf → Result Conf) → Result Conf
 (error err) >>= _ = error err
 (result x) >>= f = f x
 
-𝒱 : Env → MachConf → Result MachConf
+𝒱 : ∀ {Γ T 𝓁̂₁ 𝓁̂₂} → (γ : Env) → (M : Term) → Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T → Store → (𝓁̂ : ℒ̂) → Result Conf
+𝒱 γ `tt _ S 𝓁̂ = result ⟨ S , ⟨ clos `tt [] , 𝓁̂ ⟩ ⟩
+𝒱 γ `true _ S 𝓁̂ = result ⟨ S , ⟨ clos `true [] , 𝓁̂ ⟩ ⟩
+𝒱 γ `false _ S 𝓁̂ = result ⟨ S , ⟨ clos `false [] , 𝓁̂ ⟩ ⟩
+𝒱 γ (label 𝓁) _ S 𝓁̂ = result ⟨ S , ⟨ clos (label 𝓁) [] , 𝓁̂ ⟩ ⟩
+𝒱 γ (` x) _ S 𝓁̂ with nth γ x
+... | nothing = error stuck
+... | just c = result ⟨ S , ⟨ c , 𝓁̂ ⟩ ⟩
