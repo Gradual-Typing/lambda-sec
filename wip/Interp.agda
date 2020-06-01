@@ -54,14 +54,17 @@ data Error : Set where
   NSUError : Error
   storeOutofBound : Error
 
+-- The evaluation either diverges, or runs into an error, or returns a value.
 data Result (X : Set) : Set where
+  diverge : Result X
   error : Error → Result X
   result : X → Result X
 
 -- Bind
 _>>=_ : Result Conf → (Conf → Result Conf) → Result Conf
-(error err) >>= _ = error err
-(result x) >>= f = f x
+diverge >>= _ = diverge
+error err >>= _ = error err
+result x >>= f = f x
 
 -- Cast 𝓁̂₁ => 𝓁̂₂
 --   This can only happen where 𝓁̂₁ ⊑̂ 𝓁̂₂
@@ -95,7 +98,9 @@ castT′ m pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (V-lab 𝓁 v) wit
 ... | yes _ = castT′ m pc T₁′ T₂′ v >>= λ { ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ → result ⟨ m′ , ⟨ (V-lab 𝓁 v′) , pc′ ⟩ ⟩ }
 castT′ m pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) _           = error stuck
 -- We need to build proxy here. - Tianyu
-castT′ m pc (T [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] S) (T′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] S′) (V-clos < M , ρ >) = result ⟨ m , ⟨ (V-clos {!!}) , pc ⟩ ⟩
+castT′ m pc (T [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] S) (T′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] S′) (V-clos < M , ρ >) =
+  result ⟨ m , ⟨ V-proxy T T′ S S′ 𝓁̂₁ 𝓁̂₁′ 𝓁̂₂ 𝓁̂₂′ < M , ρ > , pc ⟩ ⟩
+castT′ m pc (T [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] S) (T′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] S′) _ = error stuck
 castT′ m pc _ _ v = error stuck  -- The default case is stuck. - Tianyu
 
 
