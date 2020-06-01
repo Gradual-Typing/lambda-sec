@@ -80,28 +80,29 @@ castL m pc 𝓁̂₁ 𝓁̂₂ with 𝓁̂₁ ⊑̂? 𝓁̂₂
 --   This can only happen when T₁ ≲ T₂
 
 castT′ : (m : Store) → (pc : ℒ) → (T₁ T₂ : 𝕋) → (v : Value) → Result Conf
+-- Unit => Unit
 castT′ m pc `⊤ `⊤ V-tt         = result ⟨ m , ⟨ V-tt , pc ⟩ ⟩  -- just return
-castT′ m pc `⊤ `⊤ _            = error stuck
+-- 𝔹 => 𝔹
 castT′ m pc `𝔹 `𝔹 V-true      = result ⟨ m , ⟨ V-true  , pc ⟩ ⟩
 castT′ m pc `𝔹 `𝔹 V-false     = result ⟨ m , ⟨ V-false , pc ⟩ ⟩
-castT′ m pc `𝔹 `𝔹 _           = error stuck
+-- ℒ => ℒ
 castT′ m pc `ℒ `ℒ (V-label 𝓁) = result ⟨ m , ⟨ V-label 𝓁 , pc ⟩ ⟩
-castT′ m pc `ℒ `ℒ _           = error stuck
+-- Ref => Ref
 castT′ m pc (Ref 𝓁̂₁ T₁′) (Ref 𝓁̂₂ T₂′) (V-ref n 𝓁₁ 𝓁₂) with 𝓁̂₂
 ... | ¿ = result ⟨ m , ⟨ V-ref n 𝓁₁ 𝓁₂ , pc ⟩ ⟩
 ... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
 ...   | no _ = error castError
 ...   | yes _ = result ⟨ m , ⟨ V-ref n 𝓁₁ 𝓁₂ , pc ⟩ ⟩
-castT′ m pc (Ref 𝓁̂₁ T₁′) (Ref 𝓁̂₂ T₂′) _ = error stuck -- if v is not a V-ref we get stuck
+-- Labeled => Labeled
 castT′ m pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (V-lab 𝓁 v) with (l̂ 𝓁) ⊑̂? 𝓁̂₂
 ... | no _ = error castError
 ... | yes _ = castT′ m pc T₁′ T₂′ v >>= λ { ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ → result ⟨ m′ , ⟨ (V-lab 𝓁 v′) , pc′ ⟩ ⟩ }
-castT′ m pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) _           = error stuck
--- We need to build proxy here. - Tianyu
+-- Closure => Proxied closure
+--   NOTE: We need to build proxy here.
 castT′ m pc (T [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] S) (T′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] S′) (V-clos < M , ρ >) =
   result ⟨ m , ⟨ V-proxy T T′ S S′ 𝓁̂₁ 𝓁̂₁′ 𝓁̂₂ 𝓁̂₂′ < M , ρ > , pc ⟩ ⟩
-castT′ m pc (T [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] S) (T′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] S′) _ = error stuck
-castT′ m pc _ _ v = error stuck  -- The default case is stuck. - Tianyu
+-- The default case is stuck.
+castT′ m pc _ _ _ = error stuck
 
 
 -- Tests:
