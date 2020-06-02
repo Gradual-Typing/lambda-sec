@@ -13,52 +13,9 @@ import Syntax
 open Syntax.OpSig Op sig
   using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)
   renaming (ABT to Term)
-
-data Cell : Set where
-  _,_↦_ : ℒ̂ → ℒ̂ → Term → Cell
-
-Store : Set
-Store = List Cell
-
-mutual
-  -- A closure is a term with an env
-  data Clos : Set where
-    <_,_> : Term → Env → Clos
-
-  data Value : Set where
-    V-tt : Value
-
-    V-true : Value
-    V-false : Value
-
-    V-label : ℒ → Value
-
-    V-clos : Clos → Value
-    V-proxy : (T T′ S S′ : 𝕋) → (𝓁̂₁ 𝓁̂₁′ 𝓁̂₂ 𝓁̂₂′ : ℒ̂) → Clos → Value
-
-    V-ref : ℕ → ℒ → ℒ → Value
-
-    V-lab : ℒ → Value → Value
-
-  Env : Set
-  Env = List Value
+open import Memory
 
 
--- Machine configuration after eval
-Conf : Set
-Conf = Store × Value × ℒ
-
-data Error : Set where
-  stuck : Error
-  castError : Error
-  NSUError : Error
-  storeOutofBound : Error
-
--- The evaluation either diverges, or runs into an error, or returns a value.
-data Result (X : Set) : Set where
-  diverge : Result X
-  error : Error → Result X
-  result : X → Result X
 
 -- Bind
 _>>=_ : Result Conf → (Conf → Result Conf) → Result Conf
