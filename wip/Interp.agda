@@ -98,4 +98,8 @@ castT m pc T₁ T₂ v with T₁ ≲? T₂
   ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₂′ (𝓁̂₂ ⊔̂ 𝓁̂₂′)
   castT m″ pc″ T′ T″ vₙ -- cast T′ ⇛ T″ , where T ⋎ T′ ≡ T″
 ... | _ = error stuck
-𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc = {!!}
+𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc with nth γ x
+𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc | just (V-ref loc 𝓁₁ 𝓁₂) with lookup m loc 𝓁₁ 𝓁₂
+𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | just ⟨ T′ , v ⟩ = castT m (pc ⊔ 𝓁₂) T′ T v  -- need to upgrade pc
+𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | nothing = error memAccError
+𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc | _ = error stuck

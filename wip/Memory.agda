@@ -52,7 +52,7 @@ data Error : Set where
   stuck : Error
   castError : Error
   NSUError : Error
-  storeOutofBound : Error
+  memAccError : Error
 
 -- The evaluation either diverges, or runs into an error, or returns a value.
 data Result (X : Set) : Set where
