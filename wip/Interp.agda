@@ -103,3 +103,16 @@ castT m pc T₁ T₂ v with T₁ ≲? T₂
 𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | just ⟨ T′ , v ⟩ = castT m (pc ⊔ 𝓁₂) T′ T v  -- need to upgrade pc
 𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | nothing = error memAccError
 𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc | _ = error stuck
+𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc with nth γ x | nth γ y
+𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | just v with lookup m loc 𝓁₁ 𝓁₂
+𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | just v | just ⟨ T″ , _ ⟩ = do
+  ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT m (pc ⊔ 𝓁₂) T′ T v  -- need to upgrade pc because of the `get`
+  ⟨ m″ , ⟨ v″ , pc″ ⟩ ⟩ ← castT m′ pc′ T T″ v′
+  setmem m″ loc 𝓁₁ 𝓁₂ pc″ ⟨ T″ , v″ ⟩
+  where
+  setmem : (m : Store) → (loc : ℕ) → (𝓁₁ 𝓁₂ : ℒ) → (pc : ℒ) → 𝕋 × Value → Result Conf
+  setmem m loc 𝓁₁ 𝓁₂ pc Tv with pc ⊑? 𝓁₂
+  ... | yes _ = result ⟨ loc , 𝓁₁ , 𝓁₂ ↦ Tv ∷ m , ⟨ V-tt , pc ⟩ ⟩
+  ... | no _ = error NSUError
+𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | just v | nothing = error memAccError
+𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc | _ | _ = error stuck
