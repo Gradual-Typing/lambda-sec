@@ -122,3 +122,10 @@ castT m pc T₁ T₂ v with T₁ ≲? T₂
   let loc = length m in result ⟨ loc , pc , 𝓁 ↦ ⟨ T , v ⟩ ∷ m , ⟨ V-ref loc pc 𝓁 , pc ⟩ ⟩
 𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc | yes _ | nothing = error stuck
 𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc | no _ = error NSUError
+-- `new-dyn` is similar to `new` except that 𝓁 comes into play at runtime (instead of from typing derivation).
+𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc with nth γ x | nth γ y
+𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc | just (V-label 𝓁) | just v with pc ⊑? 𝓁
+𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc | just (V-label 𝓁) | just v | yes _ =
+  let loc = length m in result ⟨ loc , pc , 𝓁 ↦ ⟨ T , v ⟩ ∷ m , ⟨ V-ref loc pc 𝓁 , pc ⟩ ⟩
+𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc | just (V-label 𝓁) | just v | no _ = error NSUError
+𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc | _ | _ = error stuck
