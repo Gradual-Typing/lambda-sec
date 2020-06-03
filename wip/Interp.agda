@@ -4,7 +4,7 @@ open import Data.Nat using (ℕ; zero; suc; _≤_)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; cong; cong₂)
 open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
-open import Data.List using (List; []; _∷_)
+open import Data.List using (List; []; _∷_; length)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 
@@ -35,7 +35,7 @@ castL m pc 𝓁̂₁ 𝓁̂₂ with 𝓁̂₁ ⊑̂? 𝓁̂₂
 
 -- Cast T ⇛ S
 --   This can only happen when T₁ ≲ T₂
-
+-- FIXME: Rule out the stuck case by adding a premise T₁ ≲ T₂
 castT′ : (m : Store) → (pc : ℒ) → (T₁ T₂ : 𝕋) → (v : Value) → Result Conf
 -- Unit ⇛ Unit
 castT′ m pc `⊤ `⊤ V-tt         = result ⟨ m , ⟨ V-tt , pc ⟩ ⟩  -- just return
@@ -116,3 +116,9 @@ castT m pc T₁ T₂ v with T₁ ≲? T₂
   ... | no _ = error NSUError
 𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | just v | nothing = error memAccError
 𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc | _ | _ = error stuck
+𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc with pc ⊑? 𝓁
+𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc | yes _ with nth γ y
+𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc | yes _ | just v =
+  let loc = length m in result ⟨ loc , pc , 𝓁 ↦ ⟨ T , v ⟩ ∷ m , ⟨ V-ref loc pc 𝓁 , pc ⟩ ⟩
+𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc | yes _ | nothing = error stuck
+𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc | no _ = error NSUError
