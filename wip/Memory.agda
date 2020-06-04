@@ -17,7 +17,7 @@ open Syntax.OpSig Op sig renaming (ABT to Term)
 mutual
   -- A closure is a term with an env
   data Clos : Set where
-    <_,_> : Term → Env → Clos
+    <_,_,_> : ∀ {Δ T 𝓁̂₁ 𝓁̂₂} → (M : Term) → Env → Δ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T → Clos
 
   data Value : Set where
     V-tt : Value
@@ -54,9 +54,9 @@ data Error : Set where
   NSUError : Error
   memAccError : Error
 
--- The evaluation either diverges, or runs into an error, or returns a value.
+-- The evaluation either diverges (timeout), or runs into an error, or returns a value.
 data Result (X : Set) : Set where
-  diverge : Result X
+  timeout : Result X
   error : Error → Result X
   result : X → Result X
 
