@@ -1,6 +1,7 @@
 module Interp where
 
 open import Data.Nat using (ℕ; zero; suc; _≤_)
+open import Data.Nat.Properties renaming (_≟_ to _≟ₙ_)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; cong; cong₂)
 open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
@@ -129,3 +130,16 @@ castT m pc T₁ T₂ v with T₁ ≲? T₂
   let loc = length m in result ⟨ loc , pc , 𝓁 ↦ ⟨ T , v ⟩ ∷ m , ⟨ V-ref loc pc 𝓁 , pc ⟩ ⟩
 𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc | just (V-label 𝓁) | just v | no _ = error NSUError
 𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc | _ | _ = error stuck
+𝒱 {Γ} γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} eq₁ eq₂ _ _) m pc with nth γ x | nth γ y
+𝒱 {Γ} γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} eq₁ eq₂ _ _) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | just (V-ref loc′ 𝓁₁′ 𝓁₂′)
+  with loc ≟ₙ loc′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
+𝒱 {Γ} γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} eq₁ eq₂ _ _) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | just (V-ref loc′ 𝓁₁′ 𝓁₂′) | yes _ | yes _ | yes _ =
+  result ⟨ m , ⟨ V-true , pc ⟩ ⟩
+𝒱 {Γ} γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} eq₁ eq₂ _ _) m pc | just (V-ref loc 𝓁₁ 𝓁₂) | just (V-ref loc′ 𝓁₁′ 𝓁₂′) | _ | _ | _ =
+  result ⟨ m , ⟨ V-false , pc ⟩ ⟩
+𝒱 {Γ} γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} eq₁ eq₂ _ _) m pc | _ | _ = error stuck
+-- Let binding
+𝒱 {Γ} γ (`let M N) (⊢let {T = T} {T′} {S} {M} {N} ⊢M ⊢N T′≲T) m pc = do
+  ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← 𝒱 {Γ} γ M ⊢M m pc
+  ⟨ m″ , ⟨ v″ , pc″ ⟩ ⟩ ← castT m′ pc′ T′ T v′ -- need to cast T′ ⇛ T
+  𝒱 {T ∷ Γ} (v″ ∷ γ) N ⊢N m″ pc″
