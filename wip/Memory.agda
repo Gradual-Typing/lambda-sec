@@ -28,7 +28,12 @@ mutual
     V-label : ℒ → Value
 
     V-clos : Clos → Value
+    
+{-
     V-proxy : (T T′ S S′ : 𝕋) → (𝓁̂₁ 𝓁̂₁′ 𝓁̂₂ 𝓁̂₂′ : ℒ̂) → Clos → Value
+-}
+    {- V-proxy casts from (S ⇒ T) to (S′ ⇒ T′) -}
+    V-proxy : (S T S′ T′  : 𝕋) → (𝓁̂₁ 𝓁̂₁′ 𝓁̂₂ 𝓁̂₂′ : ℒ̂) → Value → Value
 
     V-ref : ℕ → ℒ → ℒ → Value
 
