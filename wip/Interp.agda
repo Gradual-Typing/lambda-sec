@@ -57,13 +57,8 @@ castT′ m pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (V-lab 𝓁 v) wit
 ... | yes _ = castT′ m pc T₁′ T₂′ v >>= λ { ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ → result ⟨ m′ , ⟨ (V-lab 𝓁 v′) , pc′ ⟩ ⟩ }
 -- Closure ⇛ Proxied closure
 --   NOTE: We need to build proxy here.
-{-
-castT′ m pc (T [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] S) (T′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] S′) (V-clos clos) =
-  result ⟨ m , ⟨ V-proxy T T′ S S′ 𝓁̂₁ 𝓁̂₁′ 𝓁̂₂ 𝓁̂₂′ clos , pc ⟩ ⟩
--}
 castT′ m pc (S [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] T) (S′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] T′) v =
-  result ⟨ m , ⟨ V-proxy S T  S′ T′ 𝓁̂₁ 𝓁̂₁′ 𝓁̂₂ 𝓁̂₂′ v , pc ⟩ ⟩
-
+  result ⟨ m , ⟨ V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ v , pc ⟩ ⟩
 -- The default case is stuck.
 castT′ m pc _ _ _ = error stuck
 
@@ -83,10 +78,10 @@ castT m pc T₁ T₂ v with T₁ ≲? T₂
 ... | yes _ = castT′ m pc T₁ T₂ v -- proceed
 
 
-apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Result Conf
-
 -- NOTE that pc must not be ¿ in run time!
 𝒱 : ∀ {Γ T 𝓁̂₁ 𝓁̂₂} → (γ : Env) → (M : Term) → Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T → Store → (pc : ℒ) → (k : ℕ) → Result Conf
+apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Result Conf
+
 𝒱 _ _ _ _ _ 0 = timeout
 𝒱 γ `tt _ m pc (suc k) = result ⟨ m , ⟨ V-tt , pc ⟩ ⟩
 𝒱 γ `true _ m pc (suc k) = result ⟨ m , ⟨ V-true , pc ⟩ ⟩
@@ -155,23 +150,6 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 {Γ} γ (ƛ N) (⊢ƛ {T = T} {S} {N} {𝓁̂₁} {𝓁̂₂} {𝓁} ⊢N) m pc (suc k) =
   result ⟨ m , ⟨ V-clos < N , γ , ⊢N > , pc ⟩ ⟩
 -- Application
-{-
-𝒱 {Γ} γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} {𝓁̂₂} _ _ _ _) m pc (suc k) with nth γ x | nth γ y
-... | just (V-clos < N , ρ , ⊢N >) | just v = do
-  ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT m pc T′ T v  -- cast T′ ⇛ T
-  ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₁′ 𝓁̂₁ -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
-  𝒱 (v′ ∷ ρ) N ⊢N m″ pc″ k
-... | just (V-proxy T″ T‴ S″ S‴ 𝓁̂₁″ 𝓁̂₁‴ 𝓁̂₂″ 𝓁̂₂‴ < N , ρ , ⊢N >) | just v = do
-  ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT m pc T′ T v
-  ⟨ m′ , ⟨ _ , pc′ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₁′ 𝓁̂₁
-  -- dive into the proxy
-  ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT m′ pc′ T″ T‴ v′
-  ⟨ m′ , ⟨ _ , pc′ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₁″ 𝓁̂₁‴
-  ⟨ m″ , ⟨ v″ , pc″ ⟩ ⟩ ← 𝒱 (v′ ∷ ρ) N ⊢N m′ pc′ k
-  ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩ ← castL m″ pc″ 𝓁̂₂″ 𝓁̂₂‴
-  castT m″ pc″ S″ S‴ v″
-... | _ | _ = error stuck
--}
 𝒱 {Γ} γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} {𝓁̂₂} _ _ _ _) m pc (suc k)
     with nth γ x | nth γ y
 ... | just v | just w = do
@@ -181,8 +159,10 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 ... | _ | _ = error stuck
 
 apply γ (V-clos < N , ρ , ⊢N >) w m pc k = 𝒱 (w ∷ ρ) N ⊢N m pc k
-apply γ (V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₁′ 𝓁̂₂ 𝓁̂₂′ v) w m pc k = do
-    ⟨ m₁ , ⟨ w′ , pc₁ ⟩ ⟩ ← castT m pc S′ S w  -- cast S′ ⇛ S
+apply γ (V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ v) w m pc k = do
+    ⟨ m₁ , ⟨ w′ , pc₁ ⟩ ⟩ ← castT m pc S′ S w    -- cast S′ ⇛ S
+    ⟨ m₁ , ⟨ _ ,  pc₁ ⟩ ⟩ ← castL m₁ pc₁ 𝓁̂₁′ 𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
     ⟨ m₂ , ⟨ v₁ , pc₂ ⟩ ⟩ ← apply γ v w′ m₁ pc₁ k
-    castT m₂ pc₂ T T′ v₁  -- cast T ⇛ T′
+    ⟨ m₂ , ⟨ _ ,  pc₂ ⟩ ⟩ ← castL m₂ pc₂ 𝓁̂₂ 𝓁̂₂′  -- cast 𝓁̂₂ ⇛ 𝓁̂₂′
+    castT m₂ pc₂ T T′ v₁                          -- cast T ⇛ T′
 apply γ _ w m pc k = error stuck
