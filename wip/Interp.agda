@@ -149,6 +149,13 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 -- Lambda abstraction
 𝒱 {Γ} γ (ƛ N) (⊢ƛ {T = T} {S} {N} {𝓁̂₁} {𝓁̂₂} {𝓁} ⊢N) m pc (suc k) =
   result ⟨ m , ⟨ V-clos < N , γ , ⊢N > , pc ⟩ ⟩
+
+𝒱 {Γ} γ (ref-label `x) (⊢ref-label {x = x} _) m pc (suc k) with nth γ x
+... | just (V-ref loc 𝓁₁ 𝓁₂) = result ⟨ m , ⟨ V-label 𝓁₂ , pc ⟩ ⟩ -- return 𝓁₂ since 𝓁₁ is the saved pc
+... | _ = error stuck
+𝒱 {Γ} γ (lab-label `x) (⊢lab-label {x = x} _) m pc (suc k) with nth γ x
+... | just (V-lab 𝓁 v) = result ⟨ m , ⟨ V-label 𝓁 , pc ⟩ ⟩
+... | _ = error stuck
 -- Application
 𝒱 {Γ} γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} {𝓁̂₂} _ _ _ _) m pc (suc k)
     with nth γ x | nth γ y
