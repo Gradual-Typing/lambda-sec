@@ -104,13 +104,13 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 ... | _ = error stuck
 𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) with nth γ x
 𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) with lookup m loc 𝓁₁ 𝓁₂
-𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just ⟨ T′ , v ⟩ = castT m (pc ⊔ 𝓁₂) T′ T v  -- need to upgrade pc
+𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just ⟨ T′ , v ⟩ = castT m (pc ⊔ 𝓁₂) T′ T v  -- need to update pc
 𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | nothing = error memAccError
 𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) | _ = error stuck
 𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc (suc k) with nth γ x | nth γ y
 𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v with lookup m loc 𝓁₁ 𝓁₂
 𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v | just ⟨ T″ , _ ⟩ = do
-  ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT m (pc ⊔ 𝓁₂) T′ T v  -- need to upgrade pc because of the `get`
+  ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT m (pc ⊔ 𝓁₂) T′ T v  -- need to update pc because of the `get`
   ⟨ m″ , ⟨ v″ , pc″ ⟩ ⟩ ← castT m′ pc′ T T″ v′
   setmem m″ loc 𝓁₁ 𝓁₂ pc″ ⟨ T″ , v″ ⟩
   where
@@ -163,6 +163,29 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 {Γ} γ (`x `⊓ `y) (⊢⊓ {x = x} {y = y} _ _) m pc (suc k) with nth γ x | nth γ y
 ... | just (V-label 𝓁x) | just (V-label 𝓁y) = result ⟨ m , ⟨ V-label (𝓁x ⊓ 𝓁y) , pc ⟩ ⟩
 ... | _ | _ = error stuck
+𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y = y} _ _) m pc (suc k) with nth γ x | nth γ y
+𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y = y} _ _) m pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) with 𝓁x ≟ 𝓁y
+𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y = y} _ _) m pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) | yes _ = result ⟨ m , ⟨ V-true , pc ⟩ ⟩
+𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y = y} _ _) m pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) | no  _ = result ⟨ m , ⟨ V-false , pc ⟩ ⟩
+𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y = y} _ _) m pc (suc k) | _ | _ = error stuck
+𝒱 γ (unlabel `x) (⊢unlabel {x = x} _) m pc (suc k) with nth γ x
+... | just (V-lab 𝓁 v) = result ⟨ m , ⟨ v , pc ⊔ 𝓁 ⟩ ⟩ -- need to update pc
+... | _ = error stuck
+𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) with 𝒱 γ M ⊢M m pc k
+𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ with pc′ ⊑? (pc ⊔ 𝓁)
+𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | yes _ = result ⟨ m′ , ⟨ V-lab 𝓁 v , pc ⟩ ⟩
+𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | no  _ = error NSUError
+𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | error err = error err
+𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | timeout = timeout
+𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) with nth γ x
+𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) with 𝒱 γ M ⊢M m pc k
+𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ with pc′ ⊑? (pc ⊔ 𝓁)
+𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | yes _ =
+  result ⟨ m′ , ⟨ V-lab 𝓁 v , pc ⟩ ⟩
+𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | no  _ = error NSUError
+𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | error err = error err
+𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | timeout = timeout
+𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | _ = error stuck
 -- Application
 𝒱 {Γ} γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} {𝓁̂₂} _ _ _ _) m pc (suc k)
     with nth γ x | nth γ y
