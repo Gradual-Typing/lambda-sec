@@ -156,6 +156,13 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 {Γ} γ (lab-label `x) (⊢lab-label {x = x} _) m pc (suc k) with nth γ x
 ... | just (V-lab 𝓁 v) = result ⟨ m , ⟨ V-label 𝓁 , pc ⟩ ⟩
 ... | _ = error stuck
+𝒱 {Γ} γ pc-label ⊢pc-label m pc (suc k) = result ⟨ m , ⟨ V-label pc , pc ⟩ ⟩
+𝒱 {Γ} γ (`x `⊔ `y) (⊢⊔ {x = x} {y = y} _ _) m pc (suc k) with nth γ x | nth γ y
+... | just (V-label 𝓁x) | just (V-label 𝓁y) = result ⟨ m , ⟨ V-label (𝓁x ⊔ 𝓁y) , pc ⟩ ⟩
+... | _ | _ = error stuck
+𝒱 {Γ} γ (`x `⊓ `y) (⊢⊓ {x = x} {y = y} _ _) m pc (suc k) with nth γ x | nth γ y
+... | just (V-label 𝓁x) | just (V-label 𝓁y) = result ⟨ m , ⟨ V-label (𝓁x ⊓ 𝓁y) , pc ⟩ ⟩
+... | _ | _ = error stuck
 -- Application
 𝒱 {Γ} γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} {𝓁̂₂} _ _ _ _) m pc (suc k)
     with nth γ x | nth γ y
