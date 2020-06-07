@@ -28,11 +28,9 @@ result x >>= f = f x
 --   This can only happen where 𝓁̂₁ ⊑̂ 𝓁̂₂
 
 castL : (m : Store) → (pc : ℒ) → (𝓁̂₁ 𝓁̂₂ : ℒ̂) → Result Conf
-castL m pc 𝓁̂₁ 𝓁̂₂ with 𝓁̂₁ ⊑̂? 𝓁̂₂
-... | no _ = error castError
-... | yes _ with (l̂ pc) ⊑̂? 𝓁̂₂
-...   | no _ = error castError
-...   | yes _ = result ⟨ m , ⟨ V-tt , pc ⟩ ⟩
+castL m pc 𝓁̂₁ 𝓁̂₂ with 𝓁̂₁ ⊑̂? 𝓁̂₂ | (l̂ pc) ⊑̂? 𝓁̂₂
+... | yes _ | yes _ = result ⟨ m , ⟨ V-tt , pc ⟩ ⟩
+... | _     | _     = error castError
 
 -- Cast T ⇛ S
 --   This can only happen when T₁ ≲ T₂
@@ -82,34 +80,43 @@ castT m pc T₁ T₂ v with T₁ ≲? T₂
 𝒱 : ∀ {Γ T 𝓁̂₁ 𝓁̂₂} → (γ : Env) → (M : Term) → Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T → Store → (pc : ℒ) → (k : ℕ) → Result Conf
 apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Result Conf
 
+-- Running out of gas
 𝒱 _ _ _ _ _ 0 = timeout
+
 𝒱 γ `tt _ m pc (suc k) = result ⟨ m , ⟨ V-tt , pc ⟩ ⟩
 𝒱 γ `true _ m pc (suc k) = result ⟨ m , ⟨ V-true , pc ⟩ ⟩
 𝒱 γ `false _ m pc (suc k) = result ⟨ m , ⟨ V-false , pc ⟩ ⟩
 𝒱 γ (label 𝓁) _ m pc (suc k) = result ⟨ m , ⟨ V-label 𝓁 , pc ⟩ ⟩
+
 𝒱 γ (` x) _ m pc (suc k) with nth γ x
 ... | nothing = error stuck
 ... | just v = result ⟨ m , ⟨ v , pc ⟩ ⟩
-𝒱 {Γ} γ (if `x M N) (⊢if {x = x} {T} {T′} {T″} {M} {N} {𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq₁ ⊢M ⊢N eq₂) m pc (suc k) with nth γ x
--- goes to the M branch
+
+𝒱 γ (if `x M N) (⊢if {x = x} {T} {T′} {T″} {M} {N} {𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} _ ⊢M ⊢N _) m pc (suc k) with nth γ x
+--   : goes to the M branch
 ... | just V-true = do
   ⟨ m′ , ⟨ vₘ , pc′ ⟩ ⟩ ← 𝒱 γ M ⊢M m pc k
   ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₂ (𝓁̂₂ ⊔̂ 𝓁̂₂′)
   castT m″ pc″ T T″ vₘ  -- cast T ⇛ T″ , where T ⋎ T′ ≡ T″
--- goes to the N branch
+--   : goes to the N branch
 ... | just V-false = do
   ⟨ m′ , ⟨ vₙ , pc′ ⟩ ⟩ ← 𝒱 γ N ⊢N m pc k
   ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₂′ (𝓁̂₂ ⊔̂ 𝓁̂₂′)
   castT m″ pc″ T′ T″ vₙ -- cast T′ ⇛ T″ , where T ⋎ T′ ≡ T″
 ... | _ = error stuck
-𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) with nth γ x
-𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) with lookup m loc 𝓁₁ 𝓁₂
-𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just ⟨ T′ , v ⟩ = castT m (pc ⊔ 𝓁₂) T′ T v  -- need to update pc
-𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | nothing = error memAccError
-𝒱 {Γ} γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} eq) m pc (suc k) | _ = error stuck
-𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc (suc k) with nth γ x | nth γ y
-𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v with lookup m loc 𝓁₁ 𝓁₂
-𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v | just ⟨ T″ , _ ⟩ = do
+
+𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) m pc (suc k) with nth γ x
+𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) with lookup m loc 𝓁₁ 𝓁₂
+𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just ⟨ T′ , v ⟩ =
+  castT m (pc ⊔ 𝓁₂) T′ T v  -- need to update pc
+𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | nothing =
+  error memAccError
+𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) m pc (suc k) | _ = error stuck
+
+𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) m pc (suc k) with nth γ x | nth γ y
+𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v with lookup m loc 𝓁₁ 𝓁₂
+𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v | just ⟨ T″ , _ ⟩ =
+  do
   ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT m (pc ⊔ 𝓁₂) T′ T v  -- need to update pc because of the `get`
   ⟨ m″ , ⟨ v″ , pc″ ⟩ ⟩ ← castT m′ pc′ T T″ v′
   setmem m″ loc 𝓁₁ 𝓁₂ pc″ ⟨ T″ , v″ ⟩
@@ -118,80 +125,104 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
   setmem m loc 𝓁₁ 𝓁₂ pc Tv with pc ⊑? 𝓁₂
   ... | yes _ = result ⟨ loc , 𝓁₁ , 𝓁₂ ↦ Tv ∷ m , ⟨ V-tt , pc ⟩ ⟩
   ... | no _ = error NSUError
-𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v | nothing = error memAccError
-𝒱 {Γ} γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} {𝓁̂} eq₁ eq₂ T′≲T 𝓁̂₁⊑̂𝓁̂ ) m pc (suc k) | _ | _ = error stuck
-𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc (suc k) with pc ⊑? 𝓁
-𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc (suc k) | yes _ with nth γ y
-𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc (suc k) | yes _ | just v =
-  let loc = length m in result ⟨ loc , pc , 𝓁 ↦ ⟨ T , v ⟩ ∷ m , ⟨ V-ref loc pc 𝓁 , pc ⟩ ⟩
-𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc (suc k) | yes _ | nothing = error stuck
-𝒱 {Γ} γ (new 𝓁 `y) (⊢new {y = y} {T} {𝓁̂₁} {𝓁} eq 𝓁̂₁⊑̂𝓁) m pc (suc k) | no _ = error NSUError
+𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v | nothing =
+  error memAccError
+𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) m pc (suc k) | _ | _ = error stuck
+
+𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) m pc (suc k) with pc ⊑? 𝓁
+𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) m pc (suc k) | yes _ with nth γ y
+𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) m pc (suc k) | yes _ | just v =
+  let loc = length m in
+    result ⟨ loc , pc , 𝓁 ↦ ⟨ T , v ⟩ ∷ m , ⟨ V-ref loc pc 𝓁 , pc ⟩ ⟩
+𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) m pc (suc k) | yes _ | nothing = error stuck
+𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) m pc (suc k) | no _ = error NSUError
+
 -- `new-dyn` is similar to `new` except that 𝓁 comes into play at runtime (instead of from typing derivation).
-𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc (suc k) with nth γ x | nth γ y
-𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc (suc k) | just (V-label 𝓁) | just v with pc ⊑? 𝓁
-𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc (suc k) | just (V-label 𝓁) | just v | yes _ =
-  let loc = length m in result ⟨ loc , pc , 𝓁 ↦ ⟨ T , v ⟩ ∷ m , ⟨ V-ref loc pc 𝓁 , pc ⟩ ⟩
-𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc (suc k) | just (V-label 𝓁) | just v | no _ = error NSUError
-𝒱 {Γ} γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} {𝓁̂₁} eq₁ eq₂) m pc (suc k) | _ | _ = error stuck
-𝒱 {Γ} γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} eq₁ eq₂ _ _) m pc (suc k) with nth γ x | nth γ y
-𝒱 {Γ} γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} eq₁ eq₂ _ _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just (V-ref loc′ 𝓁₁′ 𝓁₂′)
-  with loc ≟ₙ loc′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
-𝒱 {Γ} γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} eq₁ eq₂ _ _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just (V-ref loc′ 𝓁₁′ 𝓁₂′) | yes _ | yes _ | yes _ =
-  result ⟨ m , ⟨ V-true , pc ⟩ ⟩
-𝒱 {Γ} γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} eq₁ eq₂ _ _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just (V-ref loc′ 𝓁₁′ 𝓁₂′) | _ | _ | _ =
-  result ⟨ m , ⟨ V-false , pc ⟩ ⟩
-𝒱 {Γ} γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} eq₁ eq₂ _ _) m pc (suc k) | _ | _ = error stuck
+𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) m pc (suc k) with nth γ x | nth γ y
+𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) m pc (suc k) | just (V-label 𝓁) | just v with pc ⊑? 𝓁
+𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) m pc (suc k) | just (V-label 𝓁) | just v | yes _ =
+  let loc = length m in
+    result ⟨ loc , pc , 𝓁 ↦ ⟨ T , v ⟩ ∷ m , ⟨ V-ref loc pc 𝓁 , pc ⟩ ⟩
+𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) m pc (suc k) | just (V-label 𝓁) | just v | no _ =
+  error NSUError
+𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) m pc (suc k) | _ | _ = error stuck
+
+𝒱 γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} _ _ _ _) m pc (suc k) with nth γ x | nth γ y
+... | just (V-ref loc 𝓁₁ 𝓁₂) | just (V-ref loc′ 𝓁₁′ 𝓁₂′) =
+  result ⟨ m , ⟨ =?-ref loc loc′ 𝓁₁ 𝓁₁′ 𝓁₂ 𝓁₂′ , pc ⟩ ⟩
+  where
+  =?-ref : (loc loc′ : ℕ) → (𝓁₁ 𝓁₁′ 𝓁₂ 𝓁₂′ : ℒ) → Value
+  =?-ref loc loc′ 𝓁₁ 𝓁₁′ 𝓁₂ 𝓁₂′ with loc ≟ₙ loc′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
+  ... | yes _ | yes _ | yes _ = V-true
+  ... | _     | _     | _     = V-false
+... | _ | _ = error stuck
+
 -- Let binding
 𝒱 {Γ} γ (`let M N) (⊢let {T = T} {T′} {S} {M} {N} ⊢M ⊢N T′≲T) m pc (suc k) = do
   ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← 𝒱 {Γ} γ M ⊢M m pc k
   ⟨ m″ , ⟨ v″ , pc″ ⟩ ⟩ ← castT m′ pc′ T′ T v′ -- need to cast T′ ⇛ T
   𝒱 {T ∷ Γ} (v″ ∷ γ) N ⊢N m″ pc″ k
--- Lambda abstraction
-𝒱 {Γ} γ (ƛ N) (⊢ƛ {T = T} {S} {N} {𝓁̂₁} {𝓁̂₂} {𝓁} ⊢N) m pc (suc k) =
-  result ⟨ m , ⟨ V-clos < N , γ , ⊢N > , pc ⟩ ⟩
 
-𝒱 {Γ} γ (ref-label `x) (⊢ref-label {x = x} _) m pc (suc k) with nth γ x
+-- Lambda abstraction
+𝒱 γ (ƛ N) (⊢ƛ ⊢N) m pc (suc k) = result ⟨ m , ⟨ V-clos < N , γ , ⊢N > , pc ⟩ ⟩
+
+𝒱 γ (ref-label `x) (⊢ref-label {x = x} _) m pc (suc k) with nth γ x
 ... | just (V-ref loc 𝓁₁ 𝓁₂) = result ⟨ m , ⟨ V-label 𝓁₂ , pc ⟩ ⟩ -- return 𝓁₂ since 𝓁₁ is the saved pc
 ... | _ = error stuck
-𝒱 {Γ} γ (lab-label `x) (⊢lab-label {x = x} _) m pc (suc k) with nth γ x
+
+𝒱 γ (lab-label `x) (⊢lab-label {x = x} _) m pc (suc k) with nth γ x
 ... | just (V-lab 𝓁 v) = result ⟨ m , ⟨ V-label 𝓁 , pc ⟩ ⟩
 ... | _ = error stuck
-𝒱 {Γ} γ pc-label ⊢pc-label m pc (suc k) = result ⟨ m , ⟨ V-label pc , pc ⟩ ⟩
-𝒱 {Γ} γ (`x `⊔ `y) (⊢⊔ {x = x} {y = y} _ _) m pc (suc k) with nth γ x | nth γ y
+
+𝒱 γ pc-label ⊢pc-label m pc (suc k) = result ⟨ m , ⟨ V-label pc , pc ⟩ ⟩
+
+𝒱 γ (`x `⊔ `y) (⊢⊔ {x = x} {y} _ _) m pc (suc k) with nth γ x | nth γ y
 ... | just (V-label 𝓁x) | just (V-label 𝓁y) = result ⟨ m , ⟨ V-label (𝓁x ⊔ 𝓁y) , pc ⟩ ⟩
 ... | _ | _ = error stuck
-𝒱 {Γ} γ (`x `⊓ `y) (⊢⊓ {x = x} {y = y} _ _) m pc (suc k) with nth γ x | nth γ y
+
+𝒱 γ (`x `⊓ `y) (⊢⊓ {x = x} {y} _ _) m pc (suc k) with nth γ x | nth γ y
 ... | just (V-label 𝓁x) | just (V-label 𝓁y) = result ⟨ m , ⟨ V-label (𝓁x ⊓ 𝓁y) , pc ⟩ ⟩
 ... | _ | _ = error stuck
-𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y = y} _ _) m pc (suc k) with nth γ x | nth γ y
-𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y = y} _ _) m pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) with 𝓁x ≟ 𝓁y
-𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y = y} _ _) m pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) | yes _ = result ⟨ m , ⟨ V-true , pc ⟩ ⟩
-𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y = y} _ _) m pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) | no  _ = result ⟨ m , ⟨ V-false , pc ⟩ ⟩
-𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y = y} _ _) m pc (suc k) | _ | _ = error stuck
+
+𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y} _ _) m pc (suc k) with nth γ x | nth γ y
+𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y} _ _) m pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) with 𝓁x ⊑? 𝓁y
+𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y} _ _) m pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) | yes _ =
+  result ⟨ m , ⟨ V-true , pc ⟩ ⟩
+𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y} _ _) m pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) | no  _ =
+  result ⟨ m , ⟨ V-false , pc ⟩ ⟩
+𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y} _ _) m pc (suc k) | _ | _ = error stuck
+
 𝒱 γ (unlabel `x) (⊢unlabel {x = x} _) m pc (suc k) with nth γ x
 ... | just (V-lab 𝓁 v) = result ⟨ m , ⟨ v , pc ⊔ 𝓁 ⟩ ⟩ -- need to update pc
 ... | _ = error stuck
+
 𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) with 𝒱 γ M ⊢M m pc k
 𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ with pc′ ⊑? (pc ⊔ 𝓁)
-𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | yes _ = result ⟨ m′ , ⟨ V-lab 𝓁 v , pc ⟩ ⟩
-𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | no  _ = error NSUError
+𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | yes _ =
+  result ⟨ m′ , ⟨ V-lab 𝓁 v , pc ⟩ ⟩
+𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | no  _ =
+  error NSUError
 𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | error err = error err
 𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) m pc (suc k) | timeout = timeout
+
+-- Similar to `to-label` except that 𝓁 comes into play at runtime
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) with nth γ x
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) with 𝒱 γ M ⊢M m pc k
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ with pc′ ⊑? (pc ⊔ 𝓁)
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | yes _ =
   result ⟨ m′ , ⟨ V-lab 𝓁 v , pc ⟩ ⟩
-𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | no  _ = error NSUError
+𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | result ⟨ m′ , ⟨ v , pc′ ⟩ ⟩ | no  _ =
+  error NSUError
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | error err = error err
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | just (V-label 𝓁) | timeout = timeout
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | _ = error stuck
+
 -- Application
-𝒱 {Γ} γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} {𝓁̂₂} _ _ _ _) m pc (suc k)
+𝒱 γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} _ _ _ _) m pc (suc k)
     with nth γ x | nth γ y
 ... | just v | just w = do
     ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT m pc T′ T w  -- cast T′ ⇛ T
-    ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₁′ 𝓁̂₁ -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
+    ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩  ← castL m′ pc′ 𝓁̂₁′ 𝓁̂₁ -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
     apply γ v w m pc k
 ... | _ | _ = error stuck
 
