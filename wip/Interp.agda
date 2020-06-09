@@ -15,14 +15,33 @@ open Syntax.OpSig Op sig
   using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)
   renaming (ABT to Term)
 open import Memory
+open import Value
 open import Lemmas
 
+
+
+-- Machine configuration after eval
+Conf : Set
+Conf = Store × Value × ℒ
+
+data Error : Set where
+  stuck : Error
+  castError : Error
+  NSUError : Error
+  memAccError : Error
+
+-- The evaluation either diverges (timeout), or runs into an error, or returns a value.
+data Result (X : Set) : Set where
+  timeout : Result X
+  error : Error → Result X
+  result : X → Result X
 
 -- Bind
 _>>=_ : Result Conf → (Conf → Result Conf) → Result Conf
 timeout >>= _ = timeout
 error err >>= _ = error err
 result x >>= f = f x
+
 
 -- Cast 𝓁̂₁ ⇛ 𝓁̂₂
 --   This can only happen where 𝓁̂₁ ⊑̂ 𝓁̂₂
