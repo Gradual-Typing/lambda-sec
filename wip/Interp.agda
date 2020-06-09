@@ -15,7 +15,7 @@ open Syntax.OpSig Op sig
   using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)
   renaming (ABT to Term)
 open import Memory
-
+open import Lemmas
 
 
 -- Bind
@@ -26,54 +26,58 @@ result x >>= f = f x
 
 -- Cast 𝓁̂₁ ⇛ 𝓁̂₂
 --   This can only happen where 𝓁̂₁ ⊑̂ 𝓁̂₂
-
-castL : (m : Store) → (pc : ℒ) → (𝓁̂₁ 𝓁̂₂ : ℒ̂) → Result Conf
-castL m pc 𝓁̂₁ 𝓁̂₂ with 𝓁̂₁ ⊑̂? 𝓁̂₂ | (l̂ pc) ⊑̂? 𝓁̂₂
-... | yes _ | yes _ = result ⟨ m , ⟨ V-tt , pc ⟩ ⟩
-... | _     | _     = error castError
+castL : (m : Store) → (pc : ℒ) → (𝓁̂₁ 𝓁̂₂ : ℒ̂) → 𝓁̂₁ ⊑̂ 𝓁̂₂ → Result Conf
+castL m pc 𝓁̂₁ 𝓁̂₂ 𝓁̂₁⊑̂𝓁̂₂ with (l̂ pc) ⊑̂? 𝓁̂₂
+... | yes _ = result ⟨ m , ⟨ V-tt , pc ⟩ ⟩
+... | no  _ = error castError
 
 -- Cast T ⇛ S
 --   This can only happen when T₁ ≲ T₂
--- FIXME: Rule out the stuck case by adding a premise T₁ ≲ T₂
-castT′ : (m : Store) → (pc : ℒ) → (T₁ T₂ : 𝕋) → (v : Value) → Result Conf
+castT′ : (m : Store) → (pc : ℒ) → (T₁ T₂ : 𝕋) → T₁ ≲ T₂ → (v : Value) → Result Conf
 -- Unit ⇛ Unit
-castT′ m pc `⊤ `⊤ V-tt         = result ⟨ m , ⟨ V-tt , pc ⟩ ⟩  -- just return
+castT′ m pc `⊤ `⊤ ≲-⊤ V-tt         = result ⟨ m , ⟨ V-tt , pc ⟩ ⟩  -- just return
+castT′ m pc `⊤ `⊤ ≲-⊤ _            = error stuck                   -- stuck if the value is not well-typed
 -- 𝔹 ⇛ 𝔹
-castT′ m pc `𝔹 `𝔹 V-true      = result ⟨ m , ⟨ V-true  , pc ⟩ ⟩
-castT′ m pc `𝔹 `𝔹 V-false     = result ⟨ m , ⟨ V-false , pc ⟩ ⟩
+castT′ m pc `𝔹 `𝔹 ≲-𝔹 V-true      = result ⟨ m , ⟨ V-true  , pc ⟩ ⟩
+castT′ m pc `𝔹 `𝔹 ≲-𝔹 V-false     = result ⟨ m , ⟨ V-false , pc ⟩ ⟩
+castT′ m pc `𝔹 `𝔹 ≲-𝔹 _           = error stuck
 -- ℒ ⇛ ℒ
-castT′ m pc `ℒ `ℒ (V-label 𝓁) = result ⟨ m , ⟨ V-label 𝓁 , pc ⟩ ⟩
+castT′ m pc `ℒ `ℒ ≲-ℒ (V-label 𝓁) = result ⟨ m , ⟨ V-label 𝓁 , pc ⟩ ⟩
+castT′ m pc `ℒ `ℒ ≲-ℒ _            = error stuck
 -- Ref ⇛ Ref
-castT′ m pc (Ref 𝓁̂₁ T₁′) (Ref 𝓁̂₂ T₂′) (V-ref n 𝓁₁ 𝓁₂) with 𝓁̂₂
+castT′ m pc (Ref 𝓁̂₁ T₁′) (Ref 𝓁̂₂ T₂′) (≲-Ref _ _ _ _) (V-ref n 𝓁₁ 𝓁₂) with 𝓁̂₂
 ... | ¿ = result ⟨ m , ⟨ V-ref n 𝓁₁ 𝓁₂ , pc ⟩ ⟩
 ... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
 ...   | no _ = error castError
 ...   | yes _ = result ⟨ m , ⟨ V-ref n 𝓁₁ 𝓁₂ , pc ⟩ ⟩
+castT′ m pc (Ref 𝓁₁ T₁′) (Ref 𝓁₂ T₂′) (≲-Ref _ _ _ _) _ = error stuck
 -- Labeled ⇛ Labeled
-castT′ m pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (V-lab 𝓁 v) with (l̂ 𝓁) ⊑̂? 𝓁̂₂
+castT′ m pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (≲-Lab _ T₁′≲T₂′) (V-lab 𝓁 v) with (l̂ 𝓁) ⊑̂? 𝓁̂₂
 ... | no _ = error castError
-... | yes _ = castT′ m pc T₁′ T₂′ v >>= λ { ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ → result ⟨ m′ , ⟨ (V-lab 𝓁 v′) , pc′ ⟩ ⟩ }
+... | yes _ =
+  do
+  ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT′ m pc T₁′ T₂′ T₁′≲T₂′ v
+  result ⟨ m′ , ⟨ (V-lab 𝓁 v′) , pc′ ⟩ ⟩
+castT′ m pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (≲-Lab _ _) _ = error stuck
 -- Closure ⇛ Proxied closure
 --   NOTE: We need to build proxy here.
-castT′ m pc (S [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] T) (S′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] T′) v =
-  result ⟨ m , ⟨ V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ v , pc ⟩ ⟩
--- The default case is stuck.
-castT′ m pc _ _ _ = error stuck
-
+castT′ m pc (S [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] T) (S′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] T′) (≲-⇒ 𝓁̂₁′⊑̂𝓁̂₁ 𝓁̂₂⊑̂𝓁̂₂′ S′≲S T≲T′) v with v
+... | (V-clos _) =
+      result ⟨ m , ⟨ V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′  𝓁̂₁′⊑̂𝓁̂₁ 𝓁̂₂⊑̂𝓁̂₂′ v , pc ⟩ ⟩
+... | (V-proxy _ _ _ _ _ _ _ _ _ _ _ _ _) =
+      result ⟨ m , ⟨ V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′ 𝓁̂₁′⊑̂𝓁̂₁ 𝓁̂₂⊑̂𝓁̂₂′  v , pc ⟩ ⟩
+... | _ = error stuck
 
 -- Tests:
---   Get stuck when casting from a reference to a bool:
-_ : castT′ [] (l 0) (Ref ¿ `𝔹) `𝔹 V-true ≡ error stuck
-_ = refl
 
 --   Get stuck when casting a bool value to a reference
-_ : castT′ [] (l 0) (Ref ¿ `𝔹) (Ref ¿ `𝔹) V-true ≡ error stuck
+_ : castT′ [] (l 0) (Ref ¿ `𝔹) (Ref ¿ `𝔹) (≲-Ref ⊑̂-¿-r ⊑̂-¿-r ≲-𝔹 ≲-𝔹) V-true ≡ error stuck
 _ = refl
 
 castT : (m : Store) → (pc : ℒ) → (T₁ T₂ : 𝕋) → (v : Value) → Result Conf
 castT m pc T₁ T₂ v with T₁ ≲? T₂
-... | no  _ = error castError
-... | yes _ = castT′ m pc T₁ T₂ v -- proceed
+... | no  _     = error castError
+... | yes T₁≲T₂ = castT′ m pc T₁ T₂ T₁≲T₂ v -- proceed
 
 
 -- NOTE that pc must not be ¿ in run time!
@@ -96,12 +100,12 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 --   : goes to the M branch
 ... | just V-true = do
   ⟨ m′ , ⟨ vₘ , pc′ ⟩ ⟩ ← 𝒱 γ M ⊢M m pc k
-  ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₂ (𝓁̂₂ ⊔̂ 𝓁̂₂′)
+  ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₂ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂⊑̂𝓁̂⊔̂𝓁̂′
   castT m″ pc″ T T″ vₘ  -- cast T ⇛ T″ , where T ⋎ T′ ≡ T″
 --   : goes to the N branch
 ... | just V-false = do
   ⟨ m′ , ⟨ vₙ , pc′ ⟩ ⟩ ← 𝒱 γ N ⊢N m pc k
-  ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₂′ (𝓁̂₂ ⊔̂ 𝓁̂₂′)
+  ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩ ← castL m′ pc′ 𝓁̂₂′ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂⊑̂𝓁̂′⊔̂𝓁̂
   castT m″ pc″ T′ T″ vₙ -- cast T′ ⇛ T″ , where T ⋎ T′ ≡ T″
 ... | _ = error stuck
 
@@ -218,19 +222,19 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) m pc (suc k) | _ = error stuck
 
 -- Application
-𝒱 γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} _ _ _ _) m pc (suc k)
+𝒱 γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} _ _ _ 𝓁̂₁′⊑̂𝓁̂₁) m pc (suc k)
     with nth γ x | nth γ y
 ... | just v | just w = do
-    ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT m pc T′ T w  -- cast T′ ⇛ T
-    ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩  ← castL m′ pc′ 𝓁̂₁′ 𝓁̂₁ -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
+    ⟨ m′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT m pc T′ T w           -- cast T′ ⇛ T
+    ⟨ m″ , ⟨ _ , pc″ ⟩ ⟩  ← castL m′ pc′ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′⊑̂𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
     apply γ v w m pc k
 ... | _ | _ = error stuck
 
 apply γ (V-clos < N , ρ , ⊢N >) w m pc k = 𝒱 (w ∷ ρ) N ⊢N m pc k
-apply γ (V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ v) w m pc k = do
-    ⟨ m₁ , ⟨ w′ , pc₁ ⟩ ⟩ ← castT m pc S′ S w    -- cast S′ ⇛ S
-    ⟨ m₁ , ⟨ _ ,  pc₁ ⟩ ⟩ ← castL m₁ pc₁ 𝓁̂₁′ 𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
+apply γ (V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′ 𝓁̂₁′⊑̂𝓁̂₁ 𝓁̂₂⊑̂𝓁̂₂′ v) w m pc k = do
+    ⟨ m₁ , ⟨ w′ , pc₁ ⟩ ⟩ ← castT m pc S′ S w           -- cast S′ ⇛ S
+    ⟨ m₁ , ⟨ _ ,  pc₁ ⟩ ⟩ ← castL m₁ pc₁ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′⊑̂𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
     ⟨ m₂ , ⟨ v₁ , pc₂ ⟩ ⟩ ← apply γ v w′ m₁ pc₁ k
-    ⟨ m₂ , ⟨ _ ,  pc₂ ⟩ ⟩ ← castL m₂ pc₂ 𝓁̂₂ 𝓁̂₂′  -- cast 𝓁̂₂ ⇛ 𝓁̂₂′
-    castT m₂ pc₂ T T′ v₁                          -- cast T ⇛ T′
+    ⟨ m₂ , ⟨ _ ,  pc₂ ⟩ ⟩ ← castL m₂ pc₂ 𝓁̂₂ 𝓁̂₂′ 𝓁̂₂⊑̂𝓁̂₂′  -- cast 𝓁̂₂ ⇛ 𝓁̂₂′
+    castT m₂ pc₂ T T′ v₁                                 -- cast T ⇛ T′
 apply γ _ w m pc k = error stuck
