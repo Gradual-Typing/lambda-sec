@@ -133,6 +133,7 @@ data _⊑_ : ℒ → ℒ → Set where
       → n ≤ n′
       → (l n) ⊑ (l n′)
 
+-- Consistent subtyping for labels
 data _⊑̂_ : ℒ̂ → ℒ̂ → Set where
 
   ⊑̂-¿-r : ∀ {𝓁̂} → 𝓁̂ ⊑̂ ¿
@@ -161,7 +162,7 @@ _≟_ : (𝓁₁ : ℒ) → (𝓁₂ : ℒ) → Dec (𝓁₁ ≡ 𝓁₂)
 ... | yes n₁≡n₂ = yes (cong (λ □ → l □) n₁≡n₂)
 ... | no n₁≢n₂ = no λ 𝓁₁≡𝓁₂ → n₁≢n₂ (≡-inv 𝓁₁≡𝓁₂)
 
--- Consistent subtyping
+-- Consistent subtyping for types
 infixl 9 _≲_
 
 data _≲_ : 𝕋 → 𝕋 → Set where
