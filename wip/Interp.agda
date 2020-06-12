@@ -28,7 +28,7 @@ data Error : Set where
   stuck : Error
   castError : Error
   NSUError : Error
-  memAccError : Error
+  -- memAccError : Error -- Use stuck instead!
 
 -- The evaluation either diverges (timeout), or runs into an error, or returns a value.
 data Result (X : Set) : Set where
@@ -133,7 +133,8 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just ⟨ T′ , v ⟩ =
   castT m (pc ⊔ 𝓁₂) T′ T v  -- need to update pc
 𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | nothing =
-  error memAccError
+  -- error memAccError
+  error stuck
 𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) m pc (suc k) | _ = error stuck
 
 𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) m pc (suc k) with nth γ x | nth γ y
@@ -149,7 +150,8 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
   ... | yes _ = result ⟨ loc , 𝓁₁ , 𝓁₂ ↦ Tv ∷ m , ⟨ V-tt , pc ⟩ ⟩
   ... | no _ = error NSUError
 𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) m pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v | nothing =
-  error memAccError
+  -- error memAccError
+  error stuck
 𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) m pc (suc k) | _ | _ = error stuck
 
 𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) m pc (suc k) with pc ⊑? 𝓁

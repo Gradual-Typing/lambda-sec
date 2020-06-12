@@ -22,9 +22,13 @@ data ⊢ᵣ_⦂_ : Result Conf → 𝕋 → Set where
       ---------------------------------
     → ⊢ᵣ result ⟨ m , ⟨ v , pc ⟩ ⟩ ⦂ T
 
-  -- Error and diverging are always well-typed under any T ∈ 𝕋
-  ⊢ᵣerror : ∀ {T err}
-    → ⊢ᵣ error err ⦂ T
+  -- Cast error, NSU check failure and diverging are always well-typed under any T ∈ 𝕋
+  --   NOTE: *stuck* is ruled out here !
+  ⊢ᵣcast-error : ∀ {T}
+    → ⊢ᵣ error castError ⦂ T
+
+  ⊢ᵣnsu-error : ∀ {T}
+    → ⊢ᵣ error NSUError ⦂ T
 
   ⊢ᵣtimeout : ∀ {T}
     → ⊢ᵣ timeout ⦂ T
