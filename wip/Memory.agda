@@ -22,11 +22,11 @@ Store : Set
 Store = List Cell
 
 
-lookup : (m : Store) → (loc : ℕ) → (𝓁₁ 𝓁₂ : ℒ) → Maybe (𝕋 × Value)
+lookup : (μ : Store) → (loc : ℕ) → (𝓁₁ 𝓁₂ : ℒ) → Maybe (𝕋 × Value)
 lookup [] _ _ _ = nothing
-lookup ( loc , 𝓁₁ , 𝓁₂ ↦ ⟨ T , v ⟩ ∷ m′) loc′ 𝓁₁′ 𝓁₂′ with loc ≟ₙ loc′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
+lookup ( loc , 𝓁₁ , 𝓁₂ ↦ ⟨ T , v ⟩ ∷ μ′) loc′ 𝓁₁′ 𝓁₂′ with loc ≟ₙ loc′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
 ... | yes _ | yes _ | yes _ = just ⟨ T , v ⟩
-... | _ | _ | _ = lookup m′ loc′ 𝓁₁′ 𝓁₂′
+... | _ | _ | _ = lookup μ′ loc′ 𝓁₁′ 𝓁₂′
 
 -- A few tests
 private
