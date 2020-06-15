@@ -19,13 +19,13 @@ data Cell (X : Set) : Set where
 Store = List (Cell (𝕋 × Value))
 StoreTyping = List (Cell 𝕋)
 
-lookup : (μ : Store) → Location → Maybe (𝕋 × Value)
+lookup : ∀ {X} → (μ : List (Cell X)) → Location → Maybe X
 lookup [] _ = nothing
-lookup ( ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩ ↦ ⟨ T , v ⟩ ∷ μ′ ) ⟨ n′ , ⟨ 𝓁₁′ , 𝓁₂′ ⟩ ⟩ with n ≟ₙ n′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
-... | yes _ | yes _ | yes _ = just ⟨ T , v ⟩
+lookup ( ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩ ↦ x ∷ μ′ ) ⟨ n′ , ⟨ 𝓁₁′ , 𝓁₂′ ⟩ ⟩ with n ≟ₙ n′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
+... | yes _ | yes _ | yes _ = just x
 ... | _ | _ | _ = lookup μ′ ⟨ n′ , ⟨ 𝓁₁′ , 𝓁₂′ ⟩ ⟩
 
--- A few tests
+-- Examples:
 private
   μ : Store
   μ = ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ↦ ⟨ `𝔹 , V-true ⟩ ∷
@@ -38,5 +38,13 @@ private
   _ : lookup μ ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ≡ just ⟨ `𝔹 , V-true ⟩
   _ = refl
 
+  Σ : StoreTyping
+  Σ = ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ↦ `𝔹 ∷
+      ⟨ 0 , ⟨ l 0 , l 1 ⟩ ⟩ ↦ `⊤ ∷
+      ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ↦ `ℒ ∷ []
 
--- StoreTyping
+  _ : lookup Σ ⟨ 0 , ⟨ l 1 , l 1 ⟩ ⟩ ≡ nothing
+  _ = refl
+
+  _ : lookup Σ ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ≡ just `𝔹
+  _ = refl
