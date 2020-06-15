@@ -13,30 +13,30 @@ open import StaticsLIO
 open import Value
 
 
+data Cell (X : Set) : Set where
+  _↦_ : Location → X → Cell X
 
--- A heap location maps address and labels to a value.
-data Cell : Set where
-  _,_,_↦_ : (loc : ℕ) → (𝓁₁ 𝓁₂ : ℒ) → 𝕋 × Value → Cell
+Store = List (Cell (𝕋 × Value))
+StoreTyping = List (Cell 𝕋)
 
-Store : Set
-Store = List Cell
-
-
-lookup : (μ : Store) → (loc : ℕ) → (𝓁₁ 𝓁₂ : ℒ) → Maybe (𝕋 × Value)
-lookup [] _ _ _ = nothing
-lookup ( loc , 𝓁₁ , 𝓁₂ ↦ ⟨ T , v ⟩ ∷ μ′) loc′ 𝓁₁′ 𝓁₂′ with loc ≟ₙ loc′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
+lookup : (μ : Store) → Location → Maybe (𝕋 × Value)
+lookup [] _ = nothing
+lookup ( ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩ ↦ ⟨ T , v ⟩ ∷ μ′ ) ⟨ n′ , ⟨ 𝓁₁′ , 𝓁₂′ ⟩ ⟩ with n ≟ₙ n′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
 ... | yes _ | yes _ | yes _ = just ⟨ T , v ⟩
-... | _ | _ | _ = lookup μ′ loc′ 𝓁₁′ 𝓁₂′
+... | _ | _ | _ = lookup μ′ ⟨ n′ , ⟨ 𝓁₁′ , 𝓁₂′ ⟩ ⟩
 
 -- A few tests
 private
-  mem : Store
-  mem = 1 , l 2 , l 2 ↦ ⟨ `𝔹 , V-true ⟩ ∷
-        0 , l 0 , l 1 ↦ ⟨ `⊤ , V-tt ⟩ ∷
-        1 , l 2 , l 2 ↦ ⟨ `ℒ , V-label (l 0) ⟩ ∷ []
+  μ : Store
+  μ = ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ↦ ⟨ `𝔹 , V-true ⟩ ∷
+      ⟨ 0 , ⟨ l 0 , l 1 ⟩ ⟩ ↦ ⟨ `⊤ , V-tt ⟩ ∷
+      ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ↦ ⟨ `ℒ , V-label (l 0) ⟩ ∷ []
 
-  _ : lookup mem 0 (l 1) (l 1) ≡ nothing
+  _ : lookup μ ⟨ 0 , ⟨ l 1 , l 1 ⟩ ⟩ ≡ nothing
   _ = refl
 
-  _ : lookup mem 1 (l 2) (l 2) ≡ just ⟨ `𝔹 , V-true ⟩
+  _ : lookup μ ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ≡ just ⟨ `𝔹 , V-true ⟩
   _ = refl
+
+
+-- StoreTyping

@@ -64,11 +64,11 @@ castT′ μ pc `𝔹 `𝔹 ≲-𝔹 _           = error stuck
 castT′ μ pc `ℒ `ℒ ≲-ℒ (V-label 𝓁) = result ⟨ μ , ⟨ V-label 𝓁 , pc ⟩ ⟩
 castT′ μ pc `ℒ `ℒ ≲-ℒ _            = error stuck
 -- Ref ⇛ Ref
-castT′ μ pc (Ref 𝓁̂₁ T₁′) (Ref 𝓁̂₂ T₂′) (≲-Ref _ _ _ _) (V-ref n 𝓁₁ 𝓁₂) with 𝓁̂₂
-... | ¿ = result ⟨ μ , ⟨ V-ref n 𝓁₁ 𝓁₂ , pc ⟩ ⟩
+castT′ μ pc (Ref 𝓁̂₁ T₁′) (Ref 𝓁̂₂ T₂′) (≲-Ref _ _ _ _) (V-ref ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩) with 𝓁̂₂
+... | ¿ = result ⟨ μ , ⟨ V-ref ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩ , pc ⟩ ⟩
 ... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
 ...   | no _ = error castError
-...   | yes _ = result ⟨ μ , ⟨ V-ref n 𝓁₁ 𝓁₂ , pc ⟩ ⟩
+...   | yes _ = result ⟨ μ , ⟨ V-ref ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩ , pc ⟩ ⟩
 castT′ μ pc (Ref 𝓁₁ T₁′) (Ref 𝓁₂ T₂′) (≲-Ref _ _ _ _) _ = error stuck
 -- Labeled ⇛ Labeled
 castT′ μ pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (≲-Lab _ T₁′≲T₂′) (V-lab 𝓁 v) with (l̂ 𝓁) ⊑̂? 𝓁̂₂
@@ -129,27 +129,27 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 ... | _ = error stuck
 
 𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) μ pc (suc k) with nth γ x
-𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) μ pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) with lookup μ loc 𝓁₁ 𝓁₂
-𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) μ pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just ⟨ T′ , v ⟩ =
+𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) μ pc (suc k) | just (V-ref loc) with lookup μ loc
+𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) μ pc (suc k) | just (V-ref ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩) | just ⟨ T′ , v ⟩ =
   castT μ (pc ⊔ 𝓁₂) T′ T v  -- need to update pc
-𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) μ pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | nothing =
+𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) μ pc (suc k) | just (V-ref loc) | nothing =
   -- error memAccError
   error stuck
 𝒱 γ (get `x) (⊢get {x = x} {T} {𝓁̂₁} {𝓁̂} _) μ pc (suc k) | _ = error stuck
 
 𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) with nth γ x | nth γ y
-𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v with lookup μ loc 𝓁₁ 𝓁₂
-𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v | just ⟨ T″ , _ ⟩ =
+𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | just (V-ref loc) | just v with lookup μ loc
+𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | just (V-ref ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩) | just v | just ⟨ T″ , _ ⟩ =
   do
   ⟨ μ′ , ⟨ v′ , pc′ ⟩ ⟩ ← castT μ (pc ⊔ 𝓁₂) T′ T v  -- need to update pc because of the `get`
   ⟨ μ″ , ⟨ v″ , pc″ ⟩ ⟩ ← castT μ′ pc′ T T″ v′
-  setmem μ″ loc 𝓁₁ 𝓁₂ pc″ ⟨ T″ , v″ ⟩
+  setmem μ″ ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩ pc″ ⟨ T″ , v″ ⟩
   where
-  setmem : (μ : Store) → (loc : ℕ) → (𝓁₁ 𝓁₂ : ℒ) → (pc : ℒ) → 𝕋 × Value → Result Conf
-  setmem μ loc 𝓁₁ 𝓁₂ pc Tv with pc ⊑? 𝓁₂
-  ... | yes _ = result ⟨ loc , 𝓁₁ , 𝓁₂ ↦ Tv ∷ μ , ⟨ V-tt , pc ⟩ ⟩
+  setmem : (μ : Store) → (loc : Location) → (pc : ℒ) → 𝕋 × Value → Result Conf
+  setmem μ ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩ pc Tv with pc ⊑? 𝓁₂
+  ... | yes _ = result ⟨ ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩ ↦ Tv ∷ μ , ⟨ V-tt , pc ⟩ ⟩
   ... | no _ = error NSUError
-𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | just (V-ref loc 𝓁₁ 𝓁₂) | just v | nothing =
+𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | just (V-ref loc) | just v | nothing =
   -- error memAccError
   error stuck
 𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | _ | _ = error stuck
@@ -157,8 +157,8 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) μ pc (suc k) with pc ⊑? 𝓁
 𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) μ pc (suc k) | yes _ with nth γ y
 𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) μ pc (suc k) | yes _ | just v =
-  let loc = length μ in
-    result ⟨ loc , pc , 𝓁 ↦ ⟨ T , v ⟩ ∷ μ , ⟨ V-ref loc pc 𝓁 , pc ⟩ ⟩
+  let n = length μ in
+    result ⟨ ⟨ n , ⟨ pc , 𝓁 ⟩ ⟩ ↦ ⟨ T , v ⟩ ∷ μ , ⟨ V-ref ⟨ n , ⟨ pc , 𝓁 ⟩ ⟩ , pc ⟩ ⟩
 𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) μ pc (suc k) | yes _ | nothing = error stuck
 𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) μ pc (suc k) | no _ = error NSUError
 
@@ -166,18 +166,18 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) μ pc (suc k) with nth γ x | nth γ y
 𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) μ pc (suc k) | just (V-label 𝓁) | just v with pc ⊑? 𝓁
 𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) μ pc (suc k) | just (V-label 𝓁) | just v | yes _ =
-  let loc = length μ in
-    result ⟨ loc , pc , 𝓁 ↦ ⟨ T , v ⟩ ∷ μ , ⟨ V-ref loc pc 𝓁 , pc ⟩ ⟩
+  let n = length μ in
+    result ⟨ ⟨ n , ⟨ pc , 𝓁 ⟩ ⟩ ↦ ⟨ T , v ⟩ ∷ μ , ⟨ V-ref ⟨ n , ⟨ pc , 𝓁 ⟩ ⟩ , pc ⟩ ⟩
 𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) μ pc (suc k) | just (V-label 𝓁) | just v | no _ =
   error NSUError
 𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) μ pc (suc k) | _ | _ = error stuck
 
 𝒱 γ (eq-ref `x `y) (⊢eq-ref {x = x} {y} _ _ _ _) μ pc (suc k) with nth γ x | nth γ y
-... | just (V-ref loc 𝓁₁ 𝓁₂) | just (V-ref loc′ 𝓁₁′ 𝓁₂′) =
-  result ⟨ μ , ⟨ =?-ref loc loc′ 𝓁₁ 𝓁₁′ 𝓁₂ 𝓁₂′ , pc ⟩ ⟩
+... | just (V-ref loc) | just (V-ref loc′) =
+  result ⟨ μ , ⟨ =?-ref loc loc′ , pc ⟩ ⟩
   where
-  =?-ref : (loc loc′ : ℕ) → (𝓁₁ 𝓁₁′ 𝓁₂ 𝓁₂′ : ℒ) → Value
-  =?-ref loc loc′ 𝓁₁ 𝓁₁′ 𝓁₂ 𝓁₂′ with loc ≟ₙ loc′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
+  =?-ref : (loc loc′ : Location) → Value
+  =?-ref ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩ ⟨ n′ , ⟨ 𝓁₁′ , 𝓁₂′ ⟩ ⟩ with n ≟ₙ n′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
   ... | yes _ | yes _ | yes _ = V-true
   ... | _     | _     | _     = V-false
 ... | _ | _ = error stuck
@@ -192,7 +192,7 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 γ (ƛ N) (⊢ƛ ⊢N) μ pc (suc k) = result ⟨ μ , ⟨ V-clos < N , γ , ⊢N > , pc ⟩ ⟩
 
 𝒱 γ (ref-label `x) (⊢ref-label {x = x} _) μ pc (suc k) with nth γ x
-... | just (V-ref loc 𝓁₁ 𝓁₂) = result ⟨ μ , ⟨ V-label 𝓁₂ , pc ⟩ ⟩ -- return 𝓁₂ since 𝓁₁ is the saved pc
+... | just (V-ref ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩) = result ⟨ μ , ⟨ V-label 𝓁₂ , pc ⟩ ⟩ -- return 𝓁₂ since 𝓁₁ is the saved pc
 ... | _ = error stuck
 
 𝒱 γ (lab-label `x) (⊢lab-label {x = x} _) μ pc (suc k) with nth γ x

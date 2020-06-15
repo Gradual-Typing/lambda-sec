@@ -2,10 +2,13 @@ module Value where
 
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_)
+open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
+
 
 open import StaticsLIO
 import Syntax
 open Syntax.OpSig Op sig renaming (ABT to Term)
+
 
 
 mutual
@@ -30,7 +33,7 @@ mutual
             → Value
             → Value
 
-    V-ref : ℕ → ℒ → ℒ → Value
+    V-ref : Location → Value
 
     V-lab : ℒ → Value → Value
 
@@ -85,9 +88,9 @@ data ⊢ᵥ_⦂_ where
       --------------------------------------------------------------------------------------- Proxy
     → ⊢ᵥ V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′ 𝓁̂₁′⊑̂𝓁̂₁ 𝓁̂₂⊑̂𝓁̂₂′ v ⦂ S′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] T′
 
-  ⊢ᵥref : ∀ {T loc 𝓁₁ 𝓁₂}
+  ⊢ᵥref : ∀ {T n 𝓁₁ 𝓁₂}
       ----------------------------------- Ref
-    → ⊢ᵥ V-ref loc 𝓁₁ 𝓁₂ ⦂ Ref (l̂ 𝓁₂) T
+    → ⊢ᵥ V-ref ⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩ ⦂ Ref (l̂ 𝓁₂) T
 
   ⊢ᵥlab : ∀ {T v 𝓁}
     → ⊢ᵥ v ⦂ T

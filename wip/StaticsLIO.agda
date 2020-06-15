@@ -7,6 +7,7 @@ open import Data.Maybe
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; cong; cong₂)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
+open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 
 import Syntax
 
@@ -22,6 +23,9 @@ data ℒ : Set where
 data ℒ̂ : Set where
   ¿ : ℒ̂
   l̂ : ℒ → ℒ̂
+
+-- Store (heap) location index
+Location = ℕ × ℒ × ℒ
 
 -- Examples: low and high.
 𝐿 : ℒ̂
