@@ -1,4 +1,5 @@
 open import Data.Nat using (ℕ; zero; suc)
+open import Data.Nat.Properties renaming (_≟_ to _≟ₙ_)
 open import Data.List using (List; []; _∷_)
 open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe using (Maybe; just; nothing)
@@ -113,7 +114,10 @@ data ⊢ᵣ_⦂_ : Result Conf → 𝕋 → Set where
 
 
 just-≡-inv : ∀ {X : Set} {x y : X} → just x ≡ just y → x ≡ y
-just-≡-inv {X} {x} {y}  refl = refl
+just-≡-inv refl = refl
+
+×-≡-inv : ∀ {X Y : Set} {x₁ x₂ : X} {y₁ y₂ : Y} → ⟨ x₁ , y₁ ⟩ ≡ ⟨ x₂ , y₂ ⟩ → (x₁ ≡ x₂) × (y₁ ≡ y₂)
+×-≡-inv refl = ⟨ refl , refl ⟩
 
 -- Env lookup is safe
 nth-safe : ∀ {Γ μ γ T v x}
@@ -127,6 +131,34 @@ nth-safe {μ = μ} {x = 0} (⊢ₑ∷ ⊢v₀ _) eq₁ eq₂ =
   let v₀≡v = just-≡-inv eq₂ in
     subst₂ (λ □₁ □₂ → μ ⊢ᵥ □₁ ⦂ □₂) v₀≡v T₀≡T ⊢v₀
 nth-safe {x = suc x} (⊢ₑ∷ _ Γμ⊢γ) eq₁ eq₂ = nth-safe Γμ⊢γ eq₁ eq₂
+
+-- Heap lookup is safe
+lookup-safe : ∀ {σ μ loc T v}
+  → σ ⊢ₛ μ
+  → lookup μ loc ≡ just ⟨ T , v ⟩
+  → σ ⊢ᵥ v ⦂ T
+lookup-safe ⊢ₛ∅ ()
+lookup-safe {σ} { ⟨ n₀ , ⟨ 𝓁₁₀ , 𝓁₂₀ ⟩ ⟩ ↦ ⟨ T₀ , v₀ ⟩ ∷ μ′ } {⟨ n , ⟨ 𝓁₁ , 𝓁₂ ⟩ ⟩} {T} {v} (⊢ₛ∷ ⊢v₀ ⊢μ′) eq with n₀ ≟ₙ n | 𝓁₁₀ ≟ 𝓁₁ | 𝓁₂₀ ≟ 𝓁₂
+... | yes _ | yes _ | yes _ =
+  let T₀v₀≡Tv = just-≡-inv eq in
+  let eq′ = ×-≡-inv T₀v₀≡Tv in
+  let T₀≡T = proj₁ eq′ in
+  let v₀≡v = proj₂ eq′ in
+  subst₂ (λ □₁ □₂ → σ ⊢ᵥ □₁ ⦂ □₂) v₀≡v T₀≡T ⊢v₀
+... | yes _ | yes _ | no _  = lookup-safe ⊢μ′ eq
+... | yes _ | no _ | yes _  = lookup-safe ⊢μ′ eq
+... | no _ | yes _ | yes _  = lookup-safe ⊢μ′ eq
+... | yes _ | no _ | no _  = lookup-safe ⊢μ′ eq
+... | no _ | yes _ | no _  = lookup-safe ⊢μ′ eq
+... | no _ | no _ | yes _  = lookup-safe ⊢μ′ eq
+... | no _ | no _ | no _ = lookup-safe ⊢μ′ eq
+
+-- If Σ ⊢ μ , ∀ loc ∈ Location , Σ ⊢ μ( loc ) ⦂ Σ( loc )
+lookup-safe-corollary : ∀ {μ loc T v}
+  → μ ⊢ₛ μ
+  → lookup μ loc ≡ just ⟨ T , v ⟩
+  → μ ⊢ᵥ v ⦂ T
+lookup-safe-corollary {μ} ⊢μ eq = lookup-safe ⊢μ eq
 
 𝒱-safe : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ pc₀ k}
   → μ ⊢ₛ μ
