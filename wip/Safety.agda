@@ -10,13 +10,13 @@ open import StaticsLIO
 open import Store
 open import Interp
 
-infix 4 _⊢ₑ_
+infix 4 _∣_⊢ₑ_
 infix 4 _⊢ᵥ_⦂_
 infix 4 _⊢ₛ_
 
 
 -- Well-typed environment γ under context Γ
-data _⊢ₑ_ : Context → Env → Set
+data _∣_⊢ₑ_ : Context → Store → Env → Set
 -- Well-typed value under store μ
 --   NOTE: Since μ contains type information, it doubles as store typing context Σ here.
 data _⊢ᵥ_⦂_ : Store → Value → 𝕋 → Set
@@ -24,15 +24,17 @@ data _⊢ᵥ_⦂_ : Store → Value → 𝕋 → Set
 data _⊢ₛ_ : Store → Store → Set
 
 
-data _⊢ₑ_ where
+data _∣_⊢ₑ_ where
 
-  ⊢ₑ∅ : [] ⊢ₑ []
+  ⊢ₑ∅ : ∀ {μ}
+      -------------
+    → [] ∣ μ ⊢ₑ []
 
   ⊢ₑ∷ : ∀ {Γ μ γ v T}
     → μ ⊢ᵥ v ⦂ T
-    → Γ ⊢ₑ γ
+    → Γ ∣ μ ⊢ₑ γ
       --------------
-    → T ∷ Γ ⊢ₑ v ∷ γ
+    → T ∷ Γ ∣ μ ⊢ₑ v ∷ γ
 
 
 data _⊢ᵥ_⦂_ where
@@ -54,7 +56,7 @@ data _⊢ᵥ_⦂_ where
     → μ ⊢ᵥ V-label 𝓁 ⦂ `ℒ
 
   ⊢ᵥclos : ∀ {Δ μ γ T S M 𝓁̂₁ 𝓁̂₂}
-    → Δ ⊢ₑ γ
+    → Δ ∣ μ ⊢ₑ γ
     → (⊢M : T ∷ Δ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ S)
       ---------------------------------------------- Closure
     → μ ⊢ᵥ V-clos < M , γ , ⊢M > ⦂ T [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] S
@@ -113,21 +115,22 @@ data ⊢ᵣ_⦂_ : Result Conf → 𝕋 → Set where
 just-≡-inv : ∀ {X : Set} {x y : X} → just x ≡ just y → x ≡ y
 just-≡-inv {X} {x} {y}  refl = refl
 
--- Lookup is safe
--- lookup-safe : ∀ {Γ γ T v x}
---   → Γ ⊢ₑ γ
---   → nth Γ x ≡ just T
---   → nth γ x ≡ just v
---     ------------------
---   → ⊢ᵥ v ⦂ T
--- lookup-safe {T = T} {v} {0} (⊢ₑ∷ {v = v₀} {T₀} ⊢v₀ Γ⊢γ) eq₁ eq₂ =
---   let T₀≡T = just-≡-inv eq₁ in
---   let v₀≡v = just-≡-inv eq₂ in subst₂ (λ □₁ □₂ → ⊢ᵥ □₁ ⦂ □₂) v₀≡v T₀≡T ⊢v₀
--- lookup-safe {T = T} {v} {suc x} (⊢ₑ∷ {v = v₀} {T₀} ⊢v₀ Γ⊢γ) eq₁ eq₂ = lookup-safe Γ⊢γ eq₁ eq₂
+-- Env lookup is safe
+nth-safe : ∀ {Γ μ γ T v x}
+  → Γ ∣ μ ⊢ₑ γ
+  → nth Γ x ≡ just T
+  → nth γ x ≡ just v
+    ------------------
+  → μ ⊢ᵥ v ⦂ T
+nth-safe {μ = μ} {x = 0} (⊢ₑ∷ ⊢v₀ _) eq₁ eq₂ =
+  let T₀≡T = just-≡-inv eq₁ in
+  let v₀≡v = just-≡-inv eq₂ in
+    subst₂ (λ □₁ □₂ → μ ⊢ᵥ □₁ ⦂ □₂) v₀≡v T₀≡T ⊢v₀
+nth-safe {x = suc x} (⊢ₑ∷ _ Γμ⊢γ) eq₁ eq₂ = nth-safe Γμ⊢γ eq₁ eq₂
 
 𝒱-safe : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ pc₀ k}
-  → Γ ⊢ₑ γ
   → μ ⊢ₛ μ
+  → Γ ∣ μ ⊢ₑ γ
   → (⊢M : Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
     ----------------------------
   → ⊢ᵣ 𝒱 γ M ⊢M μ pc₀ k ⦂ T
