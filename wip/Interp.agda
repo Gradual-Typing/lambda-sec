@@ -14,8 +14,7 @@ import Syntax
 open Syntax.OpSig Op sig
   using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)
   renaming (ABT to Term)
-open import Memory
-open import Value
+open import Store
 open import Lemmas
 
 

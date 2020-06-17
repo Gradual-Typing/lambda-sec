@@ -1,23 +1,56 @@
-module Memory where
+module Store where
 
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Nat.Properties renaming (_≟_ to _≟ₙ_)
-open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.List using (List; []; _∷_)
+open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
+
+
 open import StaticsLIO
-open import Value
+import Syntax
+open Syntax.OpSig Op sig renaming (ABT to Term)
+
+
+
+mutual
+  -- A closure is a term with an env
+  data Clos : Set where
+    <_,_,_> : ∀ {Δ T S 𝓁̂₁ 𝓁̂₂} → (M : Term) → Env → T ∷ Δ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ S → Clos
+
+  data Value : Set where
+    V-tt : Value
+
+    V-true : Value
+    V-false : Value
+
+    V-label : ℒ → Value
+
+    V-clos : Clos → Value
+
+    {- V-proxy casts from (S ⇒ T) to (S′ ⇒ T′) , (𝓁̂₁ 𝓁̂₂) to (𝓁̂₁′ 𝓁̂₂′) -}
+    V-proxy : (S T S′ T′  : 𝕋) → (𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ : ℒ̂)
+            → S′ ≲ S → T ≲ T′
+            → 𝓁̂₁′ ⊑̂ 𝓁̂₁ → 𝓁̂₂ ⊑̂ 𝓁̂₂′
+            → Value
+            → Value
+
+    V-ref : Location → Value
+
+    V-lab : ℒ → Value → Value
+
+  Env : Set
+  Env = List Value
 
 
 data Cell (X : Set) : Set where
   _↦_ : Location → X → Cell X
 
 Store = List (Cell (𝕋 × Value))
-StoreTyping = List (Cell 𝕋)
 
 lookup : ∀ {X} → (μ : List (Cell X)) → Location → Maybe X
 lookup [] _ = nothing
@@ -36,15 +69,4 @@ private
   _ = refl
 
   _ : lookup μ ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ≡ just ⟨ `𝔹 , V-true ⟩
-  _ = refl
-
-  Σ : StoreTyping
-  Σ = ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ↦ `𝔹 ∷
-      ⟨ 0 , ⟨ l 0 , l 1 ⟩ ⟩ ↦ `⊤ ∷
-      ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ↦ `ℒ ∷ []
-
-  _ : lookup Σ ⟨ 0 , ⟨ l 1 , l 1 ⟩ ⟩ ≡ nothing
-  _ = refl
-
-  _ : lookup Σ ⟨ 1 , ⟨ l 2 , l 2 ⟩ ⟩ ≡ just `𝔹
   _ = refl
