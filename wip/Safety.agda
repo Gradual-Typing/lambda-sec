@@ -8,6 +8,10 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; cong; cong₂; subst; subst₂)
 
 open import StaticsLIO
+import Syntax
+open Syntax.OpSig Op sig
+  using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)
+  renaming (ABT to Term)
 open import Store
 open import Interp
 
@@ -160,9 +164,31 @@ lookup-safe-corollary : ∀ {μ loc T v}
   → μ ⊢ᵥ v ⦂ T
 lookup-safe-corollary {μ} ⊢μ eq = lookup-safe ⊢μ eq
 
-𝒱-safe : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ pc₀ k}
+⊢γ→∃v : ∀ {Γ μ γ x T}
+  → Γ ∣ μ ⊢ₑ γ
+  → nth Γ x ≡ just T
+  → ∃[ v ] (nth γ x ≡ just v)
+⊢γ→∃v {x = 0} (⊢ₑ∷ {v = v₀} ⊢v₀ ⊢γ) eq = ⟨ v₀ , refl ⟩
+⊢γ→∃v {x = suc x} (⊢ₑ∷ {v = v₀} ⊢v₀ ⊢γ) eq = ⊢γ→∃v ⊢γ eq
+
+⊢γ→⊢v : ∀ {Γ μ γ x T}
+  → (⊢γ : Γ ∣ μ ⊢ₑ γ)
+  → (eq : nth Γ x ≡ just T)
+  → μ ⊢ᵥ proj₁ (⊢γ→∃v ⊢γ eq) ⦂ T
+⊢γ→⊢v {x = 0} (⊢ₑ∷ {v = v₀} ⊢v₀ ⊢γ) eq rewrite sym (just-≡-inv eq) = ⊢v₀
+⊢γ→⊢v {x = suc x} (⊢ₑ∷ {v = v₀} ⊢v₀ ⊢γ) eq = ⊢γ→⊢v ⊢γ eq
+
+𝒱-safe : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ pc₀}
+  → (k : ℕ)
   → μ ⊢ₛ μ
   → Γ ∣ μ ⊢ₑ γ
   → (⊢M : Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
     ----------------------------
   → ⊢ᵣ 𝒱 γ M ⊢M μ pc₀ k ⦂ T
+𝒱-safe 0 _ _ _ = ⊢ᵣtimeout
+𝒱-safe (suc k) ⊢μ ⊢γ ⊢tt = ⊢ᵣresult ⊢μ ⊢ᵥtt
+𝒱-safe (suc k) ⊢μ ⊢γ ⊢true = ⊢ᵣresult ⊢μ ⊢ᵥtrue
+𝒱-safe (suc k) ⊢μ ⊢γ ⊢false = ⊢ᵣresult ⊢μ ⊢ᵥfalse
+𝒱-safe (suc k) ⊢μ ⊢γ ⊢label = ⊢ᵣresult ⊢μ ⊢ᵥlabel
+𝒱-safe {γ = γ} {M = (` x)} (suc k) ⊢μ ⊢γ (⊢` eq) rewrite proj₂ (⊢γ→∃v ⊢γ eq) =
+  ⊢ᵣresult ⊢μ (⊢γ→⊢v ⊢γ eq)
