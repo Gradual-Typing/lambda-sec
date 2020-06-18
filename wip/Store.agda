@@ -9,13 +9,14 @@ open import Relation.Nullary using (Dec; yes; no; ¬_)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
-
-
 open import StaticsLIO
 import Syntax
 open Syntax.OpSig Op sig renaming (ABT to Term)
 
 
+
+-- Store (heap) location index
+Location = ℕ × ℒ × ℒ
 
 mutual
   -- A closure is a term with an env

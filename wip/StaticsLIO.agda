@@ -24,8 +24,6 @@ data ℒ̂ : Set where
   ¿ : ℒ̂
   l̂ : ℒ → ℒ̂
 
--- Store (heap) location index
-Location = ℕ × ℒ × ℒ
 
 -- Examples: low and high.
 𝐿 : ℒ̂
