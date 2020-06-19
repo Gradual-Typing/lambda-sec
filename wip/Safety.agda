@@ -3,10 +3,12 @@ open import Data.Nat.Properties renaming (_≟_ to _≟ₙ_)
 open import Data.List using (List; []; _∷_)
 open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe using (Maybe; just; nothing)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; sym; cong; cong₂; subst; subst₂)
+open Eq using (_≡_; _≢_; refl; sym; cong; cong₂; subst; subst₂; trans)
 
+open import Lemmas
 open import StaticsLIO
 import Syntax
 open Syntax.OpSig Op sig
@@ -178,6 +180,49 @@ lookup-safe-corollary {μ} ⊢μ eq = lookup-safe ⊢μ eq
   → μ ⊢ᵥ proj₁ (⊢γ→∃v ⊢γ eq) ⦂ T
 ⊢γ→⊢v {x = 0} (⊢ₑ∷ {v = v₀} ⊢v₀ ⊢γ) eq rewrite sym (just-≡-inv eq) = ⊢v₀
 ⊢γ→⊢v {x = suc x} (⊢ₑ∷ {v = v₀} ⊢v₀ ⊢γ) eq = ⊢γ→⊢v ⊢γ eq
+
+data _∉domₙ_ : ℕ → Store → Set where
+
+  ∉domₙ∅ : ∀ {n} → n ∉domₙ []
+
+  ∉domₙ∷ : ∀ {μ n n₀ 𝓁₁₀ 𝓁₂₀ T₀ v₀}
+    → n₀ ≢ n
+    → n ∉domₙ μ
+    → n ∉domₙ (⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ T₀ , v₀ ⟩ ∷ μ)
+
+∉→lookup≡nothing : ∀ {μ n 𝓁₁ 𝓁₂}
+  → n ∉domₙ μ
+  → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ nothing
+∉→lookup≡nothing {[]} ∉domₙ∅ = refl
+∉→lookup≡nothing {⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ v₀ , T₀ ⟩ ∷ μ} {n} (∉domₙ∷ n₀≢n n∉domμ) with n₀ ≟ₙ n
+... | yes n₀≡n = ⊥-elim (n₀≢n n₀≡n)
+... | no _ = ∉→lookup≡nothing n∉domμ
+
+lookup-≢ : ∀ {μ : Store} {n n′ 𝓁₁ 𝓁₂ T v}
+  → lookup μ ⟨ n  , 𝓁₁ , 𝓁₂ ⟩ ≡ nothing
+  → lookup μ ⟨ n′ , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
+  → n ≢ n′
+lookup-≢ {⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ T₀ , v₀ ⟩ ∷ μ} {n} {n′} {𝓁₁} {𝓁₂} {T} {v} lookup-n-nothing lookup-n′-something n≡n′ =
+  let lookup-n-something = lookup-same {⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ T₀ , v₀ ⟩ ∷ μ} lookup-n′-something (sym n≡n′) in
+  let nothing≡just = trans (sym lookup-n-nothing) lookup-n-something in
+  nothing≢just nothing≡just
+  where
+  lookup-same : ∀ {μ}
+    → lookup μ ⟨ n′ , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
+    → n′ ≡ n
+    → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
+  lookup-same eq₁ eq₂ rewrite sym eq₂ = eq₁
+
+ext-new-lookup-same : ∀ {μ n n₀ 𝓁₁ 𝓁₁₀ 𝓁₂ 𝓁₂₀ T T₀ v v₀}
+  → n₀ ∉domₙ μ
+  → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
+  → lookup (⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ T₀ , v₀ ⟩ ∷ μ) ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
+ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀} {T} {T₀} {v} {v₀} n₀∉domμ lookup-n-something with n₀ ≟ₙ n
+... | yes n₀≡n =
+  let lookup-n₀-nothing = ∉→lookup≡nothing {𝓁₁ = 𝓁₁} {𝓁₂} n₀∉domμ in
+  let n₀≢n = lookup-≢ {μ} {n₀} {n} {𝓁₁} {𝓁₂} {T} {v} lookup-n₀-nothing lookup-n-something in
+  ⊥-elim (n₀≢n n₀≡n)
+... | no n₀≢n = lookup-n-something
 
 𝒱-safe : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ pc₀}
   → (k : ℕ)

@@ -1,9 +1,10 @@
 module Lemmas where
 
+open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Nat using (ℕ; zero; suc; _≤_) renaming (_⊔_ to _⊔ₙ_; _⊓_ to _⊓ₙ_; _≟_ to _≟ₙ_)
 open import Data.Nat.Properties using (≤-refl; ≤-trans; m≤m⊔n) renaming (⊔-comm to ⊔ₙ-comm)
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; sym; cong; cong₂)
+open Eq using (_≡_; _≢_; refl; sym; cong; cong₂)
 
 open import StaticsLIO
 
@@ -36,3 +37,6 @@ open import StaticsLIO
 
 𝓁̂⊑̂𝓁̂′⊔̂𝓁̂ : ∀ {𝓁̂ 𝓁̂′} → 𝓁̂ ⊑̂ (𝓁̂′ ⊔̂ 𝓁̂)
 𝓁̂⊑̂𝓁̂′⊔̂𝓁̂ {𝓁̂} {𝓁̂′} rewrite ⊔̂-comm {𝓁̂′} {𝓁̂} = 𝓁̂⊑̂𝓁̂⊔̂𝓁̂′
+
+nothing≢just : ∀ {X : Set} {x : X} → nothing ≢ just x
+nothing≢just = λ ()
