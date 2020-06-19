@@ -11,6 +11,10 @@ open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_�
 
 import Syntax
 
+
+
+pattern ⟨_,_,_⟩ x y z = ⟨ x , ⟨ y , z ⟩ ⟩
+
 infixr 6 _[_]⇒[_]_
 infixl 7 _·_
 infixl 8 _`⊔_  -- join
