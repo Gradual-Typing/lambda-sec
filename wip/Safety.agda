@@ -125,6 +125,11 @@ just-≡-inv refl = refl
 ×-≡-inv : ∀ {X Y : Set} {x₁ x₂ : X} {y₁ y₂ : Y} → ⟨ x₁ , y₁ ⟩ ≡ ⟨ x₂ , y₂ ⟩ → (x₁ ≡ x₂) × (y₁ ≡ y₂)
 ×-≡-inv refl = ⟨ refl , refl ⟩
 
+result-≡-inv : ∀ {conf₁ conf₂ : Conf}
+  → result conf₁ ≡ result conf₂
+  → conf₁ ≡ conf₂
+result-≡-inv refl = refl
+
 -- Env lookup is safe
 nth-safe : ∀ {Γ μ γ T v x}
   → Γ ∣ μ ⊢ₑ γ
@@ -230,6 +235,27 @@ castL→⊢ᵣ : ∀ {μ pc 𝓁̂₁ 𝓁̂₂ 𝓁̂₁⊑̂𝓁̂₂}
 castL→⊢ᵣ {μ} {pc} {𝓁̂₁} {𝓁̂₂} ⊢μ with (l̂ pc) ⊑̂? 𝓁̂₂
 ... | yes _ = ⊢ᵣresult ⊢μ ⊢ᵥtt
 ... | no  _ = ⊢ᵣcast-error
+
+error≢result : ∀ (err : Error) → (conf : Conf) → error err ≢ result conf
+error≢result err rs ()
+
+castL→μ′≡μ : ∀ {μ μ′ pc pc′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁⊑̂𝓁̂₂}
+  → castL μ pc 𝓁̂₁ 𝓁̂₂ 𝓁̂₁⊑̂𝓁̂₂ ≡ result ⟨ μ′ , V-tt , pc′ ⟩
+  → μ ≡ μ′
+castL→μ′≡μ {μ} {μ′} {pc} {pc′} {𝓁̂₁} {𝓁̂₂} eq with (l̂ pc) ⊑̂? 𝓁̂₂
+... | yes _ =
+  let conf≡conf′ = result-≡-inv eq in
+  let μ≡μ′ = proj₁ (×-≡-inv conf≡conf′) in
+    μ≡μ′
+... | no  _ =
+  let err≢rs = error≢result castError ⟨ μ′ , V-tt , pc′ ⟩ in
+    ⊥-elim (err≢rs eq)
+
+castT′→⊢ᵣ : ∀ {μ pc T₁ T₂ T₁≲T₂ v}
+  → μ ⊢ₛ μ
+  → μ ⊢ᵥ v ⦂ T₁
+  → ⊢ᵣ castT′ μ pc T₁ T₂ T₁≲T₂ v ⦂ T₂
+
 
 𝒱-safe : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ}
   → (k : ℕ)
