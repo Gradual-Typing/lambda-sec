@@ -254,11 +254,12 @@ castL→⊢ᵣ {μ} {pc} {𝓁̂₁} {𝓁̂₂} ⊢μ with (l̂ pc) ⊑̂? 𝓁
 --   : Goes to the M branch
 𝒱-safe {γ = γ} {M = if `x M N} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true
   with 𝒱 γ M ⊢M μ pc₀ k | 𝒱-safe k pc₀ ⊢μ fresh ⊢γ ⊢M  -- Case split on the evaluation of M
-𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ = ?
---   with castL μ′ pc′ 𝓁̂₂ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂⊑̂𝓁̂⊔̂𝓁̂′ | castL→⊢ᵣ {μ′} {pc′} {𝓁̂₂} {𝓁̂₂ ⊔̂ 𝓁̂₂′} {𝓁̂⊑̂𝓁̂⊔̂𝓁̂′} ⊢μ′
--- 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ _ = {!!}
--- 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ ∣ error castError | ⊢ᵣcast-error = ?
-
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ
+  with castL μ′ pc′ 𝓁̂₂ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂⊑̂𝓁̂⊔̂𝓁̂′ | castL→⊢ᵣ {μ′} {pc′} {𝓁̂₂} {𝓁̂₂ ⊔̂ 𝓁̂₂′} {𝓁̂⊑̂𝓁̂⊔̂𝓁̂′} ⊢μ′
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {T = T} {T′} {T″} {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N T⋎T′≡T″) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ _ = {!!}
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
