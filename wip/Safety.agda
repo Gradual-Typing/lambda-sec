@@ -236,20 +236,11 @@ castL→⊢ᵣ {μ} {pc} {𝓁̂₁} {𝓁̂₂} ⊢μ with (l̂ pc) ⊑̂? 𝓁
 ... | yes _ = ⊢ᵣresult ⊢μ ⊢ᵥtt
 ... | no  _ = ⊢ᵣcast-error
 
-error≢result : ∀ (err : Error) → (conf : Conf) → error err ≢ result conf
-error≢result err rs ()
-
-castL→μ′≡μ : ∀ {μ μ′ pc pc′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁⊑̂𝓁̂₂}
-  → castL μ pc 𝓁̂₁ 𝓁̂₂ 𝓁̂₁⊑̂𝓁̂₂ ≡ result ⟨ μ′ , V-tt , pc′ ⟩
-  → μ ≡ μ′
-castL→μ′≡μ {μ} {μ′} {pc} {pc′} {𝓁̂₁} {𝓁̂₂} eq with (l̂ pc) ⊑̂? 𝓁̂₂
-... | yes _ =
-  let conf≡conf′ = result-≡-inv eq in
-  let μ≡μ′ = proj₁ (×-≡-inv conf≡conf′) in
-    μ≡μ′
-... | no  _ =
-  let err≢rs = error≢result castError ⟨ μ′ , V-tt , pc′ ⟩ in
-    ⊥-elim (err≢rs eq)
+castL-dec : ∀ {μ pc 𝓁̂₁ 𝓁̂₂ 𝓁̂₁⊑̂𝓁̂₂}
+  → Dec (castL μ pc 𝓁̂₁ 𝓁̂₂ 𝓁̂₁⊑̂𝓁̂₂ ≡ result ⟨ μ , V-tt , pc ⟩)
+castL-dec {μ} {pc} {𝓁̂₁} {𝓁̂₂} with (l̂ pc) ⊑̂? 𝓁̂₂
+... | yes _ = yes refl
+... | no  _ = no λ ()
 
 castT′→⊢ᵣ : ∀ {μ pc T₁ T₂ T₁≲T₂ v}
   → μ ⊢ₛ μ
@@ -281,11 +272,14 @@ castT′→⊢ᵣ : ∀ {μ pc T₁ T₂ T₁≲T₂ v}
 𝒱-safe {γ = γ} {M = if `x M N} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true
   with 𝒱 γ M ⊢M μ pc₀ k | 𝒱-safe k pc₀ ⊢μ fresh ⊢γ ⊢M  -- Case split on the evaluation of M
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ
-  with castL μ′ pc′ 𝓁̂₂ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂⊑̂𝓁̂⊔̂𝓁̂′ | castL→⊢ᵣ {μ′} {pc′} {𝓁̂₂} {𝓁̂₂ ⊔̂ 𝓁̂₂′} {𝓁̂⊑̂𝓁̂⊔̂𝓁̂′} ⊢μ′
-𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {T = T} {T′} {T″} {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N T⋎T′≡T″) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ _ = {!!}
-𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
-𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
-𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+  with castL μ′ pc′ 𝓁̂₂ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂⊑̂𝓁̂⊔̂𝓁̂′ | castL→⊢ᵣ {μ′} {pc′} {𝓁̂₂} {𝓁̂₂ ⊔̂ 𝓁̂₂′} {𝓁̂⊑̂𝓁̂⊔̂𝓁̂′} ⊢μ′ | castL-dec {μ′} {pc′} {𝓁̂₂} {𝓁̂₂ ⊔̂ 𝓁̂₂′} {𝓁̂⊑̂𝓁̂⊔̂𝓁̂′}
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {T = T} {T′} {T″} {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N T⋎T′≡T″) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | result ⟨ μ″ , V-tt , pc″ ⟩ | ⊢ᵣresult ⊢μ″ _ | yes eq₁ =
+  let μ″≡μ′ = proj₁ (×-≡-inv (result-≡-inv eq₁)) in
+  let μ″⊢vₘ = subst (λ □ → □ ⊢ᵥ vₘ ⦂ T) (sym μ″≡μ′) ⊢vₘ in
+    {!!}
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | timeout | ⊢ᵣtimeout | _ = ⊢ᵣtimeout
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | error castError | ⊢ᵣcast-error | _ = ⊢ᵣcast-error
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ | error NSUError | ⊢ᵣnsu-error | _ = ⊢ᵣnsu-error
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
