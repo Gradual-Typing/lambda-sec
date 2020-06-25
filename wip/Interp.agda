@@ -43,9 +43,9 @@ result x >>= f = f x
 
 
 -- Cast 𝓁̂₁ ⇛ 𝓁̂₂
---   This can only happen where 𝓁̂₁ ⊑̂ 𝓁̂₂
-castL : (μ : Store) → (pc : ℒ) → (𝓁̂₁ 𝓁̂₂ : ℒ̂) → 𝓁̂₁ ⊑̂ 𝓁̂₂ → Result Conf
-castL μ pc 𝓁̂₁ 𝓁̂₂ 𝓁̂₁⊑̂𝓁̂₂ with (l̂ pc) ⊑̂? 𝓁̂₂
+--   This can only happen where 𝓁̂₁ ≾ 𝓁̂₂
+castL : (μ : Store) → (pc : ℒ) → (𝓁̂₁ 𝓁̂₂ : ℒ̂) → 𝓁̂₁ ≾ 𝓁̂₂ → Result Conf
+castL μ pc 𝓁̂₁ 𝓁̂₂ 𝓁̂₁≾𝓁̂₂ with (l̂ pc) ≾? 𝓁̂₂
 ... | yes _ = result ⟨ μ , V-tt , pc ⟩
 ... | no  _ = error castError
 
@@ -70,7 +70,7 @@ castT′ μ pc (Ref 𝓁̂₁ T₁′) (Ref 𝓁̂₂ T₂′) (≲-Ref _ _ _ _)
 ...   | yes _ = result ⟨ μ , V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ , pc ⟩
 castT′ μ pc (Ref 𝓁₁ T₁′) (Ref 𝓁₂ T₂′) (≲-Ref _ _ _ _) _ = error stuck
 -- Labeled ⇛ Labeled
-castT′ μ pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (≲-Lab _ T₁′≲T₂′) (V-lab 𝓁 v) with (l̂ 𝓁) ⊑̂? 𝓁̂₂
+castT′ μ pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (≲-Lab _ T₁′≲T₂′) (V-lab 𝓁 v) with (l̂ 𝓁) ≾? 𝓁̂₂
 ... | no _ = error castError
 ... | yes _ =
   do
@@ -79,17 +79,17 @@ castT′ μ pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (≲-Lab _ T₁�
 castT′ μ pc (Lab 𝓁̂₁ T₁′) (Lab 𝓁̂₂ T₂′) (≲-Lab _ _) _ = error stuck
 -- Closure ⇛ Proxied closure
 --   NOTE: We need to build proxy here.
-castT′ μ pc (S [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] T) (S′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] T′) (≲-⇒ 𝓁̂₁′⊑̂𝓁̂₁ 𝓁̂₂⊑̂𝓁̂₂′ S′≲S T≲T′) v with v
+castT′ μ pc (S [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] T) (S′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] T′) (≲-⇒ 𝓁̂₁′≾𝓁̂₁ 𝓁̂₂≾𝓁̂₂′ S′≲S T≲T′) v with v
 ... | (V-clos _) =
-      result ⟨ μ , V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′  𝓁̂₁′⊑̂𝓁̂₁ 𝓁̂₂⊑̂𝓁̂₂′ v , pc ⟩
+      result ⟨ μ , V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′  𝓁̂₁′≾𝓁̂₁ 𝓁̂₂≾𝓁̂₂′ v , pc ⟩
 ... | (V-proxy _ _ _ _ _ _ _ _ _ _ _ _ _) =
-      result ⟨ μ , V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′ 𝓁̂₁′⊑̂𝓁̂₁ 𝓁̂₂⊑̂𝓁̂₂′  v , pc ⟩
+      result ⟨ μ , V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′ 𝓁̂₁′≾𝓁̂₁ 𝓁̂₂≾𝓁̂₂′  v , pc ⟩
 ... | _ = error stuck
 
 -- Tests:
 
 --   Get stuck when casting a bool value to a reference
-_ : castT′ [] (l 0) (Ref ¿ `𝔹) (Ref ¿ `𝔹) (≲-Ref ⊑̂-¿-r ⊑̂-¿-r ≲-𝔹 ≲-𝔹) V-true ≡ error stuck
+_ : castT′ [] (l 0) (Ref ¿ `𝔹) (Ref ¿ `𝔹) (≲-Ref ≾-¿-r ≾-¿-r ≲-𝔹 ≲-𝔹) V-true ≡ error stuck
 _ = refl
 
 castT : (μ : Store) → (pc : ℒ) → (T₁ T₂ : 𝕋) → (v : Value) → Result Conf
@@ -118,12 +118,12 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 --   : goes to the M branch
 ... | just V-true = do
   ⟨ μ′ , vₘ , pc′ ⟩ ← 𝒱 γ M ⊢M μ pc k
-  ⟨ μ″ , _  , pc″ ⟩ ← castL μ′ pc′ 𝓁̂₂ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂⊑̂𝓁̂⊔̂𝓁̂′
+  ⟨ μ″ , _  , pc″ ⟩ ← castL μ′ pc′ 𝓁̂₂ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂≾𝓁̂⊔̂𝓁̂′
   castT μ″ pc″ T T″ vₘ  -- cast T ⇛ T″ , where T ⋎ T′ ≡ T″
 --   : goes to the N branch
 ... | just V-false = do
   ⟨ μ′ , vₙ , pc′ ⟩ ← 𝒱 γ N ⊢N μ pc k
-  ⟨ μ″ , _  , pc″ ⟩ ← castL μ′ pc′ 𝓁̂₂′ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂⊑̂𝓁̂′⊔̂𝓁̂
+  ⟨ μ″ , _  , pc″ ⟩ ← castL μ′ pc′ 𝓁̂₂′ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂≾𝓁̂′⊔̂𝓁̂
   castT μ″ pc″ T′ T″ vₙ -- cast T′ ⇛ T″ , where T ⋎ T′ ≡ T″
 ... | _ = error stuck
 
@@ -145,7 +145,7 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
   setmem μ″ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ pc″ ⟨ T″ , v″ ⟩
   where
   setmem : (μ : Store) → (loc : Location) → (pc : ℒ) → 𝕋 × Value → Result Conf
-  setmem μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ pc Tv with pc ⊑? 𝓁₂
+  setmem μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ pc Tv with pc ≼? 𝓁₂
   ... | yes _ = result ⟨ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ Tv ∷ μ , V-tt , pc ⟩
   ... | no _ = error NSUError
 𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | just (V-ref loc) | just v | nothing =
@@ -153,7 +153,7 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
   error stuck
 𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | _ | _ = error stuck
 
-𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) μ pc (suc k) with pc ⊑? 𝓁
+𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) μ pc (suc k) with pc ≼? 𝓁
 𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) μ pc (suc k) | yes _ with nth γ y
 𝒱 γ (new 𝓁 `y) (⊢new {y = y} {T} eq _) μ pc (suc k) | yes _ | just v =
   let n = length μ in
@@ -163,7 +163,7 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 
 -- `new-dyn` is similar to `new` except that 𝓁 comes into play at runtime (instead of from typing derivation).
 𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) μ pc (suc k) with nth γ x | nth γ y
-𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) μ pc (suc k) | just (V-label 𝓁) | just v with pc ⊑? 𝓁
+𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) μ pc (suc k) | just (V-label 𝓁) | just v with pc ≼? 𝓁
 𝒱 γ (new-dyn `x `y) (⊢new-dyn {x = x} {y} {T} _ _) μ pc (suc k) | just (V-label 𝓁) | just v | yes _ =
   let n = length μ in
     result ⟨ ⟨ n , pc , 𝓁 ⟩ ↦ ⟨ T , v ⟩ ∷ μ , V-ref ⟨ n , pc , 𝓁 ⟩ , pc ⟩
@@ -208,20 +208,20 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 ... | just (V-label 𝓁x) | just (V-label 𝓁y) = result ⟨ μ , V-label (𝓁x ⊓ 𝓁y) , pc ⟩
 ... | _ | _ = error stuck
 
-𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y} _ _) μ pc (suc k) with nth γ x | nth γ y
-𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y} _ _) μ pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) with 𝓁x ⊑? 𝓁y
-𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y} _ _) μ pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) | yes _ =
+𝒱 γ (`x `≼ `y) (⊢≼ {x = x} {y} _ _) μ pc (suc k) with nth γ x | nth γ y
+𝒱 γ (`x `≼ `y) (⊢≼ {x = x} {y} _ _) μ pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) with 𝓁x ≼? 𝓁y
+𝒱 γ (`x `≼ `y) (⊢≼ {x = x} {y} _ _) μ pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) | yes _ =
   result ⟨ μ , V-true , pc ⟩
-𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y} _ _) μ pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) | no  _ =
+𝒱 γ (`x `≼ `y) (⊢≼ {x = x} {y} _ _) μ pc (suc k) | just (V-label 𝓁x) | just (V-label 𝓁y) | no  _ =
   result ⟨ μ , V-false , pc ⟩
-𝒱 γ (`x `⊑ `y) (⊢⊑ {x = x} {y} _ _) μ pc (suc k) | _ | _ = error stuck
+𝒱 γ (`x `≼ `y) (⊢≼ {x = x} {y} _ _) μ pc (suc k) | _ | _ = error stuck
 
 𝒱 γ (unlabel `x) (⊢unlabel {x = x} _) μ pc (suc k) with nth γ x
 ... | just (V-lab 𝓁 v) = result ⟨ μ , v , pc ⊔ 𝓁 ⟩ -- need to update pc
 ... | _ = error stuck
 
 𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) μ pc (suc k) with 𝒱 γ M ⊢M μ pc k
-𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) μ pc (suc k) | result ⟨ μ′ , v , pc′ ⟩ with pc′ ⊑? (pc ⊔ 𝓁)
+𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) μ pc (suc k) | result ⟨ μ′ , v , pc′ ⟩ with pc′ ≼? (pc ⊔ 𝓁)
 𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) μ pc (suc k) | result ⟨ μ′ , v , pc′ ⟩ | yes _ =
   result ⟨ μ′ , V-lab 𝓁 v , pc ⟩
 𝒱 γ (to-label 𝓁 M) (⊢to-label ⊢M _) μ pc (suc k) | result ⟨ μ′ , v , pc′ ⟩ | no  _ =
@@ -232,7 +232,7 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 -- Similar to `to-label` except that 𝓁 comes into play at runtime
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) μ pc (suc k) with nth γ x
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) μ pc (suc k) | just (V-label 𝓁) with 𝒱 γ M ⊢M μ pc k
-𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) μ pc (suc k) | just (V-label 𝓁) | result ⟨ μ′ , v , pc′ ⟩ with pc′ ⊑? (pc ⊔ 𝓁)
+𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) μ pc (suc k) | just (V-label 𝓁) | result ⟨ μ′ , v , pc′ ⟩ with pc′ ≼? (pc ⊔ 𝓁)
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) μ pc (suc k) | just (V-label 𝓁) | result ⟨ μ′ , v , pc′ ⟩ | yes _ =
   result ⟨ μ′ , V-lab 𝓁 v , pc ⟩
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) μ pc (suc k) | just (V-label 𝓁) | result ⟨ μ′ , v , pc′ ⟩ | no  _ =
@@ -242,19 +242,19 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 γ (to-label-dyn `x M) (⊢to-label-dyn {x = x} _ ⊢M) μ pc (suc k) | _ = error stuck
 
 -- Application
-𝒱 γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} _ _ _ 𝓁̂₁′⊑̂𝓁̂₁) μ pc (suc k)
+𝒱 γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} _ _ _ 𝓁̂₁′≾𝓁̂₁) μ pc (suc k)
     with nth γ x | nth γ y
 ... | just v | just w = do
     ⟨ μ′ , v′ , pc′ ⟩ ← castT μ pc T′ T w            -- cast T′ ⇛ T
-    ⟨ μ″ , _  , pc″ ⟩ ← castL μ′ pc′ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′⊑̂𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
+    ⟨ μ″ , _  , pc″ ⟩ ← castL μ′ pc′ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′≾𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
     apply γ v w μ pc k
 ... | _ | _ = error stuck
 
 apply γ (V-clos < N , ρ , ⊢N >) w μ pc k = 𝒱 (w ∷ ρ) N ⊢N μ pc k
-apply γ (V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′ 𝓁̂₁′⊑̂𝓁̂₁ 𝓁̂₂⊑̂𝓁̂₂′ v) w μ pc k = do
+apply γ (V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′ 𝓁̂₁′≾𝓁̂₁ 𝓁̂₂≾𝓁̂₂′ v) w μ pc k = do
     ⟨ μ₁ , w′ , pc₁ ⟩ ← castT μ pc S′ S w            -- cast S′ ⇛ S
-    ⟨ μ₁ , _  , pc₁ ⟩ ← castL μ₁ pc₁ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′⊑̂𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
+    ⟨ μ₁ , _  , pc₁ ⟩ ← castL μ₁ pc₁ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′≾𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
     ⟨ μ₂ , v₁ , pc₂ ⟩ ← apply γ v w′ μ₁ pc₁ k
-    ⟨ μ₂ , _  , pc₂ ⟩ ← castL μ₂ pc₂ 𝓁̂₂ 𝓁̂₂′ 𝓁̂₂⊑̂𝓁̂₂′  -- cast 𝓁̂₂ ⇛ 𝓁̂₂′
+    ⟨ μ₂ , _  , pc₂ ⟩ ← castL μ₂ pc₂ 𝓁̂₂ 𝓁̂₂′ 𝓁̂₂≾𝓁̂₂′  -- cast 𝓁̂₂ ⇛ 𝓁̂₂′
     castT μ₂ pc₂ T T′ v₁                              -- cast T ⇛ T′
 apply γ _ w μ pc k = error stuck

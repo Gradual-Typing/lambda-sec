@@ -36,7 +36,7 @@ mutual
     {- V-proxy casts from (S ⇒ T) to (S′ ⇒ T′) , (𝓁̂₁ 𝓁̂₂) to (𝓁̂₁′ 𝓁̂₂′) -}
     V-proxy : (S T S′ T′  : 𝕋) → (𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ : ℒ̂)
             → S′ ≲ S → T ≲ T′
-            → 𝓁̂₁′ ⊑̂ 𝓁̂₁ → 𝓁̂₂ ⊑̂ 𝓁̂₂′
+            → 𝓁̂₁′ ≾ 𝓁̂₁ → 𝓁̂₂ ≾ 𝓁̂₂′
             → Value
             → Value
 
