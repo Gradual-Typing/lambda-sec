@@ -70,6 +70,14 @@ open import WellTypedness
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
 
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢get {T = T} eq) rewrite proj₂ (⊢γ→∃v ⊢γ eq) with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢get {T = T} eq) | V-ref loc | ⊢ᵥref {T = T′} eq′ rewrite eq′ with T′ ≲? T
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢get eq) | V-ref loc | ⊢ᵥref eq′ | yes T′≲T = ⊢castT′ T′≲T ⊢μ (lookup-safe-corollary ⊢μ eq′)
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢get eq) | V-ref loc | ⊢ᵥref eq′ | no  _ = ⊢ᵣcast-error
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢get {T = T} eq) | V-ref loc | ⊢ᵥref-dyn {T = T′} eq′ rewrite eq′ with T′ ≲? T
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢get eq) | V-ref loc | ⊢ᵥref-dyn eq′ | yes T′≲T = ⊢castT′ T′≲T ⊢μ (lookup-safe-corollary ⊢μ eq′)
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢get eq) | V-ref loc | ⊢ᵥref-dyn eq′ | no _ = ⊢ᵣcast-error
+
 -- Start with empty env and store.
 -- type-safety : ∀ {T M 𝓁̂₁ 𝓁̂₂ pc₀}
 --   → (k : ℕ)
