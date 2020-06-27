@@ -73,16 +73,26 @@ data _⊢ᵥ_⦂_ where
       ----------------------------------------------------------------------------------------- Proxy
     → μ ⊢ᵥ V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′ 𝓁̂₁′≾𝓁̂₁ 𝓁̂₂≾𝓁̂₂′ v ⦂ S′ [ 𝓁̂₁′ ]⇒[ 𝓁̂₂′ ] T′
 
-  ⊢ᵥref : ∀ {μ T n 𝓁₁ 𝓁₂ v}
-    → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
+  ⊢ᵥref : ∀ {μ T T′ n 𝓁₁ 𝓁₂ v}
+    → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩  -- We only require that ⟨ n , 𝓁₁ , 𝓁₂ ⟩ is a valid address.
       ------------------------------------------- Ref
-    → μ ⊢ᵥ V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ⦂ Ref (l̂ 𝓁₂) T
+    → μ ⊢ᵥ V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ⦂ Ref (l̂ 𝓁₂) T′
 
-  ⊢ᵥlab : ∀ {μ T v 𝓁}
+  ⊢ᵥref-dyn : ∀ {μ T T′ n 𝓁₁ 𝓁₂ v}
+    → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩  -- We only require that ⟨ n , 𝓁₁ , 𝓁₂ ⟩ is a valid address.
+      ------------------------------------------- RefDyn
+    → μ ⊢ᵥ V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ⦂ Ref ¿ T′
+
+  ⊢ᵥlab : ∀ {μ T v 𝓁 𝓁′}
+    → 𝓁 ≼ 𝓁′
     → μ ⊢ᵥ v ⦂ T
       ----------------------------- Labeled
-    → μ ⊢ᵥ V-lab 𝓁 v ⦂ Lab (l̂ 𝓁) T
+    → μ ⊢ᵥ V-lab 𝓁 v ⦂ Lab (l̂ 𝓁′) T
 
+  ⊢ᵥlab-dyn : ∀ {μ T v 𝓁}
+    → μ ⊢ᵥ v ⦂ T
+      -------------------------- LabeledDyn
+    → μ ⊢ᵥ V-lab 𝓁 v ⦂ Lab ¿ T
 
 data _⊢ₛ_ where
 
@@ -242,13 +252,47 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
 ⊢castT′ ≲-ℒ ⊢μ ⊢ᵥlabel = ⊢ᵣresult ⊢μ ⊢ᵥlabel
 
 ⊢castT′ (≲-⇒ _ _ _ _) ⊢μ (⊢ᵥclos ⊢γ ⊢M) = ⊢ᵣresult ⊢μ (⊢ᵥproxy (⊢ᵥclos ⊢γ ⊢M))
--- ⊢castT′ (≲-⇒ x y z w) ⊢μ (⊢ᵥsub (⊢ᵥclos ⊢γ ⊢M) (≲-⇒ xx yy zz ww)) = {!!}
+
 ⊢castT′ (≲-⇒ _ _ _ _) ⊢μ (⊢ᵥproxy ⊢v) = ⊢ᵣresult ⊢μ (⊢ᵥproxy (⊢ᵥproxy ⊢v))
-⊢castT′ {T₁ = Ref 𝓁̂₁ T₁} {Ref 𝓁̂₂ T₂} {V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref 𝓁₂≾¿ ¿≾𝓁₂ T₁≲T₂ T₂≲T₁) ⊢μ (⊢ᵥref eq) with 𝓁̂₂
-... | ¿ = ⊢ᵣresult ⊢μ {!!}
+
+⊢castT′ {T₁ = Ref 𝓁̂₁ T₁} {Ref 𝓁̂₂ T₂} {V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref _ _ _ _) ⊢μ (⊢ᵥref eq) with 𝓁̂₂
+... | ¿ = ⊢ᵣresult ⊢μ (⊢ᵥref-dyn eq)
 ... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
-...   | yes _ = ⊢ᵣresult ⊢μ {!!}
+...   | yes 𝓁₂≡𝓁₂′ rewrite (sym 𝓁₂≡𝓁₂′) = ⊢ᵣresult ⊢μ (⊢ᵥref eq)
 ...   | no  _ = ⊢ᵣcast-error
+⊢castT′ {T₁ = Ref 𝓁̂₁ T₁} {Ref 𝓁̂₂ T₂} {V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref _ _ _ _) ⊢μ (⊢ᵥref-dyn eq) with 𝓁̂₂
+... | ¿ = ⊢ᵣresult ⊢μ (⊢ᵥref-dyn eq)
+... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
+...   | yes 𝓁₂≡𝓁₂′ rewrite (sym 𝓁₂≡𝓁₂′) = ⊢ᵣresult ⊢μ (⊢ᵥref eq)
+...   | no  _ = ⊢ᵣcast-error
+
+⊢castT′ {μ} {pc} {Lab (l̂ 𝓁₁) T₁} {Lab (l̂ 𝓁₂) T₂} {V-lab 𝓁 v} (≲-Lab (≾-l 𝓁₁≼𝓁₂) T₁≲T₂) ⊢μ (⊢ᵥlab 𝓁≼𝓁₁ ⊢v) with (l̂ 𝓁) ≾? (l̂ 𝓁₂)
+... | no _ = ⊢ᵣcast-error
+... | yes (≾-l 𝓁≼𝓁₂) with castT′ μ pc T₁ T₂ T₁≲T₂ v | ⊢castT′ {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢μ ⊢v
+...   | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab 𝓁≼𝓁₂ ⊢v′)
+...   | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+...   | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+...   | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+⊢castT′ {μ} {pc} {Lab (l̂ 𝓁₁) T₁} {Lab ¿ T₂} {V-lab 𝓁 v} (≲-Lab ≾-¿-r T₁≲T₂) ⊢μ (⊢ᵥlab 𝓁≼𝓁₁ ⊢v)
+  with castT′ μ pc T₁ T₂ T₁≲T₂ v | ⊢castT′ {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢μ ⊢v
+... | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab-dyn ⊢v′)
+... | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+... | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+... | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+⊢castT′ {μ} {pc} {Lab ¿ T₁} {Lab (l̂ 𝓁₂) T₂} {V-lab 𝓁 v} (≲-Lab _ T₁≲T₂) ⊢μ (⊢ᵥlab-dyn ⊢v) with (l̂ 𝓁) ≾? (l̂ 𝓁₂)
+... | no _ = ⊢ᵣcast-error
+... | yes (≾-l 𝓁≼𝓁₂) with castT′ μ pc T₁ T₂ T₁≲T₂ v | ⊢castT′ {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢μ ⊢v
+...   | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab 𝓁≼𝓁₂ ⊢v′)
+...   | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+...   | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+...   | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+⊢castT′ {μ} {pc} {Lab ¿ T₁} {Lab ¿ T₂} {V-lab 𝓁 v} (≲-Lab _ T₁≲T₂) ⊢μ (⊢ᵥlab-dyn ⊢v)
+  with castT′ μ pc T₁ T₂ T₁≲T₂ v | ⊢castT′ {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢μ ⊢v
+... | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab-dyn ⊢v′)
+... | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+... | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+... | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+
 
 𝒱-safe : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ}
   → (k : ℕ)
