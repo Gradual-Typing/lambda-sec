@@ -329,7 +329,19 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-true | ⊢ᵥ-true | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
 --   : Goes to the N branch
-𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false = {!!}
+𝒱-safe {γ = γ} {M = if `x M N} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false
+  with 𝒱 γ N ⊢N μ pc₀ k | 𝒱-safe k pc₀ ⊢μ fresh ⊢γ ⊢N  -- Case split on the evaluation of N
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ
+  with (l̂ pc′) ≾? (𝓁̂₂ ⊔̂ 𝓁̂₂′)
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ | yes _ with 𝓁̂₂′ ≾? (𝓁̂₂ ⊔̂ 𝓁̂₂′)
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {T = T} {T′} {T″} {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N T⋎T′≡T″) | V-false | ⊢ᵥ-false | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ | yes _ | yes _ with T′ ≲? T″
+... | yes T′≲T″ = ⊢castT′ T′≲T″ ⊢μ′ ⊢vₙ
+... | no  _ = ⊢ᵣcast-error
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ | yes _ | no  oops = ⊥-elim (oops 𝓁̂≾𝓁̂′⊔̂𝓁̂)
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ | no  _ = ⊢ᵣcast-error
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢if eq ⊢M ⊢N _) | V-false | ⊢ᵥ-false | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
 
 -- Start with empty env and store.
 -- type-safety : ∀ {T M 𝓁̂₁ 𝓁̂₂ pc₀}
