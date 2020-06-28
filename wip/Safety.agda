@@ -78,6 +78,11 @@ open import WellTypedness
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢get eq) | V-ref loc | ⊢ᵥref-dyn eq′ | yes T′≲T = ⊢castT′ T′≲T ⊢μ (lookup-safe-corollary ⊢μ eq′)
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢get eq) | V-ref loc | ⊢ᵥref-dyn eq′ | no _ = ⊢ᵣcast-error
 
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁)
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq rewrite proj₂ (⊢γ→∃v ⊢γ eq₂) with proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq | vy | ⊢vy rewrite eq = {!!}
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) | V-ref loc | ⊢ᵥref-dyn eq = {!!}
+
 -- Start with empty env and store.
 -- type-safety : ∀ {T M 𝓁̂₁ 𝓁̂₂ pc₀}
 --   → (k : ℕ)
