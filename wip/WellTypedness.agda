@@ -215,7 +215,8 @@ data _∉domₙ_ : ℕ → Store → Set where
   → n ∉domₙ μ
   → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ nothing
 ∉→lookup≡nothing {[]} ∉domₙ∅ = refl
-∉→lookup≡nothing {⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ v₀ , T₀ ⟩ ∷ μ} {n} (∉domₙ∷ n₀≢n n∉domμ) with n₀ ≟ₙ n
+∉→lookup≡nothing {⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ v₀ , T₀ ⟩ ∷ μ} {n} (∉domₙ∷ n₀≢n n∉domμ)
+  with n₀ ≟ₙ n
 ... | yes n₀≡n = ⊥-elim (n₀≢n n₀≡n)
 ... | no _ = ∉→lookup≡nothing n∉domμ
 
@@ -238,7 +239,8 @@ ext-new-lookup-same : ∀ {μ n n₀ 𝓁₁ 𝓁₁₀ 𝓁₂ 𝓁₂₀ T T�
   → n₀ ∉domₙ μ
   → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
   → lookup (⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ T₀ , v₀ ⟩ ∷ μ) ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
-ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀} {T} {T₀} {v} {v₀} n₀∉domμ lookup-n-something with n₀ ≟ₙ n
+ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀} {T} {T₀} {v} {v₀} n₀∉domμ lookup-n-something
+  with n₀ ≟ₙ n
 ... | yes n₀≡n =
   let lookup-n₀-nothing = ∉→lookup≡nothing {𝓁₁ = 𝓁₁} {𝓁₂} n₀∉domμ in
   let n₀≢n = lookup-≢ {μ} {n₀} {n} {𝓁₁} {𝓁₂} {T} {v} lookup-n₀-nothing lookup-n-something in
@@ -261,20 +263,26 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
 
 ⊢castT′ (≲-⇒ _ _ _ _) ⊢μ (⊢ᵥproxy ⊢v) = ⊢ᵣresult ⊢μ (⊢ᵥproxy (⊢ᵥproxy ⊢v))
 
-⊢castT′ {T₁ = Ref 𝓁̂₁ T₁} {Ref 𝓁̂₂ T₂} {V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref _ _ _ _) ⊢μ (⊢ᵥref eq) with 𝓁̂₂
+⊢castT′ {T₁ = Ref 𝓁̂₁ T₁} {Ref 𝓁̂₂ T₂} {V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref _ _ _ _) ⊢μ (⊢ᵥref eq)
+  with 𝓁̂₂
 ... | ¿ = ⊢ᵣresult ⊢μ (⊢ᵥref-dyn eq)
-... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
+... | (l̂ 𝓁₂′)
+  with 𝓁₂ ≟ 𝓁₂′
 ...   | yes 𝓁₂≡𝓁₂′ rewrite (sym 𝓁₂≡𝓁₂′) = ⊢ᵣresult ⊢μ (⊢ᵥref eq)
 ...   | no  _ = ⊢ᵣcast-error
-⊢castT′ {T₁ = Ref 𝓁̂₁ T₁} {Ref 𝓁̂₂ T₂} {V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref _ _ _ _) ⊢μ (⊢ᵥref-dyn eq) with 𝓁̂₂
+⊢castT′ {T₁ = Ref 𝓁̂₁ T₁} {Ref 𝓁̂₂ T₂} {V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref _ _ _ _) ⊢μ (⊢ᵥref-dyn eq)
+  with 𝓁̂₂
 ... | ¿ = ⊢ᵣresult ⊢μ (⊢ᵥref-dyn eq)
-... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
+... | (l̂ 𝓁₂′)
+  with 𝓁₂ ≟ 𝓁₂′
 ...   | yes 𝓁₂≡𝓁₂′ rewrite (sym 𝓁₂≡𝓁₂′) = ⊢ᵣresult ⊢μ (⊢ᵥref eq)
 ...   | no  _ = ⊢ᵣcast-error
 
-⊢castT′ {μ} {pc} {Lab (l̂ 𝓁₁) T₁} {Lab (l̂ 𝓁₂) T₂} {V-lab 𝓁 v} (≲-Lab (≾-l 𝓁₁≼𝓁₂) T₁≲T₂) ⊢μ (⊢ᵥlab 𝓁≼𝓁₁ ⊢v) with (l̂ 𝓁) ≾? (l̂ 𝓁₂)
+⊢castT′ {μ} {pc} {Lab (l̂ 𝓁₁) T₁} {Lab (l̂ 𝓁₂) T₂} {V-lab 𝓁 v} (≲-Lab (≾-l 𝓁₁≼𝓁₂) T₁≲T₂) ⊢μ (⊢ᵥlab 𝓁≼𝓁₁ ⊢v)
+  with (l̂ 𝓁) ≾? (l̂ 𝓁₂)
 ... | no _ = ⊢ᵣcast-error
-... | yes (≾-l 𝓁≼𝓁₂) with castT′ μ pc T₁ T₂ T₁≲T₂ v | ⊢castT′ {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢μ ⊢v
+... | yes (≾-l 𝓁≼𝓁₂)
+  with castT′ μ pc T₁ T₂ T₁≲T₂ v | ⊢castT′ {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢μ ⊢v
 ...   | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab 𝓁≼𝓁₂ ⊢v′)
 ...   | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
 ...   | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
@@ -285,9 +293,11 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
 ... | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
 ... | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
 ... | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
-⊢castT′ {μ} {pc} {Lab ¿ T₁} {Lab (l̂ 𝓁₂) T₂} {V-lab 𝓁 v} (≲-Lab _ T₁≲T₂) ⊢μ (⊢ᵥlab-dyn ⊢v) with (l̂ 𝓁) ≾? (l̂ 𝓁₂)
+⊢castT′ {μ} {pc} {Lab ¿ T₁} {Lab (l̂ 𝓁₂) T₂} {V-lab 𝓁 v} (≲-Lab _ T₁≲T₂) ⊢μ (⊢ᵥlab-dyn ⊢v)
+  with (l̂ 𝓁) ≾? (l̂ 𝓁₂)
 ... | no _ = ⊢ᵣcast-error
-... | yes (≾-l 𝓁≼𝓁₂) with castT′ μ pc T₁ T₂ T₁≲T₂ v | ⊢castT′ {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢μ ⊢v
+... | yes (≾-l 𝓁≼𝓁₂)
+  with castT′ μ pc T₁ T₂ T₁≲T₂ v | ⊢castT′ {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢μ ⊢v
 ...   | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab 𝓁≼𝓁₂ ⊢v′)
 ...   | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
 ...   | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
@@ -303,6 +313,7 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
   → μ ⊢ₛ μ
   → μ ⊢ᵥ v ⦂ T₁
   → ⊢ᵣ castT μ pc T₁ T₂ v ⦂ T₂
-⊢castT {T₁ = T₁} {T₂} ⊢μ ⊢v with T₁ ≲? T₂
+⊢castT {T₁ = T₁} {T₂} ⊢μ ⊢v
+  with T₁ ≲? T₂
 ... | yes T₁≲T₂ = ⊢castT′ T₁≲T₂ ⊢μ ⊢v
 ... | no  _ = ⊢ᵣcast-error
