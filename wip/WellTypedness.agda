@@ -298,3 +298,11 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
 ... | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
 ... | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
 ... | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+
+⊢castT : ∀ {μ pc T₁ T₂ v}
+  → μ ⊢ₛ μ
+  → μ ⊢ᵥ v ⦂ T₁
+  → ⊢ᵣ castT μ pc T₁ T₂ v ⦂ T₂
+⊢castT {T₁ = T₁} {T₂} ⊢μ ⊢v with T₁ ≲? T₂
+... | yes T₁≲T₂ = ⊢castT′ T₁≲T₂ ⊢μ ⊢v
+... | no  _ = ⊢ᵣcast-error
