@@ -42,6 +42,15 @@ open import StaticsLIO
 nothing≢just : ∀ {X : Set} {x : X} → nothing ≢ just x
 nothing≢just = λ ()
 
+just≢nothing : ∀ {X : Set} {x : X} → just x ≢ nothing
+just≢nothing = λ ()
+
+just-≡-inv : ∀ {X : Set} {x y : X} → just x ≡ just y → x ≡ y
+just-≡-inv refl = refl
+
+×-≡-inv : ∀ {X Y : Set} {x₁ x₂ : X} {y₁ y₂ : Y} → ⟨ x₁ , y₁ ⟩ ≡ ⟨ x₂ , y₂ ⟩ → (x₁ ≡ x₂) × (y₁ ≡ y₂)
+×-≡-inv refl = ⟨ refl , refl ⟩
+
 ≼-trans : ∀ {𝓁₁ 𝓁₂ 𝓁₃}
   → 𝓁₁ ≼ 𝓁₂
   → 𝓁₂ ≼ 𝓁₃

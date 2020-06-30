@@ -7,16 +7,35 @@ open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_�
 open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
+open Eq using (_≡_; _≢_; refl; cong; cong₂)
 
 open import StaticsLIO
 import Syntax
 open Syntax.OpSig Op sig renaming (ABT to Term)
-
+open import Lemmas
 
 
 -- Store (heap) location index
 Location = ℕ × ℒ × ℒ
+
+_≟ₗ_ : (loc loc′ : Location) → Dec (loc ≡ loc′)
+⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≟ₗ ⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩
+  with n ≟ₙ n′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
+... | yes n≡n′ | yes 𝓁₁≡𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
+  let p≡ = cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) 𝓁₁≡𝓁₁′ 𝓁₂≡𝓁₂′ in
+    yes (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) n≡n′ p≡)
+... | yes n≡n′ | yes 𝓁₁≡𝓁₁′ | no 𝓁₂≢𝓁₂′ = no λ p≡ → let 𝓁₂≡𝓁₂′ = proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₂≢𝓁₂′ 𝓁₂≡𝓁₂′
+... | yes n≡n′ | no 𝓁₁≢𝓁₁′ | yes 𝓁₂≡𝓁₂′ = no λ p≡ → let 𝓁₁≡𝓁₁′ = proj₁ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₁≢𝓁₁′ 𝓁₁≡𝓁₁′
+... | no n≢n′ | yes 𝓁₁≡𝓁₁′ | yes 𝓁₂≡𝓁₂′ = no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
+... | no n≢n′ | no 𝓁₁≢𝓁₁′ | yes 𝓁₂≡𝓁₂′ = no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
+... | no n≢n′ | yes 𝓁₁≡𝓁₁′ | no 𝓁₂≢𝓁₂′ = no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
+... | yes n≡n′ | no 𝓁₁≢𝓁₁′ | no 𝓁₂≢𝓁₂′ = no λ p≡ → let 𝓁₂≡𝓁₂′ = proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₂≢𝓁₂′ 𝓁₂≡𝓁₂′
+... | no n≢n′ | no 𝓁₁≢𝓁₁′ | no 𝓁₂≢𝓁₂′ = no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
+
+n≢n′→loc≢loc′ : ∀ {n n′ : ℕ} {𝓁₁ 𝓁₁′ 𝓁₂ 𝓁₂′ : ℒ}
+  → n ≢ n′
+  → ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≢ ⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩
+n≢n′→loc≢loc′ n≢n′ = λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
 
 mutual
   -- A closure is a term with an env
@@ -56,9 +75,9 @@ Store = List (Cell (𝕋 × Value))
 
 lookup : ∀ {X} → (μ : List (Cell X)) → Location → Maybe X
 lookup [] _ = nothing
-lookup ( ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ x ∷ μ′ ) ⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩ with n ≟ₙ n′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
-... | yes _ | yes _ | yes _ = just x
-... | _ | _ | _ = lookup μ′ ⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩
+lookup ( loc ↦ x ∷ μ′ ) loc′ with loc ≟ₗ loc′
+... | yes _ = just x
+... | no  _ = lookup μ′ loc′
 
 -- Examples:
 private

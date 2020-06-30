@@ -160,7 +160,11 @@ open import WellTypedness
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
   | v | ⊢v
   | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′
-  | result ⟨ u″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″ = {!!}
+  | result ⟨ u″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″
+  with pc″ ≼? 𝓁₂
+... | yes _ = ⊢ᵣresult {!!} ⊢ᵥtt
+-- (ext-update-pres-⊢ₛ (⊢ₛ∷ ⊢v″ ⊢μ″) {!!} ⊢v″) ⊢ᵥtt
+... | no  _ = ⊢ᵣnsu-error
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
   | v | ⊢v

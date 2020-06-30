@@ -176,9 +176,9 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
   result ⟨ μ , =?-ref loc loc′ , pc ⟩
   where
   =?-ref : (loc loc′ : Location) → Value
-  =?-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩ with n ≟ₙ n′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
-  ... | yes _ | yes _ | yes _ = V-true
-  ... | _     | _     | _     = V-false
+  =?-ref loc loc′ with loc ≟ₗ loc′
+  ... | yes _ = V-true
+  ... | no  _ = V-false
 ... | _ | _ = error stuck
 
 -- Let binding

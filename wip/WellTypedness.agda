@@ -135,12 +135,6 @@ data ⊢ᵣ_⦂_ : Result Conf → 𝕋 → Set where
     → ⊢ᵣ timeout ⦂ T
 
 
-just-≡-inv : ∀ {X : Set} {x y : X} → just x ≡ just y → x ≡ y
-just-≡-inv refl = refl
-
-×-≡-inv : ∀ {X Y : Set} {x₁ x₂ : X} {y₁ y₂ : Y} → ⟨ x₁ , y₁ ⟩ ≡ ⟨ x₂ , y₂ ⟩ → (x₁ ≡ x₂) × (y₁ ≡ y₂)
-×-≡-inv refl = ⟨ refl , refl ⟩
-
 result-≡-inv : ∀ {conf₁ conf₂ : Conf}
   → result conf₁ ≡ result conf₂
   → conf₁ ≡ conf₂
@@ -215,10 +209,10 @@ data _∉domₙ_ : ℕ → Store → Set where
   → n ∉domₙ μ
   → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ nothing
 ∉→lookup≡nothing {[]} ∉domₙ∅ = refl
-∉→lookup≡nothing {⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ v₀ , T₀ ⟩ ∷ μ} {n} (∉domₙ∷ n₀≢n n∉domμ)
-  with n₀ ≟ₙ n
-... | yes n₀≡n = ⊥-elim (n₀≢n n₀≡n)
-... | no _ = ∉→lookup≡nothing n∉domμ
+∉→lookup≡nothing {⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ v₀ , T₀ ⟩ ∷ μ} {n} {𝓁₁} {𝓁₂} (∉domₙ∷ n₀≢n n∉domμ)
+  with ⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ≟ₗ ⟨ n , 𝓁₁ , 𝓁₂ ⟩
+... | yes p≡ = let n₀≡n = proj₁ (×-≡-inv p≡) in ⊥-elim (n₀≢n n₀≡n)
+... | no  _  = ∉→lookup≡nothing n∉domμ
 
 lookup-≢ : ∀ {μ : Store} {n n′ 𝓁₁ 𝓁₂ T v}
   → lookup μ ⟨ n  , 𝓁₁ , 𝓁₂ ⟩ ≡ nothing
@@ -240,12 +234,12 @@ ext-new-lookup-same : ∀ {μ n n₀ 𝓁₁ 𝓁₁₀ 𝓁₂ 𝓁₂₀ T T�
   → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
   → lookup (⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ T₀ , v₀ ⟩ ∷ μ) ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
 ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀} {T} {T₀} {v} {v₀} n₀∉domμ lookup-n-something
-  with n₀ ≟ₙ n
-... | yes n₀≡n =
+  with ⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ≟ₗ ⟨ n , 𝓁₁ , 𝓁₂ ⟩
+... | yes p≡ =
   let lookup-n₀-nothing = ∉→lookup≡nothing {𝓁₁ = 𝓁₁} {𝓁₂} n₀∉domμ in
   let n₀≢n = lookup-≢ {μ} {n₀} {n} {𝓁₁} {𝓁₂} {T} {v} lookup-n₀-nothing lookup-n-something in
-  ⊥-elim (n₀≢n n₀≡n)
-... | no n₀≢n = lookup-n-something
+  ⊥-elim (n₀≢n (proj₁ (×-≡-inv p≡)))
+... | no  _ = lookup-n-something
 
 ⊢castT′ : ∀ {μ pc T₁ T₂ v}
   → (T₁≲T₂ : T₁ ≲ T₂)
@@ -317,3 +311,32 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
   with T₁ ≲? T₂
 ... | yes T₁≲T₂ = ⊢castT′ T₁≲T₂ ⊢μ ⊢v
 ... | no  _ = ⊢ᵣcast-error
+
+-- ext-update-pres-⊢ᵥ : ∀ {μ loc T Tᵥ w w′ v}
+--   → lookup μ loc ≡ just ⟨ T , w ⟩
+--   → μ ⊢ᵥ w′ ⦂ T
+--   → μ ⊢ᵥ v ⦂ Tᵥ
+--   → loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ᵥ v ⦂ Tᵥ
+-- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥtt = {!!}
+-- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥtrue = {!!}
+-- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥfalse = {!!}
+-- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥlabel = {!!}
+-- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥclos x ⊢M) = {!!}
+-- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥproxy tv) = {!!}
+-- ext-update-pres-⊢ᵥ {loc = loc} {T} {Tᵥ} {w} {w′} {V-ref loc′} eq ⊢ᵥw′ (⊢ᵥref eq′)
+--   with loc ≟ₗ loc′
+-- ... | yes _ = {!!}
+-- ... | no  _ = ⊢ᵥref {!!}
+
+-- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥref-dyn x) = {!!}
+-- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥlab x tv) = {!!}
+-- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥlab-dyn tv) = {!!}
+
+-- ext-update-pres-⊢ₛ : ∀ {μ σ loc T w w′}
+--   → μ ⊢ₛ σ
+--   → lookup μ loc ≡ just ⟨ T , w ⟩
+--   → μ ⊢ᵥ w′ ⦂ T
+--   → loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ₛ σ
+-- ext-update-pres-⊢ₛ ⊢ₛ∅ eq ⊢w′ = ⊢ₛ∅
+-- ext-update-pres-⊢ₛ {μ} {σ} {loc} {T} {w} {w′} (⊢ₛ∷ ⊢v ⊢σ) eq ⊢w′ =
+--   ⊢ₛ∷ (ext-update-pres-⊢ᵥ eq ⊢w′ ⊢v) (ext-update-pres-⊢ₛ ⊢σ eq ⊢w′)
