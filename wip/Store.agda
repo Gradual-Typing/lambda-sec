@@ -3,11 +3,13 @@ module Store where
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Nat.Properties renaming (_≟_ to _≟ₙ_)
 open import Data.List using (List; []; _∷_)
-open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
+open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe using (Maybe; just; nothing)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl; cong; cong₂)
+open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _≡⟨_⟩_; _∎)
 
 open import StaticsLIO
 import Syntax
@@ -24,18 +26,58 @@ _≟ₗ_ : (loc loc′ : Location) → Dec (loc ≡ loc′)
 ... | yes n≡n′ | yes 𝓁₁≡𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
   let p≡ = cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) 𝓁₁≡𝓁₁′ 𝓁₂≡𝓁₂′ in
     yes (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) n≡n′ p≡)
-... | yes n≡n′ | yes 𝓁₁≡𝓁₁′ | no 𝓁₂≢𝓁₂′ = no λ p≡ → let 𝓁₂≡𝓁₂′ = proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₂≢𝓁₂′ 𝓁₂≡𝓁₂′
-... | yes n≡n′ | no 𝓁₁≢𝓁₁′ | yes 𝓁₂≡𝓁₂′ = no λ p≡ → let 𝓁₁≡𝓁₁′ = proj₁ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₁≢𝓁₁′ 𝓁₁≡𝓁₁′
-... | no n≢n′ | yes 𝓁₁≡𝓁₁′ | yes 𝓁₂≡𝓁₂′ = no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
-... | no n≢n′ | no 𝓁₁≢𝓁₁′ | yes 𝓁₂≡𝓁₂′ = no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
-... | no n≢n′ | yes 𝓁₁≡𝓁₁′ | no 𝓁₂≢𝓁₂′ = no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
-... | yes n≡n′ | no 𝓁₁≢𝓁₁′ | no 𝓁₂≢𝓁₂′ = no λ p≡ → let 𝓁₂≡𝓁₂′ = proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₂≢𝓁₂′ 𝓁₂≡𝓁₂′
-... | no n≢n′ | no 𝓁₁≢𝓁₁′ | no 𝓁₂≢𝓁₂′ = no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
+... | yes n≡n′ | yes 𝓁₁≡𝓁₁′ | no 𝓁₂≢𝓁₂′ =
+  no λ p≡ → let 𝓁₂≡𝓁₂′ = proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₂≢𝓁₂′ 𝓁₂≡𝓁₂′
+... | yes n≡n′ | no 𝓁₁≢𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
+  no λ p≡ → let 𝓁₁≡𝓁₁′ = proj₁ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₁≢𝓁₁′ 𝓁₁≡𝓁₁′
+... | no n≢n′ | yes 𝓁₁≡𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
+  no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
+... | no n≢n′ | no 𝓁₁≢𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
+  no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
+... | no n≢n′ | yes 𝓁₁≡𝓁₁′ | no 𝓁₂≢𝓁₂′ =
+  no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
+... | yes n≡n′ | no 𝓁₁≢𝓁₁′ | no 𝓁₂≢𝓁₂′ =
+  no λ p≡ → let 𝓁₂≡𝓁₂′ = proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₂≢𝓁₂′ 𝓁₂≡𝓁₂′
+... | no n≢n′ | no 𝓁₁≢𝓁₁′ | no 𝓁₂≢𝓁₂′ =
+  no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
 
-n≢n′→loc≢loc′ : ∀ {n n′ : ℕ} {𝓁₁ 𝓁₁′ 𝓁₂ 𝓁₂′ : ℒ}
-  → n ≢ n′
-  → ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≢ ⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩
-n≢n′→loc≢loc′ n≢n′ = λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
+-- n≢n′→loc≢loc′ : ∀ {n n′ : ℕ} {𝓁₁ 𝓁₁′ 𝓁₂ 𝓁₂′ : ℒ}
+--   → n ≢ n′
+--   → ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≢ ⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩
+-- n≢n′→loc≢loc′ n≢n′ = λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
+
+≟ₗ-≡-normal : ∀ {loc} → ∃[ eq ] (loc ≟ₗ loc ≡ yes eq)
+≟ₗ-≡-normal {⟨ n , 𝓁₁ , 𝓁₂ ⟩}
+  with n ≟ₙ n | 𝓁₁ ≟ 𝓁₁ | 𝓁₂ ≟ 𝓁₂
+... | yes eq₁ | yes eq₂ | yes eq₃ =
+  ⟨ cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) eq₁ (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) eq₂ eq₃) , refl ⟩
+... | yes _   | yes _   | no neq  = ⊥-elim (neq refl)
+... | yes _   | no neq  | yes _   = ⊥-elim (neq refl)
+... | no neq  | yes _   | yes _   = ⊥-elim (neq refl)
+... | yes _   | no neq  | no _    = ⊥-elim (neq refl)
+... | no neq  | yes _   | no _    = ⊥-elim (neq refl)
+... | no neq  | no _    | yes _   = ⊥-elim (neq refl)
+... | no neq  | no _    | no _    = ⊥-elim (neq refl)
+
+≟ₗ-≢-normal : ∀ {loc loc′} → (neq : loc ≢ loc′) → ∃[ neq′ ] (loc ≟ₗ loc′ ≡ no neq′)
+≟ₗ-≢-normal {⟨ n , 𝓁₁ , 𝓁₂ ⟩} {⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩} neq
+  with n ≟ₙ n′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
+... | yes n≡n′ | yes 𝓁₁≡𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
+  ⊥-elim (neq (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) n≡n′ (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) 𝓁₁≡𝓁₁′ 𝓁₂≡𝓁₂′)))
+... | yes _ | yes _ | no 𝓁₂≢𝓁₂′ =
+  ⟨ (λ p≡ → 𝓁₂≢𝓁₂′ (proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))))) , refl ⟩
+... | yes _ | no 𝓁₁≢𝓁₁′ | yes _ =
+  ⟨ (λ p≡ → 𝓁₁≢𝓁₁′ (proj₁ (×-≡-inv (proj₂ (×-≡-inv p≡))))) , refl ⟩
+... | no n≢n′ | yes _ | yes _ =
+  ⟨ (λ p≡ → n≢n′ (proj₁ (×-≡-inv p≡))) , refl ⟩
+... | yes _ | no _ | no 𝓁₂≢𝓁₂′ =
+  ⟨ (λ p≡ → 𝓁₂≢𝓁₂′ (proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))))) , refl ⟩
+... | no n≢n′ | yes _ | no _ =
+  ⟨ (λ p≡ → n≢n′ (proj₁ (×-≡-inv p≡))) , refl ⟩
+... | no n≢n′ | no _ | yes _ =
+  ⟨ (λ p≡ → n≢n′ (proj₁ (×-≡-inv p≡))) , refl ⟩
+... | no n≢n′  | no _ | no _ =
+  ⟨ (λ p≡ → n≢n′ (proj₁ (×-≡-inv p≡))) , refl ⟩
 
 mutual
   -- A closure is a term with an env

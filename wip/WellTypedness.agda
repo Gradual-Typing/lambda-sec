@@ -312,31 +312,47 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
 ... | yes T₁≲T₂ = ⊢castT′ T₁≲T₂ ⊢μ ⊢v
 ... | no  _ = ⊢ᵣcast-error
 
--- ext-update-pres-⊢ᵥ : ∀ {μ loc T Tᵥ w w′ v}
---   → lookup μ loc ≡ just ⟨ T , w ⟩
---   → μ ⊢ᵥ w′ ⦂ T
---   → μ ⊢ᵥ v ⦂ Tᵥ
---   → loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ᵥ v ⦂ Tᵥ
--- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥtt = {!!}
--- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥtrue = {!!}
--- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥfalse = {!!}
--- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥlabel = {!!}
--- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥclos x ⊢M) = {!!}
--- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥproxy tv) = {!!}
--- ext-update-pres-⊢ᵥ {loc = loc} {T} {Tᵥ} {w} {w′} {V-ref loc′} eq ⊢ᵥw′ (⊢ᵥref eq′)
---   with loc ≟ₗ loc′
--- ... | yes _ = {!!}
--- ... | no  _ = ⊢ᵥref {!!}
 
--- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥref-dyn x) = {!!}
--- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥlab x tv) = {!!}
--- ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥlab-dyn tv) = {!!}
+ext-update-pres-⊢ᵥ : ∀ {μ loc T Tᵥ w w′ v}
+  → lookup μ loc ≡ just ⟨ T , w ⟩
+  → μ ⊢ᵥ w′ ⦂ T
+  → μ ⊢ᵥ v ⦂ Tᵥ
+  → loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ᵥ v ⦂ Tᵥ
+ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥtt = ⊢ᵥtt
+ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥtrue = ⊢ᵥtrue
+ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥfalse = ⊢ᵥfalse
+ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥlabel = ⊢ᵥlabel
+ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥclos ⊢γ ⊢M) = ⊢ᵥclos {!!} ⊢M
+ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥproxy ⊢v) = ⊢ᵥproxy (ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢v)
+ext-update-pres-⊢ᵥ {μ} {loc} {T} {w = w} {w′} {V-ref loc′} eq ⊢ᵥw′ (⊢ᵥref {T = Tᵥ} {v = v} eq′)
+  with loc ≟ₗ loc′
+... | yes loc≡loc′ = ⊢ᵥref hit
+  where
+  hit : lookup (loc ↦ ⟨ T , w′ ⟩ ∷ μ) loc′ ≡ just ⟨ T , w′ ⟩
+  hit rewrite loc≡loc′ | proj₂ (≟ₗ-≡-normal {loc′}) = refl
+... | no  loc≢loc′ = ⊢ᵥref hit
+  where
+  hit : lookup (loc ↦ ⟨ T , w′ ⟩ ∷ μ) loc′ ≡ just ⟨ Tᵥ , v ⟩
+  hit rewrite proj₂ (≟ₗ-≢-normal loc≢loc′) = eq′
+ext-update-pres-⊢ᵥ {μ} {loc} {T} {w = w} {w′} {V-ref loc′} eq ⊢ᵥw′ (⊢ᵥref-dyn {T = Tᵥ} {v = v} eq′)
+  with loc ≟ₗ loc′
+... | yes loc≡loc′ = ⊢ᵥref-dyn hit
+  where
+  hit : lookup (loc ↦ ⟨ T , w′ ⟩ ∷ μ) loc′ ≡ just ⟨ T , w′ ⟩
+  hit rewrite loc≡loc′ | proj₂ (≟ₗ-≡-normal {loc′}) = refl
+... | no  loc≢loc′ = ⊢ᵥref-dyn hit
+  where
+  hit : lookup (loc ↦ ⟨ T , w′ ⟩ ∷ μ) loc′ ≡ just ⟨ Tᵥ , v ⟩
+  hit rewrite proj₂ (≟ₗ-≢-normal loc≢loc′) = eq′
+ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥlab 𝓁≼𝓁′ ⊢v) = ⊢ᵥlab 𝓁≼𝓁′ (ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢v)
+ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥlab-dyn ⊢v)  = ⊢ᵥlab-dyn  (ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢v)
 
--- ext-update-pres-⊢ₛ : ∀ {μ σ loc T w w′}
---   → μ ⊢ₛ σ
---   → lookup μ loc ≡ just ⟨ T , w ⟩
---   → μ ⊢ᵥ w′ ⦂ T
---   → loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ₛ σ
--- ext-update-pres-⊢ₛ ⊢ₛ∅ eq ⊢w′ = ⊢ₛ∅
--- ext-update-pres-⊢ₛ {μ} {σ} {loc} {T} {w} {w′} (⊢ₛ∷ ⊢v ⊢σ) eq ⊢w′ =
---   ⊢ₛ∷ (ext-update-pres-⊢ᵥ eq ⊢w′ ⊢v) (ext-update-pres-⊢ₛ ⊢σ eq ⊢w′)
+
+ext-update-pres-⊢ₛ : ∀ {μ σ loc T w w′}
+  → μ ⊢ₛ σ
+  → lookup μ loc ≡ just ⟨ T , w ⟩
+  → μ ⊢ᵥ w′ ⦂ T
+  → loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ₛ σ
+ext-update-pres-⊢ₛ ⊢ₛ∅ eq ⊢w′ = ⊢ₛ∅
+ext-update-pres-⊢ₛ {μ} {σ} {loc} {T} {w} {w′} (⊢ₛ∷ ⊢v ⊢σ) eq ⊢w′ =
+  ⊢ₛ∷ (ext-update-pres-⊢ᵥ eq ⊢w′ ⊢v) (ext-update-pres-⊢ₛ ⊢σ eq ⊢w′)
