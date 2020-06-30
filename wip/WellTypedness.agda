@@ -157,6 +157,7 @@ nth-safe {x = suc x} (⊢ₑ∷ _ Γμ⊢γ) eq₁ eq₂ = nth-safe Γμ⊢γ eq
 lookup-safe : ∀ {σ μ loc T v}
   → σ ⊢ₛ μ
   → lookup μ loc ≡ just ⟨ T , v ⟩
+    ------------------------------
   → σ ⊢ᵥ v ⦂ T
 lookup-safe ⊢ₛ∅ ()
 lookup-safe {σ} { ⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ T₀ , v₀ ⟩ ∷ μ′ } {⟨ n , 𝓁₁ , 𝓁₂ ⟩} (⊢ₛ∷ ⊢v₀ ⊢μ′) eq
@@ -179,6 +180,7 @@ lookup-safe {σ} { ⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ T₀ , v₀ �
 lookup-safe-corollary : ∀ {μ loc T v}
   → μ ⊢ₛ μ
   → lookup μ loc ≡ just ⟨ T , v ⟩
+    ------------------------------
   → μ ⊢ᵥ v ⦂ T
 lookup-safe-corollary {μ} ⊢μ eq = lookup-safe ⊢μ eq
 
@@ -245,6 +247,7 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
   → (T₁≲T₂ : T₁ ≲ T₂)
   → μ ⊢ₛ μ
   → μ ⊢ᵥ v ⦂ T₁
+    ----------------------------------
   → ⊢ᵣ castT′ μ pc T₁ T₂ T₁≲T₂ v ⦂ T₂
 ⊢castT′ ≲-⊤ ⊢μ ⊢ᵥtt = ⊢ᵣresult ⊢μ ⊢ᵥtt
 
@@ -306,6 +309,7 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
 ⊢castT : ∀ {μ pc T₁ T₂ v}
   → μ ⊢ₛ μ
   → μ ⊢ᵥ v ⦂ T₁
+    ----------------------------
   → ⊢ᵣ castT μ pc T₁ T₂ v ⦂ T₂
 ⊢castT {T₁ = T₁} {T₂} ⊢μ ⊢v
   with T₁ ≲? T₂
@@ -317,12 +321,31 @@ ext-update-pres-⊢ᵥ : ∀ {μ loc T Tᵥ w w′ v}
   → lookup μ loc ≡ just ⟨ T , w ⟩
   → μ ⊢ᵥ w′ ⦂ T
   → μ ⊢ᵥ v ⦂ Tᵥ
+    --------------------------------
   → loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ᵥ v ⦂ Tᵥ
+
+ext-update-pres-⊢ₛ : ∀ {μ σ loc T w w′}
+  → μ ⊢ₛ σ
+  → lookup μ loc ≡ just ⟨ T , w ⟩
+  → μ ⊢ᵥ w′ ⦂ T
+    -------------------------------
+  → loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ₛ σ
+
+ext-update-pres-⊢ₑ : ∀ {Γ μ γ loc T w w′}
+  → lookup μ loc ≡ just ⟨ T , w ⟩
+  → Γ ∣ μ ⊢ₑ γ
+  → μ ⊢ᵥ w′ ⦂ T
+    --------------------------------
+  → Γ ∣ loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ₑ γ
+
+ext-update-pres-⊢ₑ eq ⊢ₑ∅ ⊢w′ = ⊢ₑ∅
+ext-update-pres-⊢ₑ eq (⊢ₑ∷ ⊢v ⊢γ) ⊢w′ = ⊢ₑ∷ (ext-update-pres-⊢ᵥ eq ⊢w′ ⊢v) (ext-update-pres-⊢ₑ eq ⊢γ ⊢w′)
+
 ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥtt = ⊢ᵥtt
 ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥtrue = ⊢ᵥtrue
 ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥfalse = ⊢ᵥfalse
 ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥlabel = ⊢ᵥlabel
-ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥclos ⊢γ ⊢M) = ⊢ᵥclos {!!} ⊢M
+ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥclos ⊢γ ⊢M) = ⊢ᵥclos (ext-update-pres-⊢ₑ eq ⊢γ ⊢ᵥw′) ⊢M
 ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥproxy ⊢v) = ⊢ᵥproxy (ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢v)
 ext-update-pres-⊢ᵥ {μ} {loc} {T} {w = w} {w′} {V-ref loc′} eq ⊢ᵥw′ (⊢ᵥref {T = Tᵥ} {v = v} eq′)
   with loc ≟ₗ loc′
@@ -347,12 +370,6 @@ ext-update-pres-⊢ᵥ {μ} {loc} {T} {w = w} {w′} {V-ref loc′} eq ⊢ᵥw�
 ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥlab 𝓁≼𝓁′ ⊢v) = ⊢ᵥlab 𝓁≼𝓁′ (ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢v)
 ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥlab-dyn ⊢v)  = ⊢ᵥlab-dyn  (ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢v)
 
-
-ext-update-pres-⊢ₛ : ∀ {μ σ loc T w w′}
-  → μ ⊢ₛ σ
-  → lookup μ loc ≡ just ⟨ T , w ⟩
-  → μ ⊢ᵥ w′ ⦂ T
-  → loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ₛ σ
 ext-update-pres-⊢ₛ ⊢ₛ∅ eq ⊢w′ = ⊢ₛ∅
 ext-update-pres-⊢ₛ {μ} {σ} {loc} {T} {w} {w′} (⊢ₛ∷ ⊢v ⊢σ) eq ⊢w′ =
   ⊢ₛ∷ (ext-update-pres-⊢ᵥ eq ⊢w′ ⊢v) (ext-update-pres-⊢ₛ ⊢σ eq ⊢w′)
