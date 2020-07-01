@@ -340,6 +340,11 @@ castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
   with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
 ... | V-ref loc | _ = ⊢ᵣresult ⊢μ ⊢ᵥlabel
 
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢lab-label eq)
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | V-lab 𝓁 v | _ = ⊢ᵣresult ⊢μ ⊢ᵥlabel
+
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ ⊢pc-label = ⊢ᵣresult ⊢μ ⊢ᵥlabel
 
 -- Start with empty env and store.
