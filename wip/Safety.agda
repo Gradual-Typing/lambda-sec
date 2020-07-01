@@ -306,10 +306,19 @@ castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
   | v | ⊢v
   | error NSUError | ⊢ᵣnsu-error | ▹error = ⊢ᵣnsu-error
 
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢new {𝓁 = 𝓁} eq 𝓁̂₁≲𝓁) with pc₀ ≼? 𝓁
+... | no  _ = ⊢ᵣnsu-error
+... | yes _
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | v | ⊢v = {!!}
+
+
 -- Start with empty env and store.
--- type-safety : ∀ {T M 𝓁̂₁ 𝓁̂₂ pc₀}
---   → (k : ℕ)
---   → (⊢M : [] [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
---     ----------------------------
---   → ⊢ᵣ 𝒱 [] M ⊢M [] pc₀ k ⦂ T
--- type-safety k ⊢M = 𝒱-safe k ⊢ₛ∅ ∉domₙ∅ ⊢ₑ∅ ⊢M
+type-safety : ∀ {T M 𝓁̂₁ 𝓁̂₂}
+  → (k : ℕ)
+  → (pc₀ : ℒ)
+  → (⊢M : [] [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
+    ----------------------------
+  → ⊢ᵣ 𝒱 [] M ⊢M [] pc₀ k ⦂ T
+type-safety k pc₀ ⊢M = 𝒱-safe k pc₀ ⊢ₛ∅ ∉domₙ∅ ⊢ₑ∅ ⊢M
