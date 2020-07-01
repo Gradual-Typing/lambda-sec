@@ -328,6 +328,20 @@ castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
   ⊢v∷μ = ext-new-pres-⊢ₛ (⊢ₛ∷ ⊢v ⊢μ) fresh ⊢v
 ...   | no  _ = ⊢ᵣnsu-error
 
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢eq-ref eq₁ eq₂ _ _)
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-ref loc | _ | V-ref loc′ | _ with loc ≟ₗ loc′
+...   | yes _ = ⊢ᵣresult ⊢μ ⊢ᵥtrue
+...   | no  _ = ⊢ᵣresult ⊢μ ⊢ᵥfalse
+
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢ref-label eq)
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | V-ref loc | _ = ⊢ᵣresult ⊢μ ⊢ᵥlabel
+
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ ⊢pc-label = ⊢ᵣresult ⊢μ ⊢ᵥlabel
+
 -- Start with empty env and store.
 type-safety : ∀ {T M 𝓁̂₁ 𝓁̂₂}
   → (k : ℕ)
