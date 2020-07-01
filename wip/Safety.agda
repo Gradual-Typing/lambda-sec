@@ -21,6 +21,65 @@ open import WellTypedness
 
 
 
+-- Matches program state ⟨ μ , pc ⟩ from a configuration.
+infix 10 _▹_,_
+
+data _▹_,_ : Result Conf → Store → ℒ → Set where
+
+  ▹error : ∀ {μ pc err} → error err ▹ μ , pc
+
+  ▹timeout : ∀ {μ pc} → timeout ▹ μ , pc
+
+  ▹result : ∀ {μ μ′ v pc pc′}
+    → μ′ ≡ μ
+    → pc′ ≡ pc
+    → result ⟨ μ , v , pc ⟩ ▹ μ′ , pc′
+
+castT′-state-idem : ∀ {μ pc T₁ T₂ v}
+  → (T₁≲T₂ : T₁ ≲ T₂)
+  → μ ⊢ᵥ v ⦂ T₁
+  → castT′ μ pc T₁ T₂ T₁≲T₂ v ▹ μ , pc
+castT′-state-idem ≲-⊤ ⊢ᵥtt = ▹result refl refl
+castT′-state-idem ≲-𝔹 ⊢ᵥtrue = ▹result refl refl
+castT′-state-idem ≲-𝔹 ⊢ᵥfalse = ▹result refl refl
+castT′-state-idem ≲-ℒ ⊢ᵥlabel = ▹result refl refl
+castT′-state-idem (≲-⇒ _ _ _ _) (⊢ᵥclos ⊢γ ⊢M) = ▹result refl refl
+castT′-state-idem (≲-⇒ _ _ _ _) (⊢ᵥproxy ⊢v) = ▹result refl refl
+castT′-state-idem {v = V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref {𝓁̂₁} {𝓁̂₂} _ _ _ _) (⊢ᵥref eq)
+  with 𝓁̂₂
+... | ¿ = ▹result refl refl
+... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
+...   | yes _ = ▹result refl refl
+...   | no  _ = ▹error
+castT′-state-idem {v = V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref {𝓁̂₁} {𝓁̂₂} _ _ _ _) (⊢ᵥref-dyn eq)
+  with 𝓁̂₂
+... | ¿ = ▹result refl refl
+... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
+...   | yes _ = ▹result refl refl
+...   | no  _ = ▹error
+castT′-state-idem {μ} {pc} {v = V-lab 𝓁 v} (≲-Lab {𝓁̂₁} {𝓁̂₂} {T₁} {T₂} _ T₁≲T₂) (⊢ᵥlab 𝓁≼𝓁′ ⊢v)
+  with (l̂ 𝓁) ≾? 𝓁̂₂
+... | no  _ = ▹error
+... | yes _ with castT′ μ pc T₁ T₂ T₁≲T₂ v | castT′-state-idem {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢v
+...   | result ⟨ μ′ , v′ , pc′ ⟩ | ▹result μ≡μ′ pc≡pc′ = ▹result μ≡μ′ pc≡pc′
+...   | timeout | ▹timeout = ▹timeout
+...   | error _ | ▹error = ▹error
+castT′-state-idem {μ} {pc} {v = V-lab 𝓁 v} (≲-Lab {𝓁̂₁} {𝓁̂₂} {T₁} {T₂} _ T₁≲T₂) (⊢ᵥlab-dyn ⊢v)
+  with (l̂ 𝓁) ≾? 𝓁̂₂
+... | no  _ = ▹error
+... | yes _ with castT′ μ pc T₁ T₂ T₁≲T₂ v | castT′-state-idem {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢v
+...   | result ⟨ μ′ , v′ , pc′ ⟩ | ▹result μ≡μ′ pc≡pc′ = ▹result μ≡μ′ pc≡pc′
+...   | timeout | ▹timeout = ▹timeout
+...   | error _ | ▹error = ▹error
+
+
+castT-state-idem : ∀ {μ pc T₁ T₂ v}
+  → μ ⊢ᵥ v ⦂ T₁
+  → castT μ pc T₁ T₂ v ▹ μ , pc
+castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
+... | yes T₁≲T₂ = castT′-state-idem T₁≲T₂ ⊢v
+... | no  _     = ▹error
+
 𝒱-safe : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ}
   → (k : ℕ)
   → (pc₀ : ℒ)
@@ -150,48 +209,50 @@ open import WellTypedness
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
   | v | ⊢v
   rewrite eq
-  with castT μ (pc₀ ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc₀ ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v
+  with castT μ (pc₀ ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc₀ ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc₀ ⊔ 𝓁₂} {T′} {T} {v} ⊢v
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
   | v | ⊢v
-  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′
-  with castT μ′ pc′ T T″ v′ | ⊢castT {μ′} {pc′} {T} {T″} ⊢μ′ ⊢v′
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result μ≡μ′ _
+  with castT μ′ pc′ T T″ v′ | ⊢castT {μ′} {pc′} {T} {T″} ⊢μ′ ⊢v′ | castT-state-idem {μ′} {pc′} {T} {T″} {v′} ⊢v′
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
-  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} {v = w} eq
   | v | ⊢v
-  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′
-  | result ⟨ u″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result μ≡μ′ _
+  | result ⟨ u″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″ | ▹result μ′≡μ″ _
   with pc″ ≼? 𝓁₂
-... | yes _ = ⊢ᵣresult {!!} ⊢ᵥtt
--- (ext-update-pres-⊢ₛ (⊢ₛ∷ ⊢v″ ⊢μ″) {!!} ⊢v″) ⊢ᵥtt
+... | yes _ =
+  let eq′ = subst (λ □ → lookup □ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T″ , w ⟩) μ≡μ′ eq in
+  let eq″ = subst (λ □ → lookup □ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T″ , w ⟩) μ′≡μ″ eq′ in
+  ⊢ᵣresult (ext-update-pres-⊢ₛ (⊢ₛ∷ ⊢v″ ⊢μ″) eq″ ⊢v″) ⊢ᵥtt
 ... | no  _ = ⊢ᵣnsu-error
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
   | v | ⊢v
-  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′
-  | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | timeout | ⊢ᵣtimeout | ▹timeout = ⊢ᵣtimeout
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
   | v | ⊢v
-  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′
-  | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | error castError | ⊢ᵣcast-error | ▹error = ⊢ᵣcast-error
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
   | v | ⊢v
-  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′
-  | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | error NSUError | ⊢ᵣnsu-error | ▹error = ⊢ᵣnsu-error
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
   | v | ⊢v
-  | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+  | timeout | ⊢ᵣtimeout | ▹timeout = ⊢ᵣtimeout
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
   | v | ⊢v
-  | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+  | error castError | ⊢ᵣcast-error | ▹error = ⊢ᵣcast-error
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
   | v | ⊢v
-  | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+  | error NSUError | ⊢ᵣnsu-error | ▹error = ⊢ᵣnsu-error
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) | V-ref loc | ⊢ᵥref-dyn eq = {!!}
 
 -- Start with empty env and store.
