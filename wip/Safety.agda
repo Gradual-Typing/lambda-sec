@@ -335,6 +335,8 @@ castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
 ...   | yes _ = ⊢ᵣresult ⊢μ ⊢ᵥtrue
 ...   | no  _ = ⊢ᵣresult ⊢μ ⊢ᵥfalse
 
+
+
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢ref-label eq)
   rewrite proj₂ (⊢γ→∃v ⊢γ eq)
   with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
@@ -346,6 +348,50 @@ castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
 ... | V-lab 𝓁 v | _ = ⊢ᵣresult ⊢μ ⊢ᵥlabel
 
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ ⊢pc-label = ⊢ᵣresult ⊢μ ⊢ᵥlabel
+
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢⊔ eq₁ eq₂)
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-label 𝓁x | _ | V-label 𝓁y | _ = ⊢ᵣresult ⊢μ ⊢ᵥlabel
+
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢⊓ eq₁ eq₂)
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-label 𝓁x | _ | V-label 𝓁y | _ = ⊢ᵣresult ⊢μ ⊢ᵥlabel
+
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢≼ eq₁ eq₂)
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-label 𝓁x | _ | V-label 𝓁y | _ with 𝓁x ≼? 𝓁y
+...   | yes _ = ⊢ᵣresult ⊢μ ⊢ᵥtrue
+...   | no  _ = ⊢ᵣresult ⊢μ ⊢ᵥfalse
+
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢unlabel eq)
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | V-lab 𝓁 v | ⊢ᵥlab _ ⊢v = ⊢ᵣresult ⊢μ ⊢v
+... | V-lab 𝓁 v | ⊢ᵥlab-dyn ⊢v = ⊢ᵣresult ⊢μ ⊢v
+
+𝒱-safe {γ = γ} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢to-label {M = M} {𝓁 = 𝓁} ⊢M _)
+  with 𝒱 γ M ⊢M μ pc₀ k | 𝒱-safe k pc₀ ⊢μ fresh ⊢γ ⊢M
+... | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+... | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+... | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+... | result ⟨ μ′ , v , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v with pc′ ≼? (pc₀ ⊔ 𝓁)
+...   | yes _ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab ≼-refl ⊢v)
+...   | no  _ = ⊢ᵣnsu-error
+
+𝒱-safe {γ = γ} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢to-label-dyn {M = M} eq ⊢M)
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | V-label 𝓁 | _ with 𝒱 γ M ⊢M μ pc₀ k | 𝒱-safe k pc₀ ⊢μ fresh ⊢γ ⊢M
+...   | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+...   | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+...   | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+...   | result ⟨ μ′ , v , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v with pc′ ≼? (pc₀ ⊔ 𝓁)
+...     | yes _ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab-dyn ⊢v)
+...     | no  _ = ⊢ᵣnsu-error
+
 
 -- Start with empty env and store.
 type-safety : ∀ {T M 𝓁̂₁ 𝓁̂₂}
