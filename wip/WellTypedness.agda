@@ -243,6 +243,10 @@ ext-new-lookup-same {μ} {n} {n₀} {𝓁₁} {𝓁₁₀} {𝓁₂} {𝓁₂₀
   ⊥-elim (n₀≢n (proj₁ (×-≡-inv p≡)))
 ... | no  _ = lookup-n-something
 
+ext-lookup-first : ∀ {μ : Store} {loc T v}
+  → lookup (loc ↦ ⟨ T , v ⟩ ∷ μ) loc ≡ just ⟨ T , v ⟩
+ext-lookup-first {loc = loc} rewrite proj₂ (≟ₗ-≡-normal {loc}) = refl
+
 ⊢castT′ : ∀ {μ pc T₁ T₂ v}
   → (T₁≲T₂ : T₁ ≲ T₂)
   → μ ⊢ₛ μ
@@ -339,7 +343,8 @@ ext-update-pres-⊢ₑ : ∀ {Γ μ γ loc T w w′}
   → Γ ∣ loc ↦ ⟨ T , w′ ⟩ ∷ μ ⊢ₑ γ
 
 ext-update-pres-⊢ₑ eq ⊢ₑ∅ ⊢w′ = ⊢ₑ∅
-ext-update-pres-⊢ₑ eq (⊢ₑ∷ ⊢v ⊢γ) ⊢w′ = ⊢ₑ∷ (ext-update-pres-⊢ᵥ eq ⊢w′ ⊢v) (ext-update-pres-⊢ₑ eq ⊢γ ⊢w′)
+ext-update-pres-⊢ₑ eq (⊢ₑ∷ ⊢v ⊢γ) ⊢w′ =
+  ⊢ₑ∷ (ext-update-pres-⊢ᵥ eq ⊢w′ ⊢v) (ext-update-pres-⊢ₑ eq ⊢γ ⊢w′)
 
 ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥtt = ⊢ᵥtt
 ext-update-pres-⊢ᵥ eq ⊢ᵥw′ ⊢ᵥtrue = ⊢ᵥtrue
@@ -373,3 +378,44 @@ ext-update-pres-⊢ᵥ eq ⊢ᵥw′ (⊢ᵥlab-dyn ⊢v)  = ⊢ᵥlab-dyn  (ext
 ext-update-pres-⊢ₛ ⊢ₛ∅ eq ⊢w′ = ⊢ₛ∅
 ext-update-pres-⊢ₛ {μ} {σ} {loc} {T} {w} {w′} (⊢ₛ∷ ⊢v ⊢σ) eq ⊢w′ =
   ⊢ₛ∷ (ext-update-pres-⊢ᵥ eq ⊢w′ ⊢v) (ext-update-pres-⊢ₛ ⊢σ eq ⊢w′)
+
+ext-new-pres-⊢ₑ : ∀ {Γ μ γ n 𝓁₁ 𝓁₂ T w}
+  → n ∉domₙ μ
+  → Γ ∣ μ ⊢ₑ γ
+  → μ ⊢ᵥ w ⦂ T
+    --------------------------------
+  → Γ ∣ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ ⟨ T , w ⟩ ∷ μ ⊢ₑ γ
+
+ext-new-pres-⊢ᵥ : ∀ {μ n 𝓁₁ 𝓁₂ T Tᵥ w v}
+  → n ∉domₙ μ
+  → μ ⊢ᵥ w ⦂ T
+  → μ ⊢ᵥ v ⦂ Tᵥ
+    --------------------------------
+  → ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ ⟨ T , w ⟩ ∷ μ ⊢ᵥ v ⦂ Tᵥ
+
+ext-new-pres-⊢ₛ : ∀ {μ σ n 𝓁₁ 𝓁₂ T v}
+  → μ ⊢ₛ σ
+  → n ∉domₙ μ
+  → μ ⊢ᵥ v ⦂ T
+    -------------------------------
+  → ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ ⟨ T , v ⟩ ∷ μ ⊢ₛ σ
+
+ext-new-pres-⊢ₑ fresh ⊢ₑ∅ ⊢w = ⊢ₑ∅
+ext-new-pres-⊢ₑ fresh (⊢ₑ∷ ⊢v ⊢γ) ⊢w =
+  ⊢ₑ∷ (ext-new-pres-⊢ᵥ fresh ⊢w ⊢v) (ext-new-pres-⊢ₑ fresh ⊢γ ⊢w)
+
+ext-new-pres-⊢ᵥ fresh ⊢w ⊢ᵥtt = ⊢ᵥtt
+ext-new-pres-⊢ᵥ fresh ⊢w ⊢ᵥtrue = ⊢ᵥtrue
+ext-new-pres-⊢ᵥ fresh ⊢w ⊢ᵥfalse = ⊢ᵥfalse
+ext-new-pres-⊢ᵥ fresh ⊢w ⊢ᵥlabel = ⊢ᵥlabel
+ext-new-pres-⊢ᵥ fresh ⊢w (⊢ᵥclos ⊢γ ⊢M) = ⊢ᵥclos (ext-new-pres-⊢ₑ fresh ⊢γ ⊢w) ⊢M
+ext-new-pres-⊢ᵥ fresh ⊢w (⊢ᵥproxy ⊢v) = ⊢ᵥproxy (ext-new-pres-⊢ᵥ fresh ⊢w ⊢v)
+ext-new-pres-⊢ᵥ fresh ⊢w (⊢ᵥref eq) = ⊢ᵥref (ext-new-lookup-same fresh eq)
+ext-new-pres-⊢ᵥ fresh ⊢w (⊢ᵥref-dyn eq) = ⊢ᵥref-dyn (ext-new-lookup-same fresh eq)
+ext-new-pres-⊢ᵥ fresh ⊢w (⊢ᵥlab 𝓁≼𝓁′ ⊢v) = ⊢ᵥlab 𝓁≼𝓁′ (ext-new-pres-⊢ᵥ fresh ⊢w ⊢v)
+ext-new-pres-⊢ᵥ fresh ⊢w (⊢ᵥlab-dyn tv) = ⊢ᵥlab-dyn (ext-new-pres-⊢ᵥ fresh ⊢w tv)
+
+ext-new-pres-⊢ₛ ⊢ₛ∅ fresh ⊢v = ⊢ₛ∅
+ext-new-pres-⊢ₛ (⊢ₛ∷ {v = v₀} {T = T₀} ⊢v₀ ⊢σ) fresh ⊢v =
+  ⊢ₛ∷ (ext-new-pres-⊢ᵥ fresh ⊢v ⊢v₀) (ext-new-pres-⊢ₛ ⊢σ fresh ⊢v)
+

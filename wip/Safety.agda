@@ -306,13 +306,16 @@ castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
   | v | ⊢v
   | error NSUError | ⊢ᵣnsu-error | ▹error = ⊢ᵣnsu-error
 
-𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢new {𝓁 = 𝓁} eq 𝓁̂₁≲𝓁) with pc₀ ≼? 𝓁
+𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢new {T = T} {𝓁 = 𝓁} eq 𝓁̂₁≲𝓁) with pc₀ ≼? 𝓁
 ... | no  _ = ⊢ᵣnsu-error
 ... | yes _
   rewrite proj₂ (⊢γ→∃v ⊢γ eq)
   with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
-... | v | ⊢v = {!!}
-
+... | v | ⊢v =
+  ⊢ᵣresult ⊢v∷μ (⊢ᵥref (ext-lookup-first {μ} {⟨ length μ , pc₀ , 𝓁 ⟩}))
+  where
+  ⊢v∷μ : ⟨ length μ , pc₀ , 𝓁 ⟩ ↦ ⟨ T , v ⟩ ∷ μ ⊢ₛ ⟨ length μ , pc₀ , 𝓁 ⟩ ↦ ⟨ T , v ⟩ ∷ μ
+  ⊢v∷μ = ext-new-pres-⊢ₛ (⊢ₛ∷ ⊢v ⊢μ) fresh ⊢v
 
 -- Start with empty env and store.
 type-safety : ∀ {T M 𝓁̂₁ 𝓁̂₂}
