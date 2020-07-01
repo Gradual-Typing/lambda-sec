@@ -317,6 +317,17 @@ castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
   ⊢v∷μ : ⟨ length μ , pc₀ , 𝓁 ⟩ ↦ ⟨ T , v ⟩ ∷ μ ⊢ₛ ⟨ length μ , pc₀ , 𝓁 ⟩ ↦ ⟨ T , v ⟩ ∷ μ
   ⊢v∷μ = ext-new-pres-⊢ₛ (⊢ₛ∷ ⊢v ⊢μ) fresh ⊢v
 
+𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢new-dyn {T = T} eq₁ eq₂)
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-label 𝓁 | ⊢ᵥlabel | v | ⊢v
+  with pc₀ ≼? 𝓁
+...   | yes _ = ⊢ᵣresult ⊢v∷μ (⊢ᵥref-dyn (ext-lookup-first {μ} {⟨ length μ , pc₀ , 𝓁 ⟩}))
+  where
+  ⊢v∷μ : ⟨ length μ , pc₀ , 𝓁 ⟩ ↦ ⟨ T , v ⟩ ∷ μ ⊢ₛ ⟨ length μ , pc₀ , 𝓁 ⟩ ↦ ⟨ T , v ⟩ ∷ μ
+  ⊢v∷μ = ext-new-pres-⊢ₛ (⊢ₛ∷ ⊢v ⊢μ) fresh ⊢v
+...   | no  _ = ⊢ᵣnsu-error
+
 -- Start with empty env and store.
 type-safety : ∀ {T M 𝓁̂₁ 𝓁̂₂}
   → (k : ℕ)
