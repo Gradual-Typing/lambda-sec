@@ -335,7 +335,21 @@ castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
 ...   | yes _ = ⊢ᵣresult ⊢μ ⊢ᵥtrue
 ...   | no  _ = ⊢ᵣresult ⊢μ ⊢ᵥfalse
 
+𝒱-safe {Γ} {γ} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢let {T = T} {T′ = T′} {M = M} ⊢M ⊢N T′≲T)
+  with 𝒱 {Γ} γ M ⊢M μ pc₀ k | 𝒱-safe {Γ} k pc₀ ⊢μ fresh ⊢γ ⊢M
+... | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+... | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+... | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+... | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′
+  with castT μ′ pc′ T′ T v′ | ⊢castT {μ′} {pc′} {T′} {T} ⊢μ′ ⊢v′
+...   | result ⟨ μ″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″ = 𝒱-safe k pc″ ⊢μ″ {!!} (⊢ₑ∷ ⊢v″ {!!}) ⊢N
+...   | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+...   | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+...   | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
 
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢· _ _ _ _) = {!!}
+
+𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢ƛ ⊢N) = ⊢ᵣresult ⊢μ (⊢ᵥclos ⊢γ ⊢N)
 
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢ref-label eq)
   rewrite proj₂ (⊢γ→∃v ⊢γ eq)
