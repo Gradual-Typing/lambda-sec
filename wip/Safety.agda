@@ -17,68 +17,41 @@ open Syntax.OpSig Op sig
 open import Store
 open import Interp
 open import WellTypedness
+open import CastStateIdem
 
+-- Well-formedness of heap w.r.t address
+data WFaddr : Result Conf → Set where
 
+  WFtimeout : WFaddr timeout
 
+  WFerror : ∀ {err} → WFaddr (error err)
 
--- Matches program state ⟨ μ , pc ⟩ from a configuration.
-infix 10 _▹_,_
+  WFresult : ∀ {μ v pc}
+    → length μ ∉domₙ μ
+    → WFaddr (result ⟨ μ , v , pc ⟩)
 
-data _▹_,_ : Result Conf → Store → ℒ → Set where
+data WTenv : Result Conf → Context → Env → Set where
 
-  ▹error : ∀ {μ pc err} → error err ▹ μ , pc
+  WTenv-timeout : ∀ {Γ γ} → WTenv timeout Γ γ
 
-  ▹timeout : ∀ {μ pc} → timeout ▹ μ , pc
+  WTenv-error : ∀ {Γ γ err} → WTenv (error err) Γ γ
 
-  ▹result : ∀ {μ μ′ v pc pc′}
-    → μ′ ≡ μ
-    → pc′ ≡ pc
-    → result ⟨ μ , v , pc ⟩ ▹ μ′ , pc′
+  WTenv-result : ∀ {Γ γ μ v pc}
+    → Γ ∣ μ ⊢ₑ γ
+    → WTenv (result ⟨ μ , v , pc ⟩) Γ γ
 
-castT′-state-idem : ∀ {μ pc T₁ T₂ v}
-  → (T₁≲T₂ : T₁ ≲ T₂)
-  → μ ⊢ᵥ v ⦂ T₁
-  → castT′ μ pc T₁ T₂ T₁≲T₂ v ▹ μ , pc
-castT′-state-idem ≲-⊤ ⊢ᵥtt = ▹result refl refl
-castT′-state-idem ≲-𝔹 ⊢ᵥtrue = ▹result refl refl
-castT′-state-idem ≲-𝔹 ⊢ᵥfalse = ▹result refl refl
-castT′-state-idem ≲-ℒ ⊢ᵥlabel = ▹result refl refl
-castT′-state-idem (≲-⇒ _ _ _ _) (⊢ᵥclos ⊢γ ⊢M) = ▹result refl refl
-castT′-state-idem (≲-⇒ _ _ _ _) (⊢ᵥproxy ⊢v) = ▹result refl refl
-castT′-state-idem {v = V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref {𝓁̂₁} {𝓁̂₂} _ _ _ _) (⊢ᵥref eq)
-  with 𝓁̂₂
-... | ¿ = ▹result refl refl
-... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
-...   | yes _ = ▹result refl refl
-...   | no  _ = ▹error
-castT′-state-idem {v = V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩} (≲-Ref {𝓁̂₁} {𝓁̂₂} _ _ _ _) (⊢ᵥref-dyn eq)
-  with 𝓁̂₂
-... | ¿ = ▹result refl refl
-... | (l̂ 𝓁₂′) with 𝓁₂ ≟ 𝓁₂′
-...   | yes _ = ▹result refl refl
-...   | no  _ = ▹error
-castT′-state-idem {μ} {pc} {v = V-lab 𝓁 v} (≲-Lab {𝓁̂₁} {𝓁̂₂} {T₁} {T₂} _ T₁≲T₂) (⊢ᵥlab 𝓁≼𝓁′ ⊢v)
-  with (l̂ 𝓁) ≾? 𝓁̂₂
-... | no  _ = ▹error
-... | yes _ with castT′ μ pc T₁ T₂ T₁≲T₂ v | castT′-state-idem {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢v
-...   | result ⟨ μ′ , v′ , pc′ ⟩ | ▹result μ≡μ′ pc≡pc′ = ▹result μ≡μ′ pc≡pc′
-...   | timeout | ▹timeout = ▹timeout
-...   | error _ | ▹error = ▹error
-castT′-state-idem {μ} {pc} {v = V-lab 𝓁 v} (≲-Lab {𝓁̂₁} {𝓁̂₂} {T₁} {T₂} _ T₁≲T₂) (⊢ᵥlab-dyn ⊢v)
-  with (l̂ 𝓁) ≾? 𝓁̂₂
-... | no  _ = ▹error
-... | yes _ with castT′ μ pc T₁ T₂ T₁≲T₂ v | castT′-state-idem {μ} {pc} {T₁} {T₂} {v} T₁≲T₂ ⊢v
-...   | result ⟨ μ′ , v′ , pc′ ⟩ | ▹result μ≡μ′ pc≡pc′ = ▹result μ≡μ′ pc≡pc′
-...   | timeout | ▹timeout = ▹timeout
-...   | error _ | ▹error = ▹error
+𝒱-pres-WFaddr : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ pc k}
+  → (⊢M : Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
+  → μ ⊢ₛ μ
+  → Γ ∣ μ ⊢ₑ γ
+  → length μ ∉domₙ μ
+  → WFaddr (𝒱 γ M ⊢M μ pc k)
 
-
-castT-state-idem : ∀ {μ pc T₁ T₂ v}
-  → μ ⊢ᵥ v ⦂ T₁
-  → castT μ pc T₁ T₂ v ▹ μ , pc
-castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
-... | yes T₁≲T₂ = castT′-state-idem T₁≲T₂ ⊢v
-... | no  _     = ▹error
+𝒱-pres-⊢ₑ : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ pc k}
+  → (⊢M : Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
+  → μ ⊢ₛ μ
+  → Γ ∣ μ ⊢ₑ γ
+  → WTenv (𝒱 γ M ⊢M μ pc k) Γ γ
 
 𝒱-safe : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ}
   → (k : ℕ)
@@ -89,6 +62,51 @@ castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
   → (⊢M : Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
     ----------------------------
   → ⊢ᵣ 𝒱 γ M ⊢M μ pc₀ k ⦂ T
+
+𝒱-pres-WFaddr {k = 0} = λ _ _ _ _ → WFtimeout
+𝒱-pres-WFaddr {M = ` x} {k = suc k} (⊢` eq) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq) =
+  WFresult fresh
+𝒱-pres-WFaddr {k = suc k} ⊢tt ⊢μ ⊢γ fresh = WFresult fresh
+𝒱-pres-WFaddr {k = suc k} ⊢true ⊢μ ⊢γ fresh = WFresult fresh
+𝒱-pres-WFaddr {k = suc k} ⊢false ⊢μ ⊢γ fresh = WFresult fresh
+𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc} {suc k} (⊢let {T = T} {T′} {M = M} {N} ⊢M ⊢N x) ⊢μ ⊢γ fresh
+  with 𝒱 {Γ} γ M ⊢M μ pc k | 𝒱-pres-WFaddr {Γ} {μ = μ} {pc} {k} ⊢M ⊢μ ⊢γ fresh
+    | 𝒱-safe k pc ⊢μ fresh ⊢γ ⊢M | 𝒱-pres-⊢ₑ {Γ} {γ} {μ = μ} {pc} {k} ⊢M ⊢μ ⊢γ
+... | timeout | WFtimeout | ⊢ᵣtimeout | WTenv-timeout = WFtimeout
+... | error NSUError | WFerror | ⊢ᵣnsu-error | WTenv-error = WFerror
+... | error castError | WFerror | ⊢ᵣcast-error | WTenv-error = WFerror
+... | result ⟨ μ′ , v′ , pc′ ⟩ | WFresult fresh′ | ⊢ᵣresult ⊢μ′ ⊢v′ | WTenv-result μ′⊢γ
+  with castT μ′ pc′ T′ T v′ | castT-state-idem {μ′} {pc′} {T′} {T} ⊢v′ | ⊢castT {μ′} {pc′} {T′} {T} ⊢μ′ ⊢v′
+...   | result ⟨ μ″ , v″ , pc″ ⟩ | ▹result μ′≡μ″ _ | ⊢ᵣresult ⊢μ″ ⊢v″ =
+  𝒱-pres-WFaddr {T ∷ Γ} {v″ ∷ γ} {pc = pc″} {k} ⊢N ⊢μ″ (⊢ₑ∷ ⊢v″ μ″⊢γ) fresh″
+  where
+  μ″⊢γ = subst (λ □ → Γ ∣ □ ⊢ₑ γ) μ′≡μ″ μ′⊢γ
+  fresh″ = subst (λ □ → length □ ∉domₙ □) μ′≡μ″ fresh′
+...   | timeout | ▹timeout | ⊢ᵣtimeout = WFtimeout
+...   | error NSUError | ▹error | ⊢ᵣnsu-error = WFerror
+...   | error castError | ▹error | ⊢ᵣcast-error = WFerror
+-- 𝒱-pres-WFaddr (⊢if x tM tM₁ x₁) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢get x) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢set x x₁ x₂ x₃) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢new x x₁) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢new-dyn x x₁) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢eq-ref x x₁ x₂ x₃) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢ƛ tM) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢· x x₁ x₂ x₃) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢ref-label x) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢lab-label x) fresh = {!!}
+-- 𝒱-pres-WFaddr ⊢pc-label fresh = {!!}
+-- 𝒱-pres-WFaddr ⊢label fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢≼ x x₁) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢⊔ x x₁) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢⊓ x x₁) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢unlabel x) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢to-label tM x) fresh = {!!}
+-- 𝒱-pres-WFaddr (⊢to-label-dyn x tM) fresh = {!!}
+
+
+
 𝒱-safe 0 _ _ _ _ _ = ⊢ᵣtimeout
 
 𝒱-safe (suc k) pc₀ ⊢μ _ ⊢γ ⊢tt = ⊢ᵣresult ⊢μ ⊢ᵥtt
@@ -336,16 +354,17 @@ castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
 ...   | no  _ = ⊢ᵣresult ⊢μ ⊢ᵥfalse
 
 𝒱-safe {Γ} {γ} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢let {T = T} {T′ = T′} {M = M} ⊢M ⊢N T′≲T)
-  with 𝒱 {Γ} γ M ⊢M μ pc₀ k | 𝒱-safe {Γ} k pc₀ ⊢μ fresh ⊢γ ⊢M
-... | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
-... | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
-... | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
-... | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′
-  with castT μ′ pc′ T′ T v′ | ⊢castT {μ′} {pc′} {T′} {T} ⊢μ′ ⊢v′
-...   | result ⟨ μ″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″ = 𝒱-safe k pc″ ⊢μ″ {!!} (⊢ₑ∷ ⊢v″ {!!}) ⊢N
-...   | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
-...   | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
-...   | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+  with 𝒱 {Γ} γ M ⊢M μ pc₀ k | 𝒱-safe {Γ} k pc₀ ⊢μ fresh ⊢γ ⊢M | 𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc₀} {k} ⊢M ⊢μ ⊢γ fresh
+... | timeout | ⊢ᵣtimeout | WFtimeout = ⊢ᵣtimeout
+... | error NSUError | ⊢ᵣnsu-error | _ = ⊢ᵣnsu-error
+... | error castError | ⊢ᵣcast-error | _ = ⊢ᵣcast-error
+... | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | WFresult fresh′
+  with castT μ′ pc′ T′ T v′ | ⊢castT {μ′} {pc′} {T′} {T} ⊢μ′ ⊢v′ | castT-state-idem {μ′} {pc′} {T′} {T} ⊢v′
+...   | result ⟨ μ″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″ | ▹result μ′≡μ″ pc′≡pc″ =
+  𝒱-safe k pc″ ⊢μ″ (subst (λ □ → length □ ∉domₙ □) μ′≡μ″ fresh′) (⊢ₑ∷ ⊢v″ {!!}) ⊢N
+...   | timeout | ⊢ᵣtimeout | ▹timeout = ⊢ᵣtimeout
+...   | error NSUError | ⊢ᵣnsu-error | ▹error = ⊢ᵣnsu-error
+...   | error castError | ⊢ᵣcast-error | ▹error = ⊢ᵣcast-error
 
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢· _ _ _ _) = {!!}
 
