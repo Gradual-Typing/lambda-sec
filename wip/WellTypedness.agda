@@ -1,8 +1,8 @@
 module WellTypedness where
 
 
-open import Data.Nat using (ℕ; zero; suc)
-open import Data.Nat.Properties renaming (_≟_ to _≟ₙ_)
+open import Data.Nat using (ℕ; zero; suc; _>_; _<_)
+open import Data.Nat.Properties using (<⇒≢; <-trans; ≤-refl) renaming (_≟_ to _≟ₙ_)
 open import Data.List using (List; []; _∷_; length)
 open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe using (Maybe; just; nothing)
@@ -203,7 +203,7 @@ data _∉domₙ_ : ℕ → Store → Set where
   ∉domₙ∅ : ∀ {n} → n ∉domₙ []
 
   ∉domₙ∷ : ∀ {μ n n₀ 𝓁₁₀ 𝓁₂₀ T₀ v₀}
-    → n₀ ≢ n
+    → n₀ < n
     → n ∉domₙ μ
     → n ∉domₙ (⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ T₀ , v₀ ⟩ ∷ μ)
 
@@ -211,9 +211,9 @@ data _∉domₙ_ : ℕ → Store → Set where
   → n ∉domₙ μ
   → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ nothing
 ∉→lookup≡nothing {[]} ∉domₙ∅ = refl
-∉→lookup≡nothing {⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ v₀ , T₀ ⟩ ∷ μ} {n} {𝓁₁} {𝓁₂} (∉domₙ∷ n₀≢n n∉domμ)
+∉→lookup≡nothing {⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ↦ ⟨ v₀ , T₀ ⟩ ∷ μ} {n} {𝓁₁} {𝓁₂} (∉domₙ∷ n₀<n n∉domμ)
   with ⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ≟ₗ ⟨ n , 𝓁₁ , 𝓁₂ ⟩
-... | yes p≡ = let n₀≡n = proj₁ (×-≡-inv p≡) in ⊥-elim (n₀≢n n₀≡n)
+... | yes p≡ = let n₀≡n = proj₁ (×-≡-inv p≡) in ⊥-elim ((<⇒≢ n₀<n) n₀≡n)
 ... | no  _  = ∉→lookup≡nothing n∉domμ
 
 lookup-≢ : ∀ {μ : Store} {n n′ 𝓁₁ 𝓁₂ T v}
@@ -427,3 +427,40 @@ ext-new-pres-⊢ₛ ⊢ₛ∅ fresh ⊢v = ⊢ₛ∅
 ext-new-pres-⊢ₛ (⊢ₛ∷ {v = v₀} {T = T₀} ⊢v₀ ⊢σ) fresh ⊢v =
   ⊢ₛ∷ (ext-new-pres-⊢ᵥ fresh ⊢v ⊢v₀) (ext-new-pres-⊢ₛ ⊢σ fresh ⊢v)
 
+private
+  n<1+n : ∀ n → n < suc n
+  n<1+n 0 = Data.Nat.s≤s Data.Nat.z≤n
+  n<1+n (suc n) = Data.Nat.s≤s (n<1+n n)
+
+  fresh-weaken : ∀ {μ n}
+    → n ∉domₙ μ
+    → (suc n) ∉domₙ μ
+  fresh-weaken ∉domₙ∅ = ∉domₙ∅
+  fresh-weaken {μ} {n} (∉domₙ∷ n₀<n fresh) = ∉domₙ∷ (<-trans n₀<n (n<1+n n)) (fresh-weaken fresh)
+
+  n<lengthμ : ∀ {μ : Store} {n m 𝓁₁ 𝓁₂ T v}
+    → m ∉domₙ μ
+    → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
+    → n < m
+  n<lengthμ {n = n} {m} {𝓁₁} {𝓁₂} (∉domₙ∷ {μ} {m} {n₀} {𝓁₁₀} {𝓁₂₀} n₀<m fresh) eq
+    with ⟨ n₀ , 𝓁₁₀ , 𝓁₂₀ ⟩ ≟ₗ ⟨ n , 𝓁₁ , 𝓁₂ ⟩
+  ... | yes p≡ rewrite sym (proj₁ (×-≡-inv p≡)) = n₀<m
+  ... | no ¬p≡ = n<lengthμ fresh eq
+
+
+ext-new-fresh : ∀ {μ n 𝓁₁ 𝓁₂ T v}
+  → length μ ∉domₙ μ
+  → n ≡ length μ
+  → length (⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ ⟨ T , v ⟩ ∷ μ) ∉domₙ (⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ ⟨ T , v ⟩ ∷ μ)
+ext-new-fresh {μ} fresh eq rewrite eq = ∉domₙ∷ (n<1+n (length μ)) (fresh-weaken fresh)
+
+ext-update-fresh : ∀ {μ n 𝓁₁ 𝓁₂ T v w}
+  → length μ ∉domₙ μ
+  → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T , v ⟩
+  → length (⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ ⟨ T , w ⟩ ∷ μ) ∉domₙ (⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ ⟨ T , w ⟩ ∷ μ)
+ext-update-fresh {μ} {n} {𝓁₁} {𝓁₂} {T} {v} fresh eq = ∉domₙ∷ (<-trans n<lenμ lenμ<lenv∷μ) (fresh-weaken fresh)
+  where
+  n<lenμ : n < length μ
+  n<lenμ = n<lengthμ fresh eq
+  lenμ<lenv∷μ : length μ < length ((⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ ⟨ T , v ⟩) ∷ μ)
+  lenμ<lenv∷μ = Data.Nat.s≤s ≤-refl

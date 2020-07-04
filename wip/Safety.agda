@@ -207,8 +207,156 @@ data WTenv : Result Conf → Context → Env → Set where
 𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
   | V-false | ⊢ᵥfalse
   | error castError | ⊢ᵣcast-error | WFerror = WFerror
--- 𝒱-pres-WFaddr (⊢get x) fresh = {!!}
--- 𝒱-pres-WFaddr (⊢set x x₁ x₂ x₃) fresh = {!!}
+
+𝒱-pres-WFaddr {k = suc k} (⊢get eq) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢get {T = T} eq) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T′} {v = v} eq′
+  rewrite eq′
+  with castT μ (pc ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢v
+  where
+  ⊢v = lookup-safe-corollary ⊢μ eq′
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢get {T = T} eq) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T′} {v = v} eq′
+  | result ⟨ μ′ , _ , _ ⟩ | ⊢ᵣresult _ _ | ▹result μ≡μ′ _ = WFresult (subst (λ □ → length □ ∉domₙ □) μ≡μ′ fresh)
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢get {T = T} eq) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T′} {v = v} eq′
+  | timeout | ⊢ᵣtimeout | ▹timeout = WFtimeout
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢get {T = T} eq) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T′} {v = v} eq′
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢get {T = T} eq) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T′} {v = v} eq′
+  | error castError | ⊢ᵣcast-error | ▹error = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢get {T = T} eq) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T′} {v = v} eq′
+  rewrite eq′
+  with castT μ (pc ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢v
+  where
+  ⊢v = lookup-safe-corollary ⊢μ eq′
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢get {T = T} eq) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T′} {v = v} eq′
+  | result ⟨ μ′ , _ , _ ⟩ | ⊢ᵣresult _ _ | ▹result μ≡μ′ _ = WFresult (subst (λ □ → length □ ∉domₙ □) μ≡μ′ fresh)
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢get {T = T} eq) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T′} {v = v} eq′
+  | timeout | ⊢ᵣtimeout | ▹timeout = WFtimeout
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢get {T = T} eq) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T′} {v = v} eq′
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢get {T = T} eq) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T′} {v = v} eq′
+  | error castError | ⊢ᵣcast-error | ▹error = WFerror
+
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁)
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
+  | v | ⊢v
+  rewrite eq
+  with castT μ (pc ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc ⊔ 𝓁₂} {T′} {T} {v} ⊢v
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result μ≡μ′ _
+  with castT μ′ pc′ T T″ v′ | ⊢castT {μ′} {pc′} {T} {T″} ⊢μ′ ⊢v′ | castT-state-idem {μ′} {pc′} {T} {T″} {v′} ⊢v′
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} {v = w} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result μ≡μ′ _
+  | result ⟨ u″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″ | ▹result μ′≡μ″ _
+  with pc″ ≼? 𝓁₂
+... | yes _ = WFresult (ext-update-fresh fresh′ hit)
+  where
+  μ≡μ″ = trans μ≡μ′ μ′≡μ″
+  fresh′ = subst (λ □ → length □ ∉domₙ □) μ≡μ″ fresh
+  hit = subst (λ □ → lookup □ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T″ , w ⟩) μ≡μ″ eq
+... | no  _ = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | timeout | ⊢ᵣtimeout | ▹timeout = WFtimeout
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | error castError | ⊢ᵣcast-error | ▹error = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
+  | v | ⊢v
+  | timeout | ⊢ᵣtimeout | ▹timeout = WFtimeout
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
+  | v | ⊢v
+  | error castError | ⊢ᵣcast-error | ▹error = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
+  | v | ⊢v
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
+  | v | ⊢v
+  rewrite eq
+  with castT μ (pc ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc ⊔ 𝓁₂} {T′} {T} {v} ⊢v
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result μ≡μ′ _
+  with castT μ′ pc′ T T″ v′ | ⊢castT {μ′} {pc′} {T} {T″} ⊢μ′ ⊢v′ | castT-state-idem {μ′} {pc′} {T} {T″} {v′} ⊢v′
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} {v = w} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result μ≡μ′ _
+  | result ⟨ u″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″ | ▹result μ′≡μ″ _
+  with pc″ ≼? 𝓁₂
+... | yes _ = WFresult (ext-update-fresh fresh′ hit)
+  where
+  μ≡μ″ = trans μ≡μ′ μ′≡μ″
+  fresh′ = subst (λ □ → length □ ∉domₙ □) μ≡μ″ fresh
+  hit = subst (λ □ → lookup □ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T″ , w ⟩) μ≡μ″ eq
+... | no  _ = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | timeout | ⊢ᵣtimeout | ▹timeout = WFtimeout
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | error castError | ⊢ᵣcast-error | ▹error = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
+  | v | ⊢v
+  | timeout | ⊢ᵣtimeout | ▹timeout = WFtimeout
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
+  | v | ⊢v
+  | error castError | ⊢ᵣcast-error | ▹error = WFerror
+𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
+  | v | ⊢v
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
 -- 𝒱-pres-WFaddr (⊢new x x₁) fresh = {!!}
 -- 𝒱-pres-WFaddr (⊢new-dyn x x₁) fresh = {!!}
 -- 𝒱-pres-WFaddr (⊢eq-ref x x₁ x₂ x₃) fresh = {!!}
