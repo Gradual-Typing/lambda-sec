@@ -70,6 +70,7 @@ data WTenv : Result Conf → Context → Env → Set where
 𝒱-pres-WFaddr {k = suc k} ⊢tt ⊢μ ⊢γ fresh = WFresult fresh
 𝒱-pres-WFaddr {k = suc k} ⊢true ⊢μ ⊢γ fresh = WFresult fresh
 𝒱-pres-WFaddr {k = suc k} ⊢false ⊢μ ⊢γ fresh = WFresult fresh
+
 𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc} {suc k} (⊢let {T = T} {T′} {M = M} {N} ⊢M ⊢N x) ⊢μ ⊢γ fresh
   with 𝒱 {Γ} γ M ⊢M μ pc k | 𝒱-pres-WFaddr {Γ} {μ = μ} {pc} {k} ⊢M ⊢μ ⊢γ fresh
     | 𝒱-safe k pc ⊢μ fresh ⊢γ ⊢M | 𝒱-pres-⊢ₑ {Γ} {γ} {μ = μ} {pc} {k} ⊢M ⊢μ ⊢γ
@@ -86,7 +87,126 @@ data WTenv : Result Conf → Context → Env → Set where
 ...   | timeout | ▹timeout | ⊢ᵣtimeout = WFtimeout
 ...   | error NSUError | ▹error | ⊢ᵣnsu-error = WFerror
 ...   | error castError | ▹error | ⊢ᵣcast-error = WFerror
--- 𝒱-pres-WFaddr (⊢if x tM tM₁ x₁) fresh = {!!}
+
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc} {suc k} (⊢if {M = M} eq ⊢M ⊢N _) ⊢μ ⊢γ fresh | V-true | ⊢ᵥtrue
+  with 𝒱 γ M ⊢M μ pc k | 𝒱-safe k pc ⊢μ fresh ⊢γ ⊢M | 𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc} {k} ⊢M ⊢μ ⊢γ fresh
+𝒱-pres-WFaddr {k = suc k} (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ′ | WFresult fresh′
+  with castL μ′ pc′ 𝓁̂₂ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂≾𝓁̂⊔̂𝓁̂′ | ⊢castL {μ′} {pc′} {𝓁̂₂} {𝓁̂₂ ⊔̂ 𝓁̂₂′} 𝓁̂≾𝓁̂⊔̂𝓁̂′ ⊢μ′
+    | castL-state-idem {μ′} {pc′} {𝓁̂₂} {𝓁̂₂ ⊔̂ 𝓁̂₂′} 𝓁̂≾𝓁̂⊔̂𝓁̂′
+𝒱-pres-WFaddr {k = suc k} (⊢if {T = T} {T′} {T″} eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ′ | WFresult fresh′
+  | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt | ▹result μ′≡μ″ _
+  with castT μ″ pc″ T T″ vₘ | ⊢castT {μ″} {pc″} {T} {T″} ⊢μ″ ⊢vₘ″ | castT-state-idem {μ″} {pc″} {T} {T″} ⊢vₘ″
+  where
+  ⊢vₘ″ = subst (λ □ → □ ⊢ᵥ vₘ ⦂ T) μ′≡μ″ ⊢vₘ′
+𝒱-pres-WFaddr {k = suc k} (⊢if {T = T} {T′} {T″} eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ′ | WFresult fresh′
+  | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt | ▹result μ′≡μ″ _
+  | result ⟨ μ‴ , _ , _ ⟩ | ⊢ᵣresult _ _ | ▹result μ″≡μ‴ _ = WFresult fresh″
+  where
+  fresh″ : length μ‴ ∉domₙ μ‴
+  fresh″ = subst (λ □ → length □ ∉domₙ □) (trans μ′≡μ″ μ″≡μ‴) fresh′
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ′ | WFresult fresh′
+  | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt | ▹result μ′≡μ″ _
+  | timeout | ⊢ᵣtimeout | ▹timeout = WFtimeout
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ′ | WFresult fresh′
+  | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt | ▹result μ′≡μ″ _
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₘ′ | WFresult fresh′
+  | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt | ▹result μ′≡μ″ _
+  | error castError | ⊢ᵣcast-error | ▹error = WFerror
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult _ _ | WFresult _
+  | timeout | ⊢ᵣtimeout | ▹timeout = WFtimeout
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult _ _ | WFresult _
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | result ⟨ μ′ , vₘ , pc′ ⟩ | ⊢ᵣresult _ _ | WFresult _
+  | error castError | ⊢ᵣcast-error | ▹error = WFerror
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | timeout | ⊢ᵣtimeout | WFtimeout = WFtimeout
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | error NSUError | ⊢ᵣnsu-error | WFerror = WFerror
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-true | ⊢ᵥtrue
+  | error castError | ⊢ᵣcast-error | WFerror = WFerror
+𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc} {suc k} (⊢if {N = N} eq ⊢M ⊢N _) ⊢μ ⊢γ fresh | V-false | ⊢ᵥfalse
+  with 𝒱 γ N ⊢N μ pc k | 𝒱-safe k pc ⊢μ fresh ⊢γ ⊢N | 𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc} {k} ⊢N ⊢μ ⊢γ fresh
+𝒱-pres-WFaddr {k = suc k} (⊢if {𝓁̂₁ = 𝓁̂₁} {𝓁̂₂} {𝓁̂₂′} eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ | WFresult fresh′
+  with castL μ′ pc′ 𝓁̂₂′ (𝓁̂₂ ⊔̂ 𝓁̂₂′) 𝓁̂≾𝓁̂′⊔̂𝓁̂ | ⊢castL {μ′} {pc′} {𝓁̂₂′} {𝓁̂₂ ⊔̂ 𝓁̂₂′} 𝓁̂≾𝓁̂′⊔̂𝓁̂ ⊢μ′
+    | castL-state-idem {μ′} {pc′} {𝓁̂₂′} {𝓁̂₂ ⊔̂ 𝓁̂₂′} 𝓁̂≾𝓁̂′⊔̂𝓁̂
+𝒱-pres-WFaddr {k = suc k} (⊢if {T = T} {T′} {T″} eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ | WFresult fresh′
+  | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt | ▹result μ′≡μ″ _
+  with castT μ″ pc″ T′ T″ vₙ | ⊢castT {μ″} {pc″} {T′} {T″} ⊢μ″ ⊢vₙ′ | castT-state-idem {μ″} {pc″} {T′} {T″} ⊢vₙ′
+  where
+  ⊢vₙ′ = subst (λ □ → □ ⊢ᵥ vₙ ⦂ T′) μ′≡μ″ ⊢vₙ
+𝒱-pres-WFaddr {k = suc k} (⊢if {T = T} {T′} {T″} eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ | WFresult fresh′
+  | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt | ▹result μ′≡μ″ _
+  | result ⟨ μ‴ , _ , _ ⟩ | ⊢ᵣresult _ _ | ▹result μ″≡μ‴ _ = WFresult fresh″
+  where
+  fresh″ : length μ‴ ∉domₙ μ‴
+  fresh″ = subst (λ □ → length □ ∉domₙ □) (trans μ′≡μ″ μ″≡μ‴) fresh′
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ | WFresult fresh′
+  | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt | ▹result μ′≡μ″ _
+  | timeout | ⊢ᵣtimeout | ▹timeout = WFtimeout
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ | WFresult fresh′
+  | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt | ▹result μ′≡μ″ _
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢vₙ | WFresult fresh′
+  | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt | ▹result μ′≡μ″ _
+  | error castError | ⊢ᵣcast-error | ▹error = WFerror
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult _ _ | WFresult _
+  | timeout | ⊢ᵣtimeout | ▹timeout = WFtimeout
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult _ _ | WFresult _
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | result ⟨ μ′ , vₙ , pc′ ⟩ | ⊢ᵣresult _ _ | WFresult _
+  | error castError | ⊢ᵣcast-error | ▹error = WFerror
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | timeout | ⊢ᵣtimeout | WFtimeout = WFtimeout
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | error NSUError | ⊢ᵣnsu-error | WFerror = WFerror
+𝒱-pres-WFaddr {k = suc k} (⊢if eq ⊢M ⊢N _) ⊢μ ⊢γ fresh
+  | V-false | ⊢ᵥfalse
+  | error castError | ⊢ᵣcast-error | WFerror = WFerror
 -- 𝒱-pres-WFaddr (⊢get x) fresh = {!!}
 -- 𝒱-pres-WFaddr (⊢set x x₁ x₂ x₃) fresh = {!!}
 -- 𝒱-pres-WFaddr (⊢new x x₁) fresh = {!!}

@@ -79,3 +79,11 @@ castT-state-idem : ∀ {μ pc T₁ T₂ v}
 castT-state-idem {μ} {pc} {T₁} {T₂} {v} ⊢v with T₁ ≲? T₂
 ... | yes T₁≲T₂ = castT′-state-idem T₁≲T₂ ⊢v
 ... | no  _     = ▹error
+
+
+castL-state-idem : ∀ {μ pc 𝓁̂₁ 𝓁̂₂}
+  → (𝓁̂₁≾𝓁̂₂ : 𝓁̂₁ ≾ 𝓁̂₂)
+  → castL μ pc 𝓁̂₁ 𝓁̂₂ 𝓁̂₁≾𝓁̂₂ ▹ μ , pc
+castL-state-idem {μ} {pc} {𝓁̂₁} {𝓁̂₂} 𝓁̂₁≾𝓁̂₂ with (l̂ pc) ≾? 𝓁̂₂
+... | yes _ = ▹result refl refl
+... | no  _ = ▹error
