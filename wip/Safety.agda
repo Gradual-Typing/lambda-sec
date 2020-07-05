@@ -357,8 +357,23 @@ data WTenv : Result Conf → Context → Env → Set where
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
   | v | ⊢v
   | error NSUError | ⊢ᵣnsu-error | ▹error = WFerror
--- 𝒱-pres-WFaddr (⊢new x x₁) fresh = {!!}
--- 𝒱-pres-WFaddr (⊢new-dyn x x₁) fresh = {!!}
+
+𝒱-pres-WFaddr {μ = μ} {pc} {k = suc k} (⊢new {T = T} {𝓁 = 𝓁} eq _) ⊢μ ⊢γ fresh
+ with pc ≼? 𝓁
+... | no  _ = WFerror
+... | yes _
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | v | ⊢v = WFresult (ext-new-fresh {n = length μ} fresh refl)
+
+𝒱-pres-WFaddr {μ = μ} {pc} {k = suc k} (⊢new-dyn eq₁ eq₂) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-label 𝓁 | ⊢ᵥlabel | v | ⊢v
+  with pc ≼? 𝓁
+... | yes _ = WFresult (ext-new-fresh {n = length μ} fresh refl)
+... | no  _ = WFerror
+
 -- 𝒱-pres-WFaddr (⊢eq-ref x x₁ x₂ x₃) fresh = {!!}
 -- 𝒱-pres-WFaddr (⊢ƛ tM) fresh = {!!}
 -- 𝒱-pres-WFaddr (⊢· x x₁ x₂ x₃) fresh = {!!}
