@@ -637,19 +637,39 @@ data WTenv : Result Conf → Context → Env → Set where
 ...   | no  _ = ⊢ᵣresult ⊢μ ⊢ᵥfalse
 
 𝒱-safe {Γ} {γ} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢let {T = T} {T′ = T′} {M = M} ⊢M ⊢N T′≲T)
-  with 𝒱 {Γ} γ M ⊢M μ pc₀ k | 𝒱-safe {Γ} k pc₀ ⊢μ fresh ⊢γ ⊢M | 𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc₀} {k} ⊢M ⊢μ ⊢γ fresh
-... | timeout | ⊢ᵣtimeout | WFtimeout = ⊢ᵣtimeout
-... | error NSUError | ⊢ᵣnsu-error | _ = ⊢ᵣnsu-error
-... | error castError | ⊢ᵣcast-error | _ = ⊢ᵣcast-error
-... | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | WFresult fresh′
+  with 𝒱 {Γ} γ M ⊢M μ pc₀ k | 𝒱-safe {Γ} k pc₀ ⊢μ fresh ⊢γ ⊢M
+    | 𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc₀} {k} ⊢M ⊢μ ⊢γ fresh | 𝒱-pres-⊢ₑ {Γ} {γ} {pc = pc₀} {k} ⊢M ⊢μ ⊢γ
+... | timeout | ⊢ᵣtimeout | WFtimeout | _ = ⊢ᵣtimeout
+... | error NSUError | ⊢ᵣnsu-error | _ | _ = ⊢ᵣnsu-error
+... | error castError | ⊢ᵣcast-error | _ | _ = ⊢ᵣcast-error
+... | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | WFresult fresh′ | WTenv-result μ′⊢γ
   with castT μ′ pc′ T′ T v′ | ⊢castT {μ′} {pc′} {T′} {T} ⊢μ′ ⊢v′ | castT-state-idem {μ′} {pc′} {T′} {T} ⊢v′
 ...   | result ⟨ μ″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″ | ▹result μ′≡μ″ pc′≡pc″ =
-  𝒱-safe k pc″ ⊢μ″ (subst (λ □ → length □ ∉domₙ □) μ′≡μ″ fresh′) (⊢ₑ∷ ⊢v″ {!!}) ⊢N
+  𝒱-safe k pc″ ⊢μ″ fresh″ (⊢ₑ∷ ⊢v″ μ″⊢γ) ⊢N
+  where
+  fresh″ = subst (λ □ → length □ ∉domₙ □) μ′≡μ″ fresh′
+  μ″⊢γ = subst (λ □ → Γ ∣ □ ⊢ₑ γ) μ′≡μ″ μ′⊢γ
 ...   | timeout | ⊢ᵣtimeout | ▹timeout = ⊢ᵣtimeout
 ...   | error NSUError | ⊢ᵣnsu-error | ▹error = ⊢ᵣnsu-error
 ...   | error castError | ⊢ᵣcast-error | ▹error = ⊢ᵣcast-error
 
-𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢· _ _ _ _) = {!!}
+𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} {𝓁̂₂} eq₁ eq₂ _ 𝓁̂₁′≾𝓁̂₁)
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | v | ⊢v | w | ⊢w
+  with castT μ pc₀ T′ T w | ⊢castT {pc = pc₀} {T′} {T} ⊢μ ⊢w
+...   | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+...   | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+...   | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+...   | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′
+  with castL μ′ pc′ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′≾𝓁̂₁ | ⊢castL {pc = pc′} 𝓁̂₁′≾𝓁̂₁ ⊢μ′
+...     | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
+...     | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
+...     | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
+...     | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt = {!!}
+  -- where
+  -- apply-safe : ∀ {}
+  --   → 
 
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢ƛ ⊢N) = ⊢ᵣresult ⊢μ (⊢ᵥclos ⊢γ ⊢N)
 
