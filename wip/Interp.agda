@@ -245,9 +245,9 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 γ (`x · `y) (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} _ _ _ 𝓁̂₁′≾𝓁̂₁) μ pc (suc k)
     with nth γ x | nth γ y
 ... | just v | just w = do
-    ⟨ μ′ , v′ , pc′ ⟩ ← castT μ pc T′ T w            -- cast T′ ⇛ T
+    ⟨ μ′ , w′ , pc′ ⟩ ← castT μ pc T′ T w            -- cast T′ ⇛ T
     ⟨ μ″ , _  , pc″ ⟩ ← castL μ′ pc′ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′≾𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
-    apply γ v w μ pc k
+    apply γ v w′ μ pc k
 ... | _ | _ = error stuck
 
 apply γ (V-clos < N , ρ , ⊢N >) w μ pc k = 𝒱 (w ∷ ρ) N ⊢N μ pc k
