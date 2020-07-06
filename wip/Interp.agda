@@ -253,8 +253,8 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 apply γ (V-clos < N , ρ , ⊢N >) w μ pc k = 𝒱 (w ∷ ρ) N ⊢N μ pc k
 apply γ (V-proxy S T S′ T′ 𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ S′≲S T≲T′ 𝓁̂₁′≾𝓁̂₁ 𝓁̂₂≾𝓁̂₂′ v) w μ pc k = do
     ⟨ μ₁ , w′ , pc₁ ⟩ ← castT μ pc S′ S w            -- cast S′ ⇛ S
-    ⟨ μ₁ , _  , pc₁ ⟩ ← castL μ₁ pc₁ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′≾𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
-    ⟨ μ₂ , v₁ , pc₂ ⟩ ← apply γ v w′ μ₁ pc₁ k
-    ⟨ μ₂ , _  , pc₂ ⟩ ← castL μ₂ pc₂ 𝓁̂₂ 𝓁̂₂′ 𝓁̂₂≾𝓁̂₂′  -- cast 𝓁̂₂ ⇛ 𝓁̂₂′
-    castT μ₂ pc₂ T T′ v₁                              -- cast T ⇛ T′
+    ⟨ μ₂ , _  , pc₂ ⟩ ← castL μ₁ pc₁ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′≾𝓁̂₁  -- cast 𝓁̂₁′ ⇛ 𝓁̂₁
+    ⟨ μ₃ , v₁ , pc₃ ⟩ ← apply γ v w′ μ₂ pc₂ k
+    ⟨ μ₄ , _  , pc₄ ⟩ ← castL μ₃ pc₃ 𝓁̂₂ 𝓁̂₂′ 𝓁̂₂≾𝓁̂₂′  -- cast 𝓁̂₂ ⇛ 𝓁̂₂′
+    castT μ₄ pc₄ T T′ v₁                              -- cast T ⇛ T′
 apply γ _ w μ pc k = error stuck

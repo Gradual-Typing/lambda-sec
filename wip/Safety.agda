@@ -389,6 +389,38 @@ data WTenv : Result Conf → Context → Env → Set where
 -- 𝒱-pres-WFaddr (⊢to-label-dyn x tM) fresh = {!!}
 
 
+apply-safe : ∀ {γ S T 𝓁̂₁ 𝓁̂₂ v w μ pc k}
+  → μ ⊢ₛ μ
+  → length μ ∉domₙ μ
+  → μ ⊢ᵥ v ⦂ S [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] T
+  → μ ⊢ᵥ w ⦂ S
+  → ⊢ᵣ apply γ v w μ pc k ⦂ T
+apply-safe {μ = μ} {pc} {k} ⊢μ fresh (⊢ᵥclos {Δ} {γ = ρ} ⊢ρ ⊢N) ⊢w = 𝒱-safe k pc ⊢μ fresh (⊢ₑ∷ ⊢w ⊢ρ) ⊢N
+apply-safe {γ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy {S = S} {T} {S′} {T′} {v} {𝓁̂₁} {𝓁̂₂} {𝓁̂₁′} {𝓁̂₂′} {𝓁̂₁′≾𝓁̂₁ = 𝓁̂₁′≾𝓁̂₁} {𝓁̂₂≾𝓁̂₂′} ⊢v) ⊢w
+  with castT μ pc S′ S w | ⊢castT {pc = pc} {S′} {S} ⊢μ ⊢w | castT-state-idem {μ} {pc} {S′} {S} ⊢w
+... | timeout | _ | _ = ⊢ᵣtimeout
+... | error NSUError | _ | _ = ⊢ᵣnsu-error
+... | error castError | _ | _ = ⊢ᵣcast-error
+... | result ⟨ μ₁ , w′ , pc₁ ⟩ | ⊢ᵣresult ⊢μ₁ ⊢w′ | ▹result μ≡μ₁ _
+  with castL μ₁ pc₁ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′≾𝓁̂₁ | ⊢castL {μ₁} {pc₁} 𝓁̂₁′≾𝓁̂₁ ⊢μ₁ | castL-state-idem {μ₁} {pc₁} 𝓁̂₁′≾𝓁̂₁
+...   | timeout | _ | _ = ⊢ᵣtimeout
+...   | error NSUError | _ | _ = ⊢ᵣnsu-error
+...   | error castError | _ | _ = ⊢ᵣcast-error
+...   | result ⟨ μ₂ , _ , pc₂ ⟩ | ⊢ᵣresult ⊢μ₂ _ | ▹result μ₁≡μ₂ _
+  with apply γ v w′ μ₂ pc₂ k | apply-safe {γ} {pc = pc₂} {k} ⊢μ₂ freshμ₂ μ₂⊢v μ₂⊢w′
+  where
+  freshμ₂ = subst (λ □ → length □ ∉domₙ □) (trans μ≡μ₁ μ₁≡μ₂) fresh
+  μ₂⊢v = subst (λ □ → □ ⊢ᵥ v ⦂ S [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] T) (trans μ≡μ₁ μ₁≡μ₂) ⊢v
+  μ₂⊢w′ = subst (λ □ → □ ⊢ᵥ w′ ⦂ S) μ₁≡μ₂ ⊢w′
+...     | timeout | _ = ⊢ᵣtimeout
+...     | error NSUError | _ = ⊢ᵣnsu-error
+...     | error castError | _ = ⊢ᵣcast-error
+...     | result ⟨ μ₃ , v₁ , pc₃ ⟩ | ⊢ᵣresult ⊢μ₃ ⊢v₁
+  with castL μ₃ pc₃ 𝓁̂₂ 𝓁̂₂′ 𝓁̂₂≾𝓁̂₂′ | ⊢castL {μ₃} {pc₃} 𝓁̂₂≾𝓁̂₂′ ⊢μ₃ | castL-state-idem {μ₃} {pc₃} 𝓁̂₂≾𝓁̂₂′
+...       | timeout | _ | _ = ⊢ᵣtimeout
+...       | error NSUError | _ | _ = ⊢ᵣnsu-error
+...       | error castError | _ | _ = ⊢ᵣcast-error
+...       | result ⟨ μ₄ , _ , pc₄ ⟩ | ⊢ᵣresult ⊢μ₄ _ | ▹result μ₃≡μ₄ _ rewrite (sym μ₃≡μ₄) = ⊢castT {pc = pc₄} {T} {T′} ⊢μ₄ ⊢v₁
 
 𝒱-safe 0 _ _ _ _ _ = ⊢ᵣtimeout
 
@@ -653,23 +685,22 @@ data WTenv : Result Conf → Context → Env → Set where
 ...   | error NSUError | ⊢ᵣnsu-error | ▹error = ⊢ᵣnsu-error
 ...   | error castError | ⊢ᵣcast-error | ▹error = ⊢ᵣcast-error
 
-𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} {𝓁̂₂} eq₁ eq₂ _ 𝓁̂₁′≾𝓁̂₁)
+𝒱-safe {Γ} {γ} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢· {x = x} {y} {T} {T′} {S} {𝓁̂₁} {𝓁̂₁′} {𝓁̂₂} eq₁ eq₂ _ 𝓁̂₁′≾𝓁̂₁)
   rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
   with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
 ... | v | ⊢v | w | ⊢w
-  with castT μ pc₀ T′ T w | ⊢castT {pc = pc₀} {T′} {T} ⊢μ ⊢w
-...   | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
-...   | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
-...   | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
-...   | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′
+  with castT μ pc₀ T′ T w | ⊢castT {pc = pc₀} {T′} {T} ⊢μ ⊢w | castT-state-idem {μ} {pc₀} {T′} {T} ⊢w
+...   | timeout | ⊢ᵣtimeout | _ = ⊢ᵣtimeout
+...   | error NSUError | ⊢ᵣnsu-error | _ = ⊢ᵣnsu-error
+...   | error castError | ⊢ᵣcast-error | _ = ⊢ᵣcast-error
+...   | result ⟨ μ′ , w′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢w′ | ▹result μ≡μ′ _
   with castL μ′ pc′ 𝓁̂₁′ 𝓁̂₁ 𝓁̂₁′≾𝓁̂₁ | ⊢castL {pc = pc′} 𝓁̂₁′≾𝓁̂₁ ⊢μ′
 ...     | timeout | ⊢ᵣtimeout = ⊢ᵣtimeout
 ...     | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
 ...     | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
-...     | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt = {!!}
-  -- where
-  -- apply-safe : ∀ {}
-  --   → 
+...     | result ⟨ μ″ , _ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢ᵥtt = apply-safe {γ = γ} {pc = pc₀} {k} ⊢μ fresh ⊢v μ⊢w′
+  where
+  μ⊢w′ = subst (λ □ → □ ⊢ᵥ w′ ⦂ T) (sym μ≡μ′) ⊢w′
 
 𝒱-safe (suc k) pc₀ ⊢μ fresh ⊢γ (⊢ƛ ⊢N) = ⊢ᵣresult ⊢μ (⊢ᵥclos ⊢γ ⊢N)
 
