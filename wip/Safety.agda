@@ -374,19 +374,76 @@ data WTenv : Result Conf → Context → Env → Set where
 ... | yes _ = WFresult (ext-new-fresh {n = length μ} fresh refl)
 ... | no  _ = WFerror
 
--- 𝒱-pres-WFaddr (⊢eq-ref x x₁ x₂ x₃) fresh = {!!}
--- 𝒱-pres-WFaddr (⊢ƛ tM) fresh = {!!}
+𝒱-pres-WFaddr {k = suc k} (⊢eq-ref eq₁ eq₂ _ _) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-ref loc | _ | V-ref loc′ | _ with loc ≟ₗ loc′
+...   | yes _ = WFresult fresh
+...   | no  _ = WFresult fresh
+
+𝒱-pres-WFaddr {k = suc k} (⊢ƛ ⊢N) ⊢μ ⊢γ fresh = WFresult fresh
+
 -- 𝒱-pres-WFaddr (⊢· x x₁ x₂ x₃) fresh = {!!}
--- 𝒱-pres-WFaddr (⊢ref-label x) fresh = {!!}
--- 𝒱-pres-WFaddr (⊢lab-label x) fresh = {!!}
--- 𝒱-pres-WFaddr ⊢pc-label fresh = {!!}
--- 𝒱-pres-WFaddr ⊢label fresh = {!!}
--- 𝒱-pres-WFaddr (⊢≼ x x₁) fresh = {!!}
--- 𝒱-pres-WFaddr (⊢⊔ x x₁) fresh = {!!}
--- 𝒱-pres-WFaddr (⊢⊓ x x₁) fresh = {!!}
--- 𝒱-pres-WFaddr (⊢unlabel x) fresh = {!!}
--- 𝒱-pres-WFaddr (⊢to-label tM x) fresh = {!!}
--- 𝒱-pres-WFaddr (⊢to-label-dyn x tM) fresh = {!!}
+
+𝒱-pres-WFaddr {k = suc k} (⊢ref-label eq) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | V-ref loc | _ = WFresult fresh
+
+𝒱-pres-WFaddr {k = suc k} (⊢lab-label eq) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | V-lab 𝓁 v | _ = WFresult fresh
+
+𝒱-pres-WFaddr {k = suc k} ⊢pc-label ⊢μ ⊢γ fresh = WFresult fresh
+
+𝒱-pres-WFaddr {k = suc k} ⊢label ⊢μ ⊢γ fresh = WFresult fresh
+
+𝒱-pres-WFaddr {k = suc k} (⊢≼ eq₁ eq₂) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-label 𝓁x | _ | V-label 𝓁y | _ with 𝓁x ≼? 𝓁y
+...   | yes _ = WFresult fresh
+...   | no  _ = WFresult fresh
+
+𝒱-pres-WFaddr {k = suc k} (⊢⊔ eq₁ eq₂) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-label 𝓁x | _ | V-label 𝓁y | _ = WFresult fresh
+
+𝒱-pres-WFaddr {k = suc k} (⊢⊓ eq₁ eq₂) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-label 𝓁x | _ | V-label 𝓁y | _ = WFresult fresh
+
+𝒱-pres-WFaddr {k = suc k} (⊢unlabel eq) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | V-lab 𝓁 v | ⊢ᵥlab _ ⊢v = WFresult fresh
+... | V-lab 𝓁 v | ⊢ᵥlab-dyn ⊢v = WFresult fresh
+
+𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc} {suc k} (⊢to-label {M = M} {𝓁 = 𝓁} ⊢M _) ⊢μ ⊢γ fresh
+  with 𝒱 γ M ⊢M μ pc k | 𝒱-safe k pc ⊢μ fresh ⊢γ ⊢M | 𝒱-pres-WFaddr {pc = pc} {k} ⊢M ⊢μ ⊢γ fresh
+... | timeout | ⊢ᵣtimeout | _ = WFtimeout
+... | error NSUError | ⊢ᵣnsu-error | _ = WFerror
+... | error castError | ⊢ᵣcast-error | _ = WFerror
+... | result ⟨ μ′ , v , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v | WFresult fresh′
+  with pc′ ≼? (pc ⊔ 𝓁)
+...   | yes _ = WFresult fresh′
+...   | no  _ = WFerror
+
+𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc} {suc k} (⊢to-label-dyn {M = M} eq ⊢M) ⊢μ ⊢γ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | V-label 𝓁 | _
+  with 𝒱 γ M ⊢M μ pc k | 𝒱-safe k pc ⊢μ fresh ⊢γ ⊢M | 𝒱-pres-WFaddr {pc = pc} {k} ⊢M ⊢μ ⊢γ fresh
+...   | timeout | ⊢ᵣtimeout | _ = WFtimeout
+...   | error NSUError | ⊢ᵣnsu-error | _ = WFerror
+...   | error castError | ⊢ᵣcast-error | _ = WFerror
+...   | result ⟨ μ′ , v , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v | WFresult fresh′
+  with pc′ ≼? (pc ⊔ 𝓁)
+...     | yes _ = WFresult fresh′
+...     | no  _ = WFerror
 
 
 apply-safe : ∀ {γ S T 𝓁̂₁ 𝓁̂₂ v w μ pc k}
