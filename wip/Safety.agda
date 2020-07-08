@@ -40,6 +40,11 @@ data WTenv : Result Conf → Context → Env → Set where
     → Γ ∣ μ ⊢ₑ γ
     → WTenv (result ⟨ μ , v , pc ⟩) Γ γ
 
+-- data WTval : Result Conf → Value → Set where
+--   WTval-timeout : ∀ {v} → WTval timeout v
+--   WTval-error : ∀ {v err} → WTval (error err) v
+--   WTval-result : ∀ {} → μ ⊢ᵥ v₁ ⦂ T → WTval (result ⟨ μ , v , pc ⟩) v₁
+
 𝒱-pres-WFaddr : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ pc k}
   → (⊢M : Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
   → μ ⊢ₛ μ
@@ -47,11 +52,17 @@ data WTenv : Result Conf → Context → Env → Set where
   → length μ ∉domₙ μ
   → WFaddr (𝒱 γ M ⊢M μ pc k)
 
-𝒱-pres-⊢ₑ : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ pc k}
+-- 𝒱-pres-⊢ᵥ : ∀ {}
+--   → μ ⊢ᵥ v ⦂ T
+--   → WTval (𝒱 γ M ⊢M μ pc k) v
+
+𝒱-pres-⊢ₑ : ∀ {Γ Δ γ ρ T M 𝓁̂₁ 𝓁̂₂ μ pc k}
   → (⊢M : Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
   → μ ⊢ₛ μ
   → Γ ∣ μ ⊢ₑ γ
-  → WTenv (𝒱 γ M ⊢M μ pc k) Γ γ
+  → Δ ∣ μ ⊢ₑ ρ
+  → length μ ∉domₙ μ
+  → WTenv (𝒱 γ M ⊢M μ pc k) Δ ρ
 
 𝒱-safe : ∀ {Γ γ T M 𝓁̂₁ 𝓁̂₂ μ}
   → (k : ℕ)
@@ -112,6 +123,51 @@ apply-pres-WFaddr {γ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy {S = S} {T
 ...         | result ⟨ μ₄′ , _ , _ ⟩ | _ | ▹result μ₄≡μ₄′ _ rewrite (sym μ₄≡μ₄′) | (sym μ₃≡μ₄) = WFresult fresh′
 
 
+𝒱-pres-⊢ₑ {k = 0} _ _ _ _ _ = WTenv-timeout
+
+𝒱-pres-⊢ₑ {k = suc k} (⊢` eq) ⊢μ ⊢γ ⊢ρ fresh rewrite proj₂ (⊢γ→∃v ⊢γ eq) = WTenv-result ⊢ρ
+
+𝒱-pres-⊢ₑ {k = suc k} ⊢tt ⊢μ ⊢γ ⊢ρ fresh = WTenv-result ⊢ρ
+𝒱-pres-⊢ₑ {k = suc k} ⊢true ⊢μ ⊢γ ⊢ρ fresh = WTenv-result ⊢ρ
+𝒱-pres-⊢ₑ {k = suc k} ⊢false ⊢μ ⊢γ ⊢ρ fresh = WTenv-result ⊢ρ
+
+𝒱-pres-⊢ₑ {Γ} {Δ} {γ} {ρ} {μ = μ} {pc} {suc k} (⊢let {T = T} {T′} {M = M} {N} ⊢M ⊢N x) ⊢μ ⊢γ ⊢ρ fresh
+  with 𝒱 {Γ} γ M ⊢M μ pc k | 𝒱-pres-WFaddr {Γ} {μ = μ} {pc} {k} ⊢M ⊢μ ⊢γ fresh | 𝒱-safe k pc ⊢μ fresh ⊢γ ⊢M
+     | 𝒱-pres-⊢ₑ {pc = pc} {k} ⊢M ⊢μ ⊢γ ⊢ρ fresh | 𝒱-pres-⊢ₑ {pc = pc} {k} ⊢M ⊢μ ⊢γ ⊢γ fresh
+... | timeout | WFtimeout | ⊢ᵣtimeout | _ | _ = WTenv-timeout
+... | error NSUError | WFerror | ⊢ᵣnsu-error | _ | _ = WTenv-error
+... | error castError | WFerror | ⊢ᵣcast-error | _ | _ = WTenv-error
+... | result ⟨ μ′ , v′ , pc′ ⟩ | WFresult fresh′ | ⊢ᵣresult ⊢μ′ ⊢v′ | WTenv-result μ′⊢ρ | WTenv-result μ′⊢γ
+  with castT μ′ pc′ T′ T v′ | castT-state-idem {μ′} {pc′} {T′} {T} ⊢v′ | ⊢castT {μ′} {pc′} {T′} {T} ⊢μ′ ⊢v′
+...   | result ⟨ μ″ , v″ , pc″ ⟩ | ▹result μ′≡μ″ _ | ⊢ᵣresult ⊢μ″ ⊢v″ =
+  𝒱-pres-⊢ₑ {pc = pc″} {k} ⊢N ⊢μ″ (⊢ₑ∷ ⊢v″ μ″⊢γ) μ″⊢ρ freshμ″
+  where
+  μ″⊢ρ = subst (λ □ → Δ ∣ □ ⊢ₑ ρ) μ′≡μ″ μ′⊢ρ
+  μ″⊢γ = subst (λ □ → Γ ∣ □ ⊢ₑ γ) μ′≡μ″ μ′⊢γ
+  freshμ″ = subst (λ □ → length □ ∉domₙ □) μ′≡μ″ fresh′
+...   | timeout | ▹timeout | ⊢ᵣtimeout = WTenv-timeout
+...   | error NSUError | ▹error | ⊢ᵣnsu-error = WTenv-error
+...   | error castError | ▹error | ⊢ᵣcast-error = WTenv-error
+
+𝒱-pres-⊢ₑ {k = suc k} (⊢if x tM tM₁ x₁) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢get x) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢set x x₁ x₂ x₃) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢new x x₁) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢new-dyn x x₁) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢eq-ref x x₁ x₂ x₃) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢ƛ tM) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢· x x₁ x₂ x₃) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢ref-label x) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢lab-label x) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} ⊢pc-label ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} ⊢label ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢≼ x x₁) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢⊔ x x₁) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢⊓ x x₁) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢unlabel x) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢to-label tM x) ⊢μ ⊢γ = {!!}
+𝒱-pres-⊢ₑ {k = suc k} (⊢to-label-dyn x tM) ⊢μ ⊢γ = {!!}
+
 
 𝒱-pres-WFaddr {k = 0} = λ _ _ _ _ → WFtimeout
 𝒱-pres-WFaddr {M = ` x} {k = suc k} (⊢` eq) ⊢μ ⊢γ fresh
@@ -123,7 +179,7 @@ apply-pres-WFaddr {γ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy {S = S} {T
 
 𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc} {suc k} (⊢let {T = T} {T′} {M = M} {N} ⊢M ⊢N x) ⊢μ ⊢γ fresh
   with 𝒱 {Γ} γ M ⊢M μ pc k | 𝒱-pres-WFaddr {Γ} {μ = μ} {pc} {k} ⊢M ⊢μ ⊢γ fresh
-    | 𝒱-safe k pc ⊢μ fresh ⊢γ ⊢M | 𝒱-pres-⊢ₑ {Γ} {γ} {μ = μ} {pc} {k} ⊢M ⊢μ ⊢γ
+    | 𝒱-safe k pc ⊢μ fresh ⊢γ ⊢M | 𝒱-pres-⊢ₑ {μ = μ} {pc} {k} ⊢M ⊢μ ⊢γ ⊢γ fresh
 ... | timeout | WFtimeout | ⊢ᵣtimeout | WTenv-timeout = WFtimeout
 ... | error NSUError | WFerror | ⊢ᵣnsu-error | WTenv-error = WFerror
 ... | error castError | WFerror | ⊢ᵣcast-error | WTenv-error = WFerror
@@ -784,7 +840,7 @@ apply-safe {γ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy {S = S} {T} {S′
 
 𝒱-safe {Γ} {γ} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢let {T = T} {T′ = T′} {M = M} ⊢M ⊢N T′≲T)
   with 𝒱 {Γ} γ M ⊢M μ pc₀ k | 𝒱-safe {Γ} k pc₀ ⊢μ fresh ⊢γ ⊢M
-    | 𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc₀} {k} ⊢M ⊢μ ⊢γ fresh | 𝒱-pres-⊢ₑ {Γ} {γ} {pc = pc₀} {k} ⊢M ⊢μ ⊢γ
+    | 𝒱-pres-WFaddr {Γ} {γ} {μ = μ} {pc₀} {k} ⊢M ⊢μ ⊢γ fresh | 𝒱-pres-⊢ₑ {pc = pc₀} {k} ⊢M ⊢μ ⊢γ ⊢γ fresh
 ... | timeout | ⊢ᵣtimeout | WFtimeout | _ = ⊢ᵣtimeout
 ... | error NSUError | ⊢ᵣnsu-error | _ | _ = ⊢ᵣnsu-error
 ... | error castError | ⊢ᵣcast-error | _ | _ = ⊢ᵣcast-error
