@@ -149,24 +149,148 @@ apply-pres-WFaddr {γ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy {S = S} {T
 ...   | error NSUError | ▹error | ⊢ᵣnsu-error = WTenv-error
 ...   | error castError | ▹error | ⊢ᵣcast-error = WTenv-error
 
-𝒱-pres-⊢ₑ {k = suc k} (⊢if x tM tM₁ x₁) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢get x) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢set x x₁ x₂ x₃) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢new x x₁) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢new-dyn x x₁) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢eq-ref x x₁ x₂ x₃) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢ƛ tM) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢· x x₁ x₂ x₃) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢ref-label x) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢lab-label x) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} ⊢pc-label ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} ⊢label ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢≼ x x₁) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢⊔ x x₁) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢⊓ x x₁) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢unlabel x) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢to-label tM x) ⊢μ ⊢γ = {!!}
-𝒱-pres-⊢ₑ {k = suc k} (⊢to-label-dyn x tM) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢if x tM tM₁ x₁) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢get x) ⊢μ ⊢γ = {!!}
+
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁)
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
+  | v | ⊢v
+  rewrite eq
+  with castT μ (pc ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc ⊔ 𝓁₂} {T′} {T} {v} ⊢v
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result μ≡μ′ _
+  with castT μ′ pc′ T T″ v′ | ⊢castT {μ′} {pc′} {T} {T″} ⊢μ′ ⊢v′ | castT-state-idem {μ′} {pc′} {T} {T″} {v′} ⊢v′
+𝒱-pres-⊢ₑ {Γ} {Δ} {γ} {ρ} {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} {v = w} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result μ≡μ′ _
+  | result ⟨ u″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″ | ▹result μ′≡μ″ _
+  with pc″ ≼? 𝓁₂
+... | yes _ = WTenv-result (ext-update-pres-⊢ₑ hit μ″⊢ρ ⊢v″)
+  where
+  μ≡μ″ = trans μ≡μ′ μ′≡μ″
+  μ″⊢ρ = subst (λ □ → Δ ∣ □ ⊢ₑ ρ) μ≡μ″ ⊢ρ
+  hit = subst (λ □ → lookup □ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T″ , w ⟩) μ≡μ″ eq
+... | no  _ = WTenv-error
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | timeout | ⊢ᵣtimeout | ▹timeout = WTenv-timeout
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | error castError | ⊢ᵣcast-error | ▹error = WTenv-error
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WTenv-error
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
+  | v | ⊢v
+  | timeout | ⊢ᵣtimeout | ▹timeout = WTenv-timeout
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
+  | v | ⊢v
+  | error castError | ⊢ᵣcast-error | ▹error = WTenv-error
+𝒱-pres-⊢ₑ  {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
+  | v | ⊢v
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WTenv-error
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
+  | v | ⊢v
+  rewrite eq
+  with castT μ (pc ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc ⊔ 𝓁₂} {T′} {T} {v} ⊢v
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result μ≡μ′ _
+  with castT μ′ pc′ T T″ v′ | ⊢castT {μ′} {pc′} {T} {T″} ⊢μ′ ⊢v′ | castT-state-idem {μ′} {pc′} {T} {T″} {v′} ⊢v′
+𝒱-pres-⊢ₑ {Γ} {Δ} {γ} {ρ} {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} {v = w} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result μ≡μ′ _
+  | result ⟨ u″ , v″ , pc″ ⟩ | ⊢ᵣresult ⊢μ″ ⊢v″ | ▹result μ′≡μ″ _
+  with pc″ ≼? 𝓁₂
+... | yes _ = WTenv-result (ext-update-pres-⊢ₑ hit μ″⊢ρ ⊢v″)
+  where
+  μ≡μ″ = trans μ≡μ′ μ′≡μ″
+  μ″⊢ρ = subst (λ □ → Δ ∣ □ ⊢ₑ ρ) μ≡μ″ ⊢ρ
+  hit = subst (λ □ → lookup □ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≡ just ⟨ T″ , w ⟩) μ≡μ″ eq
+... | no  _ = WTenv-error
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | timeout | ⊢ᵣtimeout | ▹timeout = WTenv-timeout
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | error castError | ⊢ᵣcast-error | ▹error = WTenv-error
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
+  | v | ⊢v
+  | result ⟨ μ′ , v′ , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v′ | ▹result _ _
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WTenv-error
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
+  | v | ⊢v
+  | timeout | ⊢ᵣtimeout | ▹timeout = WTenv-timeout
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
+  | v | ⊢v
+  | error castError | ⊢ᵣcast-error | ▹error = WTenv-error
+𝒱-pres-⊢ₑ  {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
+  | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
+  | v | ⊢v
+  | error NSUError | ⊢ᵣnsu-error | ▹error = WTenv-error
+
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢new {T = T} {𝓁 = 𝓁} eq _) ⊢μ ⊢γ ⊢ρ fresh
+ with pc ≼? 𝓁
+... | no  _ = WTenv-error
+... | yes _
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq)
+  with proj₁ (⊢γ→∃v ⊢γ eq) | (⊢γ→⊢v ⊢γ eq)
+... | v | ⊢v = WTenv-result (ext-new-pres-⊢ₑ fresh ⊢ρ ⊢v)
+
+𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢new-dyn eq₁ eq₂) ⊢μ ⊢γ ⊢ρ fresh
+  rewrite proj₂ (⊢γ→∃v ⊢γ eq₁) | proj₂ (⊢γ→∃v ⊢γ eq₂)
+  with proj₁ (⊢γ→∃v ⊢γ eq₁) | (⊢γ→⊢v ⊢γ eq₁) | proj₁ (⊢γ→∃v ⊢γ eq₂) | (⊢γ→⊢v ⊢γ eq₂)
+... | V-label 𝓁 | ⊢ᵥlabel | v | ⊢v
+  with pc ≼? 𝓁
+... | yes _ = WTenv-result (ext-new-pres-⊢ₑ fresh ⊢ρ ⊢v)
+... | no  _ = WTenv-error
+
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢eq-ref x x₁ x₂ x₃) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢ƛ tM) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢· x x₁ x₂ x₃) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢ref-label x) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢lab-label x) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} ⊢pc-label ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} ⊢label ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢≼ x x₁) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢⊔ x x₁) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢⊓ x x₁) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢unlabel x) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢to-label tM x) ⊢μ ⊢γ = {!!}
+-- 𝒱-pres-⊢ₑ {k = suc k} (⊢to-label-dyn x tM) ⊢μ ⊢γ = {!!}
 
 
 𝒱-pres-WFaddr {k = 0} = λ _ _ _ _ → WFtimeout
