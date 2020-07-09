@@ -1,3 +1,5 @@
+module InterpSafe where
+
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Nat.Properties renaming (_≟_ to _≟ₙ_)
 open import Data.List using (List; []; _∷_; length)
@@ -1309,13 +1311,3 @@ apply-safe {γ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy {S = S} {T} {S′
 ...   | result ⟨ μ′ , v , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v with pc′ ≼? (pc₀ ⊔ 𝓁)
 ...     | yes _ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab-dyn ⊢v)
 ...     | no  _ = ⊢ᵣnsu-error
-
-
--- Start with empty env and store.
-type-safety : ∀ {T M 𝓁̂₁ 𝓁̂₂}
-  → (k : ℕ)
-  → (pc₀ : ℒ)
-  → (⊢M : [] [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
-    ----------------------------
-  → ⊢ᵣ 𝒱 [] M ⊢M [] pc₀ k ⦂ T
-type-safety k pc₀ ⊢M = 𝒱-safe k pc₀ ⊢ₛ∅ ∉domₙ∅ ⊢ₑ∅ ⊢M
