@@ -1,7 +1,14 @@
 This directory contains a proof about type safety, that is, well-typed GLIO programs do /not/ get stuck.
 
-+ [[./Interp.agda][Interp.agda]] contains a definitional interpreter for the language.
++ [[./StaticsLIO.agda][StaticsLIO]] defines the statics (terms, typing judgments, etc. ) of the language.
 
-+ [[./WellTypedness.agda][WellTypedness.agda]] elaborates on what it means for a evaluation result of the definitional interpreter to be well-typed.
++ [[./Interp.agda][Interp]] contains a definitional interpreter for the language.
 
-+ The major theorem is at [[./TypeSafety.agda][TypeSafety.agda]] .
+  + 3 types of trapped errors ( ~timeout~ , ~NSUError~ , and ~castError~ ) .
+  + Untrapped error : ~stuck~ .
+
++ [[./Store.agda][Store]] defines the store (heap) model, which loosely follows /chapter 13.4/ in /TAPL/.
+
++ [[./WellTypedness.agda][WellTypedness]] elaborates on what it means for a evaluation result of the definitional interpreter to be well-typed.
+
++ The major theorem is at [[./TypeSafety.agda][TypeSafety]] .
