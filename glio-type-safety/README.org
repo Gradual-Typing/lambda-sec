@@ -11,4 +11,6 @@ This directory contains a proof about type safety, that is, well-typed GLIO prog
 
 + [[./WellTypedness.agda][WellTypedness]] elaborates on what it means for a evaluation result of the definitional interpreter to be well-typed.
 
++ [[./InterpSafe.agda][InterpSafe]] deals with most of the heavy-lifting reasoning about the definitional interpreter.
+
 + The major theorem is at [[./TypeSafety.agda][TypeSafety]] .
