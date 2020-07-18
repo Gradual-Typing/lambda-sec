@@ -11,7 +11,25 @@ open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_�
 
 import Syntax
 
-
+{-
+  +------------------------------------+
+  |          Index of Relations        |
+  +===+================================+
+  | ⊔ | Label join (𝓁)                 |
+  | ⊓ | Label meet (𝓁)                 |
+  | ≼ | Label partial order (𝓁)        |
+  +---+--------------------------------+
+  | ⋎ | Gradual label join (𝓁̂)         |
+  | ⋏ | Gradual label meet (𝓁̂)         |
+  | ∏ | Gradual label intersection (𝓁̂) |
+  | ≾ | Label consistent subtyping (𝓁̂) |
+  +---+--------------------------------+
+  | ∨ | Type join (𝕋)                  |
+  | ∧ | Type meet (𝕋)                  |
+  | ∩ | Type intersection (𝕋)          |
+  | ≲ | Type consistent subtyping (𝕋)  |
+  +---+--------------------------------+
+-}
 
 pattern ⟨_,_,_⟩ x y z = ⟨ x , ⟨ y , z ⟩ ⟩
 
