@@ -154,7 +154,7 @@ infixl 9 _≾_
 -- Partial order of labels
 data _≼_ : ℒ → ℒ → Set where
 
-  ≼-l : ∀ {n , n′ : ℕ}
+  ≼-l : ∀ {n n′ : ℕ}
       → n ≤ n′
       → (l n) ≼ (l n′)
 
