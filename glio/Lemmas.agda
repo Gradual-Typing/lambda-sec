@@ -7,7 +7,7 @@ open import Data.Product using (_×_; ∃; ∃-syntax; proj₁; proj₂) renamin
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl; sym; cong; cong₂)
 
-open import StaticsLIO
+open import StaticsGLIO
 
 
 

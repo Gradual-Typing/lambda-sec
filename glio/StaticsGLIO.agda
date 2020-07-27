@@ -1,4 +1,4 @@
-module StaticsLIO where
+module StaticsGLIO where
 
 open import Data.Nat using (ℕ; zero; suc; _≤_; z≤n; s≤s) renaming (_⊔_ to _⊔ₙ_; _⊓_ to _⊓ₙ_; _≟_ to _≟ₙ_)
 open import Data.Nat.Properties using (≤-refl; _≤?_)

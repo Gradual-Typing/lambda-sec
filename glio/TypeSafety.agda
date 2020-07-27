@@ -1,7 +1,7 @@
 open import Data.Nat using (ℕ)
 open import Data.List using ([])
 
-open import StaticsLIO
+open import StaticsGLIO
 open import Interp
 open import WellTypedness
 open import InterpSafe

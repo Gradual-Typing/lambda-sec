@@ -1,6 +1,6 @@
 This directory contains a proof about type safety, that is, well-typed GLIO programs do /not/ get stuck.
 
-+ [[./StaticsLIO.agda][StaticsLIO]] defines the statics (terms, typing judgments, etc. ) of the language.
++ [[./StaticsGLIO.agda][StaticsGLIO]] defines the statics (terms, typing judgments, etc. ) of the language.
 
 + [[./Interp.agda][Interp]] contains a definitional interpreter for the language.
 

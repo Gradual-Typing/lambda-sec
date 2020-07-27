@@ -3,7 +3,7 @@ open import Data.Nat.Properties using (m≤m⊔n; m≤n⇒m≤n⊔o)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
-open import StaticsGLIOb
+open import StaticsGLIO
 import Syntax
 open Syntax.OpSig Op sig
   using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)

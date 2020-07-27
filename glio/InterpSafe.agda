@@ -11,7 +11,7 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl; sym; cong; cong₂; subst; subst₂; trans)
 
 open import Lemmas
-open import StaticsLIO
+open import StaticsGLIO
 import Syntax
 open Syntax.OpSig Op sig
   using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)
