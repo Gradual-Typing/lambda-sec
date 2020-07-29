@@ -2,6 +2,10 @@ This directory contains a proof about type safety, that is, well-typed GLIO prog
 
 + [[./StaticsGLIO.agda][StaticsGLIO]] defines the statics (terms, typing judgments, etc. ) of the language.
 
++ [[./Consistency.agda][Consistency]] defines consistency relations (=~=) between information flow labels and types. It also proves that <img src="https://render.githubusercontent.com/render/math?math=S \sim T \iff S \lesssim T \wedge T \lesssim S">.
+
+# S \sim T \iff S \lesssim T \wedge T \lesssim S
+
 + [[./Interp.agda][Interp]] contains a definitional interpreter for the language.
 
   + 3 types of trapped errors ( ~timeout~ , ~NSUError~ , and ~castError~ ) .
