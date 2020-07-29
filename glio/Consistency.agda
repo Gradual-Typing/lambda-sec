@@ -63,8 +63,8 @@ data _∼_ : 𝕋 → 𝕋 → Set where
   from ⟨ ≾-¿-l , _ ⟩ = ~-¿-l
   from ⟨ ≾-l 𝓁≼𝓁′ , ≾-l 𝓁′≼𝓁 ⟩ rewrite ≼-antisym 𝓁≼𝓁′ 𝓁′≼𝓁 = ~-l
 
-S∼T⇔S≾T×T≾S : ∀ S T → (S ∼ T) ⇔ (S ≲ T × T ≲ S)
-S∼T⇔S≾T×T≾S S T = record { to = to ; from = from }
+S∼T⇔S≲T×T≲S : ∀ S T → (S ∼ T) ⇔ (S ≲ T × T ≲ S)
+S∼T⇔S≲T×T≲S S T = record { to = to ; from = from }
   where
   to : S ∼ T → S ≲ T × T ≲ S
   to ∼-⊤ = ⟨ ≲-⊤ , ≲-⊤ ⟩
@@ -72,17 +72,17 @@ S∼T⇔S≾T×T≾S S T = record { to = to ; from = from }
   to ∼-ℒ = ⟨ ≲-ℒ , ≲-ℒ ⟩
   to (∼-Ref 𝓁₁~𝓁₂ S∼T) =
     let ⟨ 𝓁₁≾𝓁₂ , 𝓁₂≾𝓁₁ ⟩ = _⇔_.to (𝓁~𝓁′⇔𝓁≾𝓁′×𝓁′≾𝓁 _ _) 𝓁₁~𝓁₂ in
-    let ⟨ T₁≲T₂ , T₂≲T₁ ⟩ = _⇔_.to (S∼T⇔S≾T×T≾S _ _) S∼T in
+    let ⟨ T₁≲T₂ , T₂≲T₁ ⟩ = _⇔_.to (S∼T⇔S≲T×T≲S _ _) S∼T in
       ⟨ ≲-Ref 𝓁₁≾𝓁₂ 𝓁₂≾𝓁₁ T₁≲T₂ T₂≲T₁ , ≲-Ref 𝓁₂≾𝓁₁ 𝓁₁≾𝓁₂ T₂≲T₁ T₁≲T₂ ⟩
   to (∼-Lab 𝓁₁~𝓁₂ S∼T) =
     let ⟨ 𝓁₁≾𝓁₂ , 𝓁₂≾𝓁₁ ⟩ = _⇔_.to (𝓁~𝓁′⇔𝓁≾𝓁′×𝓁′≾𝓁 _ _) 𝓁₁~𝓁₂ in
-    let ⟨ T₁≲T₂ , T₂≲T₁ ⟩ = _⇔_.to (S∼T⇔S≾T×T≾S _ _) S∼T in
+    let ⟨ T₁≲T₂ , T₂≲T₁ ⟩ = _⇔_.to (S∼T⇔S≲T×T≲S _ _) S∼T in
       ⟨ ≲-Lab 𝓁₁≾𝓁₂ T₁≲T₂ , ≲-Lab 𝓁₂≾𝓁₁ T₂≲T₁ ⟩
   to (∼-⇒ 𝓁₁~𝓁₁′ 𝓁₂~𝓁₂′ S₁∼T₁ S₂∼T₂) =
     let ⟨ 𝓁₁≾𝓁₁′ , 𝓁₁′≾𝓁₁ ⟩ = _⇔_.to (𝓁~𝓁′⇔𝓁≾𝓁′×𝓁′≾𝓁 _ _) 𝓁₁~𝓁₁′ in
     let ⟨ 𝓁₂≾𝓁₂′ , 𝓁₂′≾𝓁₂ ⟩ = _⇔_.to (𝓁~𝓁′⇔𝓁≾𝓁′×𝓁′≾𝓁 _ _) 𝓁₂~𝓁₂′ in
-    let ⟨ S₁≲T₁ , T₁≲S₁ ⟩ = _⇔_.to (S∼T⇔S≾T×T≾S _ _) S₁∼T₁ in
-    let ⟨ S₂≲T₂ , T₂≲S₂ ⟩ = _⇔_.to (S∼T⇔S≾T×T≾S _ _) S₂∼T₂ in
+    let ⟨ S₁≲T₁ , T₁≲S₁ ⟩ = _⇔_.to (S∼T⇔S≲T×T≲S _ _) S₁∼T₁ in
+    let ⟨ S₂≲T₂ , T₂≲S₂ ⟩ = _⇔_.to (S∼T⇔S≲T×T≲S _ _) S₂∼T₂ in
       ⟨ ≲-⇒ 𝓁₁′≾𝓁₁ 𝓁₂≾𝓁₂′ T₁≲S₁ S₂≲T₂ , ≲-⇒ 𝓁₁≾𝓁₁′ 𝓁₂′≾𝓁₂ S₁≲T₁ T₂≲S₂ ⟩
 
   from : S ≲ T × T ≲ S → S ∼ T
@@ -91,15 +91,15 @@ S∼T⇔S≾T×T≾S S T = record { to = to ; from = from }
   from ⟨ ≲-ℒ , ≲-ℒ ⟩ = ∼-ℒ
   from ⟨ ≲-Ref 𝓁₁≾𝓁₂ 𝓁₂≾𝓁₁ T₁≲T₂ T₂≲T₁ , ≲-Ref _ _ _ _ ⟩ =
     let 𝓁₁~𝓁₂ = _⇔_.from (𝓁~𝓁′⇔𝓁≾𝓁′×𝓁′≾𝓁 _ _) ⟨ 𝓁₁≾𝓁₂ , 𝓁₂≾𝓁₁ ⟩ in
-    let T₁∼T₂ = _⇔_.from (S∼T⇔S≾T×T≾S _ _) ⟨ T₁≲T₂ , T₂≲T₁ ⟩ in
+    let T₁∼T₂ = _⇔_.from (S∼T⇔S≲T×T≲S _ _) ⟨ T₁≲T₂ , T₂≲T₁ ⟩ in
       ∼-Ref 𝓁₁~𝓁₂ T₁∼T₂
   from ⟨ ≲-Lab 𝓁₁≾𝓁₂ T₁≲T₂ , ≲-Lab 𝓁₂≾𝓁₁ T₂≲T₁ ⟩ =
     let 𝓁₁~𝓁₂ = _⇔_.from (𝓁~𝓁′⇔𝓁≾𝓁′×𝓁′≾𝓁 _ _) ⟨ 𝓁₁≾𝓁₂ , 𝓁₂≾𝓁₁ ⟩ in
-    let T₁∼T₂ = _⇔_.from (S∼T⇔S≾T×T≾S _ _) ⟨ T₁≲T₂ , T₂≲T₁ ⟩ in
+    let T₁∼T₂ = _⇔_.from (S∼T⇔S≲T×T≲S _ _) ⟨ T₁≲T₂ , T₂≲T₁ ⟩ in
       ∼-Lab 𝓁₁~𝓁₂ T₁∼T₂
   from ⟨ ≲-⇒ 𝓁₁′≾𝓁₁ 𝓁₂≾𝓁₂′ T₁′≲T₁ T₂≲T₂′ , ≲-⇒ 𝓁₁≾𝓁₁′ 𝓁₂′≾𝓁₂ T₁≲T₁′ T₂′≲T₂ ⟩ =
     let 𝓁₁~𝓁₁′ = _⇔_.from (𝓁~𝓁′⇔𝓁≾𝓁′×𝓁′≾𝓁 _ _) ⟨ 𝓁₁≾𝓁₁′ , 𝓁₁′≾𝓁₁ ⟩ in
     let 𝓁₂~𝓁₂′ = _⇔_.from (𝓁~𝓁′⇔𝓁≾𝓁′×𝓁′≾𝓁 _ _) ⟨ 𝓁₂≾𝓁₂′ , 𝓁₂′≾𝓁₂ ⟩ in
-    let T₁∼T₁′ = _⇔_.from (S∼T⇔S≾T×T≾S _ _) ⟨ T₁≲T₁′ , T₁′≲T₁ ⟩ in
-    let T₂∼T₂′ = _⇔_.from (S∼T⇔S≾T×T≾S _ _) ⟨ T₂≲T₂′ , T₂′≲T₂ ⟩ in
+    let T₁∼T₁′ = _⇔_.from (S∼T⇔S≲T×T≲S _ _) ⟨ T₁≲T₁′ , T₁′≲T₁ ⟩ in
+    let T₂∼T₂′ = _⇔_.from (S∼T⇔S≲T×T≲S _ _) ⟨ T₂≲T₂′ , T₂′≲T₂ ⟩ in
       ∼-⇒ 𝓁₁~𝓁₁′ 𝓁₂~𝓁₂′ T₁∼T₁′ T₂∼T₂′
