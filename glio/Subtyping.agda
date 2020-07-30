@@ -13,6 +13,10 @@ open Syntax.OpSig Op sig
   renaming (ABT to Term)
 open import Lemmas
 open import Interp
+open import WellTypedness using (_⊢ᵥ_⦂_)
+open _⊢ᵥ_⦂_
+open import Store using (Value)
+open Value
 
 
 
@@ -147,6 +151,32 @@ data _<:_ : 𝕋 → 𝕋 → Set where
 <:→≲ (<:-Lab 𝓁₁≺:𝓁₂ T₁<:T₂) = ≲-Lab (≺:→≾ 𝓁₁≺:𝓁₂) (<:→≲ T₁<:T₂)
 <:→≲ (<:-⇒ 𝓁₁′≺:𝓁₁ 𝓁₂≺:𝓁₂′ T₁<:S₁ S₂<:T₂) = ≲-⇒ (≺:→≾ 𝓁₁′≺:𝓁₁) (≺:→≾ 𝓁₂≺:𝓁₂′) (<:→≲ T₁<:S₁) (<:→≲ S₂<:T₂)
 
--- <:→no-blame : ∀ {μ pc T₁ T₂ v}
---   → T₁ <: T₂
---   → castT μ pc T₁ T₂ v ≢ error castError
+<:→no-blame : ∀ {μ pc T₁ T₂ v}
+  → μ ⊢ᵥ v ⦂ T₁
+  → (T₁<:T₂ : T₁ <: T₂)
+    ------------------------------------------------------------------
+  → ∃[ w ] (castT′ μ pc T₁ T₂ (<:→≲ T₁<:T₂) v ≡ result ⟨ μ , w , pc ⟩)
+<:→no-blame ⊢ᵥtt <:-⊤ = ⟨ V-tt , refl ⟩
+<:→no-blame ⊢ᵥtrue <:-𝔹 = ⟨ V-true , refl ⟩
+<:→no-blame ⊢ᵥfalse <:-𝔹 = ⟨ V-false , refl ⟩
+<:→no-blame ⊢ᵥlabel <:-ℒ = ⟨ V-label _ , refl ⟩
+<:→no-blame (⊢ᵥref _) (<:-Ref ≂-¿ T₁≲T₂ T₂≲T₁) = ⟨ V-ref _ , refl ⟩
+<:→no-blame (⊢ᵥref _) (<:-Ref {𝓁̂₂ = l̂ 𝓁₂} ≂-l T₁≲T₂ T₂≲T₁)
+  with 𝓁₂ ≟ 𝓁₂
+... | yes _ = ⟨ V-ref _ , refl ⟩
+... | no 𝓁₂≢𝓁₂ = ⊥-elim (𝓁₂≢𝓁₂ refl)
+<:→no-blame (⊢ᵥref-dyn _) (<:-Ref ≂-¿ T₁≲T₂ T₂≲T₁) = ⟨ V-ref _ , refl ⟩
+<:→no-blame {pc = pc} (⊢ᵥlab {𝓁 = 𝓁} 𝓁≼𝓁′ ⊢v) (<:-Lab ≺:-¿ T₁<:T₂)
+  with <:→no-blame {pc = pc} ⊢v T₁<:T₂
+... | ⟨ w , eq ⟩ rewrite eq = ⟨ V-lab 𝓁 w , refl ⟩
+<:→no-blame {pc = pc} (⊢ᵥlab {𝓁 = 𝓁} 𝓁≼𝓁′ ⊢v) (<:-Lab (≺-l {𝓁₂ = 𝓁₂} 𝓵′≼𝓁₂) T₁<:T₂)
+  with 𝓁 ≼? 𝓁₂
+... | no 𝓁⊀𝓁₂ = ⊥-elim (𝓁⊀𝓁₂ 𝓁≼𝓁₂)
+  where
+  𝓁≼𝓁₂ = ≼-trans 𝓁≼𝓁′ 𝓵′≼𝓁₂
+... | yes _ with <:→no-blame {pc = pc} ⊢v T₁<:T₂
+...   | ⟨ w , eq ⟩ rewrite eq = ⟨ V-lab 𝓁 w , refl ⟩
+<:→no-blame {pc = pc} (⊢ᵥlab-dyn ⊢v) (<:-Lab ≺:-¿ T₁<:T₂) with <:→no-blame {pc = pc} ⊢v T₁<:T₂
+... | ⟨ w , eq ⟩ rewrite eq = ⟨ V-lab _ w , refl ⟩
+<:→no-blame (⊢ᵥclos _ _) (<:-⇒ _ _ _ _) = ⟨ V-proxy _ _ _ _ _ _ _ _ _ _ _ _ _ , refl ⟩
+<:→no-blame (⊢ᵥproxy _) (<:-⇒ _ _ _ _) = ⟨ V-proxy _ _ _ _ _ _ _ _ _ _ _ _ _ , refl ⟩
