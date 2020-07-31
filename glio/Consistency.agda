@@ -1,6 +1,11 @@
 module Consistency where
 
-open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
+open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; _≢_; refl; sym)
+open import Data.Maybe using (Maybe; just; nothing)
+open import Relation.Nullary using (Dec; yes; no; ¬_)
+open import Data.Empty using (⊥; ⊥-elim)
 
 open import StaticsGLIO
 open import Lemmas using (≼-refl; ≼-antisym)
@@ -103,3 +108,39 @@ S∼T⇔S≲T×T≲S S T = record { to = to ; from = from }
     let T₁∼T₁′ = _⇔_.from (S∼T⇔S≲T×T≲S _ _) ⟨ T₁≲T₁′ , T₁′≲T₁ ⟩ in
     let T₂∼T₂′ = _⇔_.from (S∼T⇔S≲T×T≲S _ _) ⟨ T₂≲T₂′ , T₂′≲T₂ ⟩ in
       ∼-⇒ 𝓁₁~𝓁₁′ 𝓁₂~𝓁₂′ T₁∼T₁′ T₂∼T₂′
+
+-- Recall that label and type intersections are partial functions.
+private
+  ~→∏ : ∀ {𝓁̂₁ 𝓁̂₂} → 𝓁̂₁ ~ 𝓁̂₂ → ∃[ 𝓁̂ ] (𝓁̂₁ ∏ 𝓁̂₂ ≡ just 𝓁̂)
+  ~→∏ {¿} ~-¿-r = ⟨ ¿ , refl ⟩
+  ~→∏ {l̂ 𝓁} ~-¿-r = ⟨ l̂ 𝓁 , refl ⟩
+  ~→∏ {𝓁̂₂ = ¿} ~-¿-l = ⟨ ¿ , refl ⟩
+  ~→∏ {𝓁̂₂ = l̂ 𝓁} ~-¿-l = ⟨ l̂ 𝓁 , refl ⟩
+  ~→∏ {l̂ 𝓁} ~-l with 𝓁 ≟ 𝓁
+  ... | yes _ = ⟨ l̂ 𝓁 , refl ⟩
+  ... | no 𝓁≢𝓁 = ⊥-elim (𝓁≢𝓁 refl)
+
+  ∼→∩ : ∀ {T₁ T₂} → T₁ ∼ T₂ → ∃[ S ] (T₁ ∩ T₂ ≡ just S)
+  ∼→∩ ∼-⊤ = ⟨ `⊤ , refl ⟩
+  ∼→∩ ∼-𝔹 = ⟨ `𝔹 , refl ⟩
+  ∼→∩ ∼-ℒ = ⟨ `ℒ , refl ⟩
+  ∼→∩ (∼-Ref 𝓁₁~𝓁₂ T₁∼T₂) with ~→∏ 𝓁₁~𝓁₂ | ∼→∩ T₁∼T₂
+  ... | ⟨ 𝓁̂ , eq₁ ⟩ | ⟨ T , eq₂ ⟩ rewrite eq₁ | eq₂ = ⟨ Ref 𝓁̂ T , refl ⟩
+  ∼→∩ (∼-Lab 𝓁₁~𝓁₂ T₁∼T₂) with ~→∏ 𝓁₁~𝓁₂ | ∼→∩ T₁∼T₂
+  ... | ⟨ 𝓁̂ , eq₁ ⟩ | ⟨ T , eq₂ ⟩ rewrite eq₁ | eq₂ = ⟨ Lab 𝓁̂ T , refl ⟩
+  ∼→∩ (∼-⇒ 𝓁₁~𝓁₁′ 𝓁₂~𝓁₂′ S₁∼T₁ S₂∼T₂) with ~→∏ 𝓁₁~𝓁₁′ | ~→∏ 𝓁₂~𝓁₂′ | ∼→∩ S₁∼T₁ | ∼→∩ S₂∼T₂
+  ... | ⟨ 𝓁̂₁″ , eq₁ ⟩ | ⟨ 𝓁̂₂″ , eq₂ ⟩ | ⟨ T₁″ , eq₃ ⟩ | ⟨ T₂″ , eq₄ ⟩ rewrite eq₁ | eq₂ | eq₃ | eq₄ = ⟨ T₁″ [ 𝓁̂₁″ ]⇒[ 𝓁̂₂″ ] T₂″ , refl ⟩
+
+∏~ : ∀ {𝓁̂₁ 𝓁̂₂} → 𝓁̂₁ ~ 𝓁̂₂ → ℒ̂
+∏~ 𝓁₁~𝓁₂ = proj₁ (~→∏ 𝓁₁~𝓁₂)
+
+∩∼ : ∀ {S T} → S ∼ T → 𝕋
+∩∼ S∼T = proj₁ (∼→∩ S∼T)
+
+private
+  -- Tests:
+  _ : ∃[ x ] (∏~ (~-l {l 42}) ≡ x)
+  _ = ⟨ l̂ (l 42) , refl ⟩
+
+  _ : ∃[ T ] (∩∼ (∼-Lab (~-¿-r {l̂ (l 42)}) ∼-⊤) ≡ T)
+  _ = ⟨ Lab (l̂ (l 42)) `⊤ , refl ⟩
