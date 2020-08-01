@@ -131,11 +131,40 @@ private
   ∼→∩ (∼-⇒ 𝓁₁~𝓁₁′ 𝓁₂~𝓁₂′ S₁∼T₁ S₂∼T₂) with ~→∏ 𝓁₁~𝓁₁′ | ~→∏ 𝓁₂~𝓁₂′ | ∼→∩ S₁∼T₁ | ∼→∩ S₂∼T₂
   ... | ⟨ 𝓁̂₁″ , eq₁ ⟩ | ⟨ 𝓁̂₂″ , eq₂ ⟩ | ⟨ T₁″ , eq₃ ⟩ | ⟨ T₂″ , eq₄ ⟩ rewrite eq₁ | eq₂ | eq₃ | eq₄ = ⟨ T₁″ [ 𝓁̂₁″ ]⇒[ 𝓁̂₂″ ] T₂″ , refl ⟩
 
+  ∼→∨ : ∀ {T₁ T₂} → T₁ ∼ T₂ → ∃[ S ] (T₁ ∨ T₂ ≡ just S)
+  ∼→∧ : ∀ {T₁ T₂} → T₁ ∼ T₂ → ∃[ S ] (T₁ ∧ T₂ ≡ just S)
+
+  ∼→∨ ∼-⊤ = ⟨ `⊤ , refl ⟩
+  ∼→∨ ∼-𝔹 = ⟨ `𝔹 , refl ⟩
+  ∼→∨ ∼-ℒ = ⟨ `ℒ , refl ⟩
+  ∼→∨ (∼-Ref 𝓁₁~𝓁₂ T₁∼T₂) with ~→∏ 𝓁₁~𝓁₂ | ∼→∩ T₁∼T₂
+  ... | ⟨ 𝓁̂ , eq₁ ⟩ | ⟨ T , eq₂ ⟩ rewrite eq₁ | eq₂ = ⟨ Ref 𝓁̂ T , refl ⟩
+  ∼→∨ (∼-Lab 𝓁₁~𝓁₂ T₁∼T₂) with ∼→∨ T₁∼T₂
+  ... | ⟨ T , eq ⟩ rewrite eq = ⟨ Lab _ T , refl ⟩
+  ∼→∨ (∼-⇒ 𝓁₁~𝓁₁′ 𝓁₂~𝓁₂′ S₁∼T₁ S₂∼T₂) with ∼→∧ S₁∼T₁ | ∼→∨ S₂∼T₂
+  ... | ⟨ T₁″ , eq₁ ⟩ | ⟨ T₂″ , eq₂ ⟩ rewrite eq₁ | eq₂ = ⟨ T₁″ [ _ ]⇒[ _ ] T₂″ , refl ⟩
+
+  ∼→∧ ∼-⊤ = ⟨ `⊤ , refl ⟩
+  ∼→∧ ∼-𝔹 = ⟨ `𝔹 , refl ⟩
+  ∼→∧ ∼-ℒ = ⟨ `ℒ , refl ⟩
+  ∼→∧ (∼-Ref 𝓁₁~𝓁₂ T₁∼T₂) with ~→∏ 𝓁₁~𝓁₂ | ∼→∩ T₁∼T₂
+  ... | ⟨ 𝓁̂ , eq₁ ⟩ | ⟨ T , eq₂ ⟩ rewrite eq₁ | eq₂ = ⟨ Ref 𝓁̂ T , refl ⟩
+  ∼→∧ (∼-Lab 𝓁₁~𝓁₂ T₁∼T₂) with ∼→∧ T₁∼T₂
+  ... | ⟨ T , eq ⟩ rewrite eq = ⟨ Lab _ T , refl ⟩
+  ∼→∧ (∼-⇒ 𝓁₁~𝓁₁′ 𝓁₂~𝓁₂′ S₁∼T₁ S₂∼T₂) with ∼→∨ S₁∼T₁ | ∼→∧ S₂∼T₂
+  ... | ⟨ T₁″ , eq₁ ⟩ | ⟨ T₂″ , eq₂ ⟩ rewrite eq₁ | eq₂ = ⟨ T₁″ [ _ ]⇒[ _ ] T₂″ , refl ⟩
+
 ∏~ : ∀ {𝓁̂₁ 𝓁̂₂} → 𝓁̂₁ ~ 𝓁̂₂ → ℒ̂
 ∏~ 𝓁₁~𝓁₂ = proj₁ (~→∏ 𝓁₁~𝓁₂)
 
 ∩∼ : ∀ {S T} → S ∼ T → 𝕋
 ∩∼ S∼T = proj₁ (∼→∩ S∼T)
+
+∨∼ : ∀ {S T} → S ∼ T → 𝕋
+∨∼ S∼T = proj₁ (∼→∨ S∼T)
+
+∧∼ : ∀ {S T} → S ∼ T → 𝕋
+∧∼ S∼T = proj₁ (∼→∧ S∼T)
 
 private
   -- Tests:
