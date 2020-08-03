@@ -2,8 +2,9 @@ open import Data.Nat using (ℕ; zero; suc; _≤_; z≤n; s≤s) renaming (_⊔_
 open import Data.Nat.Properties using (m≤m⊔n; m≤n⇒m≤n⊔o)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
+open import Data.Maybe using (Maybe; just; nothing)
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; _≢_; refl)
+open Eq using (_≡_; _≢_; refl; sym)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 
 open import StaticsGLIO
@@ -15,8 +16,8 @@ open import Lemmas
 open import Interp
 open import WellTypedness using (_⊢ᵥ_⦂_)
 open _⊢ᵥ_⦂_
-open import Store using (Value)
-open Value
+open import Store
+open import WellTypedness using (result-≡-inv)
 
 
 
@@ -190,3 +191,23 @@ data _<:_ : 𝕋 → 𝕋 → Set where
 ... | ⟨ w , eq ⟩ rewrite eq = ⟨ V-lab _ w , refl ⟩
 <:→no-blame (⊢ᵥclos _ _) (<:-⇒ _ _ _ _) = ⟨ V-proxy _ _ _ _ _ _ _ _ _ _ _ _ _ , refl ⟩
 <:→no-blame (⊢ᵥproxy _) (<:-⇒ _ _ _ _) = ⟨ V-proxy _ _ _ _ _ _ _ _ _ _ _ _ _ , refl ⟩
+
+private
+  error≢result : ∀ {err} {conf : Conf} → error err ≢ result conf
+  error≢result ()
+
+  result≡→𝓁ᶜ≡ : ∀ {μ₁ μ₂ : Store} {v₁ v₂ : Value} {𝓁ᶜ₁ 𝓁ᶜ₂ : ℒ}
+    → result ⟨ μ₁ , v₁ , 𝓁ᶜ₁ ⟩ ≡ result ⟨ μ₂ , v₂ , 𝓁ᶜ₂ ⟩
+    → 𝓁ᶜ₁ ≡ 𝓁ᶜ₂
+  result≡→𝓁ᶜ≡ res≡ =
+    let conf₁≡conf₂ = result-≡-inv res≡ in
+    let cdr₁≡cdr₂ = proj₂ (×-≡-inv conf₁≡conf₂) in
+      proj₂ (×-≡-inv cdr₁≡cdr₂)
+
+𝒱-pres-pc≲ : ∀ {Γ γ μ₁ μ₂ 𝓁ᶜ₁ 𝓁ᶜ₂ 𝓁̂₁ 𝓁̂₂ M v T}
+  → (k : ℕ)
+  → (l̂ 𝓁ᶜ₁) ≾ 𝓁̂₁
+  → (⊢M : Γ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ T)
+  → 𝒱 γ M ⊢M μ₁ 𝓁ᶜ₁ k ≡ result ⟨ μ₂ , v , 𝓁ᶜ₂ ⟩
+    -------------------------------------------
+  → (l̂ 𝓁ᶜ₂) ≾ 𝓁̂₂
