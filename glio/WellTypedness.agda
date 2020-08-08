@@ -464,3 +464,9 @@ ext-update-fresh {μ} {n} {𝓁₁} {𝓁₂} {T} {v} fresh eq = ∉domₙ∷ (<
   n<lenμ = n<lengthμ fresh eq
   lenμ<lenv∷μ : length μ < length ((⟨ n , 𝓁₁ , 𝓁₂ ⟩ ↦ ⟨ T , v ⟩) ∷ μ)
   lenμ<lenv∷μ = Data.Nat.s≤s ≤-refl
+
+⊢ₑ→nth⊢ᵥ : ∀ {Γ μ γ x v T}
+  → Γ ∣ μ ⊢ₑ γ
+  → nth γ x ≡ just v
+  → nth Γ x ≡ just T
+  → μ ⊢ᵥ v ⦂ T
