@@ -1298,7 +1298,7 @@ apply-safe {γ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy {S = S} {T} {S′
 ... | error NSUError | ⊢ᵣnsu-error = ⊢ᵣnsu-error
 ... | error castError | ⊢ᵣcast-error = ⊢ᵣcast-error
 ... | result ⟨ μ′ , v , pc′ ⟩ | ⊢ᵣresult ⊢μ′ ⊢v with pc′ ≼? (pc₀ ⊔ 𝓁)
-...   | yes _ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab ≼-refl ⊢v)
+...   | yes _ = ⊢ᵣresult ⊢μ′ (⊢ᵥlab (≼-refl _) ⊢v)
 ...   | no  _ = ⊢ᵣnsu-error
 
 𝒱-safe {γ = γ} {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢to-label-dyn {M = M} eq ⊢M)
