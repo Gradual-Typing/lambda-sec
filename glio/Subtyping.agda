@@ -330,11 +330,21 @@ private
     subst (λ □ → l̂ _ ≾ □) (⋎-comm 𝓁̂₂′ 𝓁̂₂) (𝓁≾𝓁₁→𝓁≾𝓁₁⋎𝓁₂ 𝓁ᶜ₂≾𝓁₂′)
 
 
--- 𝒱-pres-pc≲ {γ = γ} {μ₁ = μ₁} {𝓁ᶜ₁ = 𝓁ᶜ₁} {𝓁ᶜ₂} (suc k) 𝓁ᶜ₁≾𝓁₁ ⊢γ (⊢get {x = x} _) eq with nth γ x | inspect (λ □ → nth □ x) γ
--- ... | nothing | _ = ⊥-elim (error≢result eq)
--- ... | just (V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩) | [ eq₁ ] with lookup μ₁ ⟨ n , 𝓁₁ , 𝓁₂ ⟩
--- ...   | just ⟨ T′ , v ⟩ = {!!}
--- ...   | nothing = ⊥-elim (error≢result eq)
+𝒱-pres-pc≲ {Γ} {γ} {μ₁} {μ₂} {𝓁ᶜ₁} {𝓁ᶜ₂} (suc k) 𝓁ᶜ₁≾𝓁₁ ⊢μ₁ ⊢γ fresh (⊢get {x = x} {T} eq₁) eq
+  with nth γ x | inspect (λ γ → nth γ x) γ
+... | nothing | _ = ⊥-elim (error≢result eq)
+... | just (V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩) | [ eq₂ ]
+  with lookup μ₁ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | inspect (λ μ → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩) μ₁
+...   | nothing | _ = ⊥-elim (error≢result eq)
+...   | just ⟨ T′ , v ⟩ | [ eq₃ ]
+  with castT μ₁ (𝓁ᶜ₁ ⊔ 𝓁₂) T′ T v | castT-state-idem {μ₁} {𝓁ᶜ₁ ⊔ 𝓁₂} {T′} {T} ⊢v
+  where
+  ⊢v = lookup-safe ⊢μ₁ eq₃
+...     | timeout | _ = ⊥-elim (timeout≢result eq)
+...     | error _ | _ = ⊥-elim (error≢result eq)
+...     | result _  | ▹result _ 𝓁ᶜ≡ with ⊢ₑ→nth⊢ᵥ ⊢γ eq₂ eq₁
+...       | ⊢ᵥref {𝓁₂ = 𝓁₂} _ rewrite sym (trans 𝓁ᶜ≡ (result≡→𝓁ᶜ≡ eq)) = {!!}
+...       | ⊢ᵥref-dyn _ = {!!}
 
 -- 𝒱-pres-pc≲ 𝓁ᶜ≾𝓁₁ (⊢set x x₁ x₂ x₃) eq = {!!}
 -- 𝒱-pres-pc≲ 𝓁ᶜ≾𝓁₁ (⊢new x x₁) eq = {!!}
