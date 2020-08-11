@@ -254,7 +254,6 @@ private
 𝒱-pres-pc≲ 0 _ _ _ _ _ ()
 𝒱-pres-pc≲ {γ = γ} (suc k) 𝓁ᶜ₁≾𝓁₁ _ _ _ (⊢` {x = x} eq) eq₁
   with nth γ x
-... | nothing = ⊥-elim (error≢result eq₁)
 ... | just _ rewrite sym (result≡→𝓁ᶜ≡ eq₁) = 𝓁ᶜ₁≾𝓁₁
 𝒱-pres-pc≲ (suc k) 𝓁ᶜ₁≾𝓁₁ _ _ _ ⊢tt eq rewrite sym (result≡→𝓁ᶜ≡ eq) = 𝓁ᶜ₁≾𝓁₁
 𝒱-pres-pc≲ (suc k) 𝓁ᶜ₁≾𝓁₁ _ _ _ ⊢true eq rewrite sym (result≡→𝓁ᶜ≡ eq) = 𝓁ᶜ₁≾𝓁₁
@@ -332,10 +331,8 @@ private
 
 𝒱-pres-pc≲ {Γ} {γ} {μ₁} {μ₂} {𝓁ᶜ₁} {𝓁ᶜ₂} (suc k) 𝓁ᶜ₁≾𝓁₁ ⊢μ₁ ⊢γ fresh (⊢get {x = x} {T} {𝓁̂₁} eq₁) eq
   with nth γ x | inspect (λ γ → nth γ x) γ
-... | nothing | _ = ⊥-elim (error≢result eq)
 ... | just (V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩) | [ eq₂ ]
   with lookup μ₁ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | inspect (λ μ → lookup μ ⟨ n , 𝓁₁ , 𝓁₂ ⟩) μ₁
-...   | nothing | _ = ⊥-elim (error≢result eq)
 ...   | just ⟨ T′ , v ⟩ | [ eq₃ ]
   with castT μ₁ (𝓁ᶜ₁ ⊔ 𝓁₂) T′ T v | castT-state-idem {μ₁} {𝓁ᶜ₁ ⊔ 𝓁₂} {T′} {T} ⊢v
   where
@@ -347,7 +344,13 @@ private
 ...       | ⊢ᵥref-dyn _ rewrite 𝓁̂⋎¿≡¿ 𝓁̂₁ = ≾-¿-r
 
 
--- 𝒱-pres-pc≲ 𝓁ᶜ≾𝓁₁ (⊢set x x₁ x₂ x₃) eq = {!!}
+𝒱-pres-pc≲ {Γ} {γ} {μ₁} {μ₂} {𝓁ᶜ₁} (suc k) 𝓁ᶜ₁≾𝓁₁ ⊢μ₁ ⊢γ fresh (⊢set {x = x} {y} _ _ _ _) eq
+  with nth γ x | nth γ y
+𝒱-pres-pc≲ {μ₁ = μ₁} (suc k) 𝓁ᶜ₁≾𝓁₁ ⊢μ₁ ⊢γ fresh (⊢set _ _ _ _) eq | just (V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩) | just v
+  with lookup μ₁ ⟨ n , 𝓁₁ , 𝓁₂ ⟩
+𝒱-pres-pc≲ (suc k) 𝓁ᶜ₁≾𝓁₁ ⊢μ₁ ⊢γ fresh (⊢set _ _ _ _) eq | just (V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩) | just v | just ⟨ T″ , _ ⟩ = {!!}
+
+
 -- 𝒱-pres-pc≲ 𝓁ᶜ≾𝓁₁ (⊢new x x₁) eq = {!!}
 -- 𝒱-pres-pc≲ 𝓁ᶜ≾𝓁₁ (⊢new-dyn x x₁) eq = {!!}
 -- 𝒱-pres-pc≲ 𝓁ᶜ≾𝓁₁ (⊢eq-ref x x₁ x₂ x₃) eq = {!!}
