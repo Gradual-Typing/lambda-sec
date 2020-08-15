@@ -48,11 +48,13 @@ data ℒ̂ : Set where
 
 
 -- Examples: low and high.
-𝐿 : ℒ̂
-𝐿 = l̂ (l 0)
+𝐿 : ℒ
+𝐿 = l 0
+𝐿̂ = l̂ 𝐿
 
-𝐻 : ℒ̂
-𝐻 = l̂ (l 1)
+𝐻 : ℒ
+𝐻 = l 1
+𝐻̂ = l̂ 𝐻
 
 data 𝕋 : Set where
   `⊤ : 𝕋                          -- Unit
