@@ -13,6 +13,12 @@ open import Interp
 open import Store
 open import WellTypedness
 
+{-
+  An example:
+    let _ = set x y in
+      set z w
+  where x, y, z, w are free vars (see Γ and γ).
+-}
 M : Term
 M = `let (set (` 0) (` 1)) (set (` 3) (` 4))
 
@@ -25,15 +31,15 @@ M = `let (set (` 0) (` 1)) (set (` 3) (` 4))
 μ : Store
 μ = ⟨ 0 , 𝐿 , 𝐻 ⟩ ↦ ⟨ `⊤ , V-tt ⟩ ∷ ⟨ 1 , 𝐿 , 𝐿 ⟩ ↦ ⟨ `⊤ , V-tt ⟩ ∷ []
 
--- The env is well-typed.
+-- The env is well-typed under Γ, Σ.
 ⊢γ : Γ ∣ μ ⊢ₑ γ
 ⊢γ = ⊢ₑ∷ (⊢ᵥref refl) (⊢ₑ∷ ⊢ᵥtt (⊢ₑ∷ (⊢ᵥref refl) (⊢ₑ∷ ⊢ᵥtt ⊢ₑ∅)))
 
--- The heap is well-typed.
+-- The heap is well-typed under Σ.
 ⊢μ : μ ⊢ₛ μ
 ⊢μ = ⊢ₛ∷ ⊢ᵥtt (⊢ₛ∷ ⊢ᵥtt ⊢ₛ∅)
 
--- The term with double heap assignments is also well-typed.
+-- The term with double heap assignments is well-typed under Γ.
 ⊢M : Γ [ 𝐿̂ , 𝐿̂ ]⊢ M ⦂ `⊤
 ⊢M = ⊢let (⊢set refl refl ≲-⊤ (≾-l (≼-l z≤n))) (⊢set refl refl ≲-⊤ (≾-l (≼-l z≤n))) ≲-⊤
 
