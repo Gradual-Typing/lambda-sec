@@ -140,7 +140,12 @@ apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Resul
 𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | just (V-ref loc) | just v with lookup μ loc
 𝒱 γ (set `x `y) (⊢set {x = x} {y} {T} {T′} {𝓁̂₁} _ _ T′≲T _) μ pc (suc k) | just (V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩) | just v | just ⟨ T″ , _ ⟩ =
   do
-  ⟨ μ′ , v′ , pc′ ⟩ ← castT μ (pc ⊔ 𝓁₂) T′ T v  -- need to update pc because of the `get`
+  {- NOTE:
+    We do not taint pc here like we do in `get`'s case, since the value is discarded and the
+    type tag T″ is not used anywhere afterwards in the evaluation - the `set` clause always
+    returns unit, which never leaks information.
+  -}
+  ⟨ μ′ , v′ , pc′ ⟩ ← castT μ  pc T′ T v
   ⟨ μ″ , v″ , pc″ ⟩ ← castT μ′ pc′ T T″ v′
   setmem μ″ ⟨ n , 𝓁₁ , 𝓁₂ ⟩ pc″ ⟨ T″ , v″ ⟩
   where

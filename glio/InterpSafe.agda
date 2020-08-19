@@ -352,7 +352,7 @@ apply-pres-⊢ₑ {Δ} {γ} {ρ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy 
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
   | v | ⊢v
   rewrite eq
-  with castT μ (pc ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc ⊔ 𝓁₂} {T′} {T} {v} ⊢v
+  with castT μ pc T′ T v | ⊢castT {μ} {pc} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc} {T′} {T} {v} ⊢v
 𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
   | v | ⊢v
@@ -405,7 +405,7 @@ apply-pres-⊢ₑ {Δ} {γ} {ρ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy 
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
   | v | ⊢v
   rewrite eq
-  with castT μ (pc ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc ⊔ 𝓁₂} {T′} {T} {v} ⊢v
+  with castT μ pc T′ T v | ⊢castT {μ} {pc} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc} {T′} {T} {v} ⊢v
 𝒱-pres-⊢ₑ {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ ⊢ρ fresh
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
   | v | ⊢v
@@ -748,7 +748,7 @@ apply-pres-⊢ₑ {Δ} {γ} {ρ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy 
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
   | v | ⊢v
   rewrite eq
-  with castT μ (pc ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc ⊔ 𝓁₂} {T′} {T} {v} ⊢v
+  with castT μ pc T′ T v | ⊢castT {μ} {pc} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc} {T′} {T} {v} ⊢v
 𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
   | v | ⊢v
@@ -801,7 +801,7 @@ apply-pres-⊢ₑ {Δ} {γ} {ρ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy 
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
   | v | ⊢v
   rewrite eq
-  with castT μ (pc ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc ⊔ 𝓁₂} {T′} {T} {v} ⊢v
+  with castT μ pc T′ T v | ⊢castT {μ} {pc} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc} {T′} {T} {v} ⊢v
 𝒱-pres-WFaddr {μ = μ} {pc} {suc k} (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂) ⊢μ ⊢γ fresh
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
   | v | ⊢v
@@ -1095,7 +1095,7 @@ apply-safe {γ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy {S = S} {T} {S′
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref eq
   | v | ⊢v
   rewrite eq
-  with castT μ (pc₀ ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc₀ ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc₀ ⊔ 𝓁₂} {T′} {T} {v} ⊢v
+  with castT μ pc₀ T′ T v | ⊢castT {μ} {pc₀} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc₀} {T′} {T} {v} ⊢v
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref {T = T″} eq
   | v | ⊢v
@@ -1147,7 +1147,7 @@ apply-safe {γ} {w = w} {μ} {pc} {k} ⊢μ fresh (⊢ᵥproxy {S = S} {T} {S′
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn eq
   | v | ⊢v
   rewrite eq
-  with castT μ (pc₀ ⊔ 𝓁₂) T′ T v | ⊢castT {μ} {pc₀ ⊔ 𝓁₂} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc₀ ⊔ 𝓁₂} {T′} {T} {v} ⊢v
+  with castT μ pc₀ T′ T v | ⊢castT {μ} {pc₀} {T′} {T} ⊢μ ⊢v | castT-state-idem {μ} {pc₀} {T′} {T} {v} ⊢v
 𝒱-safe {μ = μ} (suc k) pc₀ ⊢μ fresh ⊢γ (⊢set {T = T} {T′} eq₁ eq₂ T′≲T 𝓁̂₁≾𝓁̂)
   | V-ref ⟨ n , 𝓁₁ , 𝓁₂ ⟩ | ⊢ᵥref-dyn {T = T″} eq
   | v | ⊢v
