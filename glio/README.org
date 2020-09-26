@@ -2,6 +2,9 @@
 
 This is an /Agda/ formalization of GLIO. It contains the proofs for several interesting properties.
 
+The language definition is the same as the one in [[http://arthuraa.net/docs/glio-full.pdf][Reconciling noninterference and gradual typing]], however
+we use an interpreter as the dynamics instead of the denotational semantics presented in the paper.
+
 * Directory structure
 
 *[DONE]*
