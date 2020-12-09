@@ -10,10 +10,6 @@ open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 
 open import StaticsGLIO
-import Syntax
-open Syntax.OpSig Op sig
-  using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)
-  renaming (ABT to Term)
 open import Store
 open import Lemmas
 

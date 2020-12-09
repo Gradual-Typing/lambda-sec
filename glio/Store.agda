@@ -9,11 +9,8 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl; cong; cong₂)
-open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _≡⟨_⟩_; _∎)
 
 open import StaticsGLIO
-import Syntax
-open Syntax.OpSig Op sig renaming (ABT to Term)
 open import Lemmas
 
 

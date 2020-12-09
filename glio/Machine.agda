@@ -118,6 +118,9 @@ nth [] k = nothing
 nth (x ∷ ls) zero = just x
 nth (x ∷ ls) (suc k) = nth ls k
 
+-- We're using the ABT library.
+open Syntax using (Sig; Rename; ν; ∁; ■; _•_; id; ↑; ⟰)
+
 data Op : Set where
   op-lam        : ℒ → Op        -- ƛ
   op-true       : Op
@@ -133,24 +136,23 @@ data Op : Set where
   op-assign     : Op            -- :=
   op-label      : ℒ → Op        -- / (label annotation)
 
-sig : Op → List ℕ
-sig (op-lam pc)        = 2 ∷ []   -- First we bind f then we bind x
+sig : Op → List Sig
+sig (op-lam pc)        = (ν (ν ■)) ∷ []   -- First we bind f then we bind x (for some reason)
 sig op-true            = []
 sig op-false           = []
 sig op-unit            = []
 sig (op-memory n s)    = []
-sig op-app             = 0 ∷ 0 ∷ []
-sig op-if              = 0 ∷ 0 ∷ 0 ∷ []
-sig op-and             = 0 ∷ 0 ∷ []
-sig op-or              = 0 ∷ 0 ∷ []
-sig (op-ref s)         = 0 ∷ []
-sig op-deref           = 0 ∷ []
-sig op-assign          = 0 ∷ 0 ∷ []
-sig (op-label 𝓁)       = 0 ∷ []
+sig op-app             = ■ ∷ ■ ∷ []
+sig op-if              = ■ ∷ ■ ∷ ■ ∷ []
+sig op-and             = ■ ∷ ■ ∷ []
+sig op-or              = ■ ∷ ■ ∷ []
+sig (op-ref s)         = ■ ∷ []
+sig op-deref           = ■ ∷ []
+sig op-assign          = ■ ∷ ■ ∷ []
+sig (op-label 𝓁)       = ■ ∷ []
 
--- We're using the ABT library.
-open Syntax Op sig
-  using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; Rename; ⟪_⟫; ⟦_⟧; exts; _•_; id; exts-sub-cons; sub-id)
+open Syntax.OpSig Op sig
+  using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫)
   renaming (ABT to Term) public
 
 

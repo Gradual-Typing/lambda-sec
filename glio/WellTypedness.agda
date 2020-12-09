@@ -13,10 +13,6 @@ open Eq using (_≡_; _≢_; refl; sym; cong; cong₂; subst; subst₂; trans)
 
 open import Lemmas
 open import StaticsGLIO
-import Syntax
-open Syntax.OpSig Op sig
-  using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)
-  renaming (ABT to Term)
 open import Store
 open import Interp
 

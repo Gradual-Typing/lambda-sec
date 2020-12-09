@@ -74,6 +74,8 @@ nth (x ∷ ls) zero = just x
 nth (x ∷ ls) (suc k) = nth ls k
 
 -- We're using the ABT library.
+open Syntax using (Sig; Rename; ν; ∁; ■; _•_; id; ↑; ⟰)
+
 data Op : Set where
   op-let : Op
   op-true       : Op
@@ -98,33 +100,33 @@ data Op : Set where
   op-to-label : ℒ → Op
   op-to-label-dyn : Op
 
-sig : Op → List ℕ
-sig op-let      = 0 ∷ 1 ∷ []
+sig : Op → List Sig
+sig op-let      = ■ ∷ (ν ■) ∷ []
 sig op-true            = []
 sig op-false           = []
 sig op-unit            = []
-sig op-if       = 0 ∷ 0 ∷ 0 ∷ []
-sig op-lam      = 1 ∷ []
-sig op-app      = 0 ∷ 0 ∷ []
-sig op-get      = 0 ∷ []
-sig op-set      = 0 ∷ 0 ∷ []
-sig (op-new 𝓁)  = 0 ∷ []
-sig op-new-dyn  = 0 ∷ 0 ∷ []
-sig op-eq-ref   = 0 ∷ 0 ∷ []
-sig op-ref-label = 0 ∷ []
-sig op-lab-label = 0 ∷ []
-sig op-pc-label  = []
+sig op-if       = ■ ∷ ■ ∷ ■ ∷ []
+sig op-lam      = (ν ■) ∷ []
+sig op-app      = ■ ∷ ■ ∷ []
+sig op-get      = ■ ∷ []
+sig op-set      = ■ ∷ ■ ∷ []
+sig (op-new 𝓁)  = ■ ∷ []
+sig op-new-dyn  = ■ ∷ ■ ∷ []
+sig op-eq-ref   = ■ ∷ ■ ∷ []
+sig op-ref-label = ■ ∷ []
+sig op-lab-label = ■ ∷ []
+sig op-pc-label  = []  -- does not have any sub-term
 sig (op-label 𝓁) = []
-sig op-label-join = 0 ∷ 0 ∷ []
-sig op-label-meet = 0 ∷ 0 ∷ []
-sig op-label-leq = 0 ∷ 0 ∷ []
-sig op-unlabel = 0 ∷ []
-sig (op-to-label 𝓁) = 0 ∷ []
-sig op-to-label-dyn = 0 ∷ 0 ∷ []
+sig op-label-join     = ■ ∷ ■ ∷ []
+sig op-label-meet     = ■ ∷ ■ ∷ []
+sig op-label-leq      = ■ ∷ ■ ∷ []
+sig op-unlabel        = ■ ∷ []
+sig (op-to-label 𝓁)   = ■ ∷ []
+sig op-to-label-dyn   = ■ ∷ ■ ∷ []
 
 open Syntax.OpSig Op sig
-  using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)
-  renaming (ABT to Term)
+  using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫)
+  renaming (ABT to Term) public
 
 pattern `let M N = op-let ⦅ cons (ast M) (cons (bind (ast N)) nil) ⦆
 pattern `true = op-true ⦅ nil ⦆

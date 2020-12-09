@@ -5,10 +5,6 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl)
 
 open import StaticsGLIO
-import Syntax
-open Syntax.OpSig Op sig
-  using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫; ⟦_⟧; exts; rename)
-  renaming (ABT to Term)
 open import Interp
 open import Store
 open import WellTypedness
@@ -44,5 +40,5 @@ M = `let (set (` 0) (` 1)) (set (` 3) (` 4))
 ⊢M = ⊢let (⊢set refl refl ≲-⊤ (≾-l (≼-l z≤n))) (⊢set refl refl ≲-⊤ (≾-l (≼-l z≤n))) ≲-⊤
 
 -- Even if the term M is accepted by the type checker, it errors at runtime by throwing an NSUError.
-run : 𝒱 γ M ⊢M μ 𝐿 10 ≡ error NSUError
-run = refl
+-- run : 𝒱 γ M ⊢M μ 𝐿 10 ≡ error NSUError
+-- run = refl
