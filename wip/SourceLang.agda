@@ -17,6 +17,7 @@ data _;_⊢G_ : Context → Label → Type → Set where
       --------
     → Γ ; pc ⊢G A
 
+  -- A value need to be annotated with static label
   $_^_ : ∀ {Γ ι pc ℓ}
     → rep ι
     → StaticLabel ℓ
@@ -29,18 +30,20 @@ data _;_⊢G_ : Context → Label → Type → Set where
       -------------------------------
     → Γ ; pc ⊢G A ⟦ pc₀ ⟧⇒ B ^ ℓ
 
-  prot : ∀ {Γ τ ℓ₀ pc ℓ}
+  prot : ∀ {Γ τᴬ ℓᴬ pc ℓ}
     → StaticLabel ℓ
-    → Γ ; pc ⋎ ℓ ⊢G τ ^ ℓ₀
+    → Γ ; pc ⋎ ℓ ⊢G τᴬ ^ ℓᴬ
       -----------------------
-    → Γ ; pc ⊢G τ ^ (ℓ₀ ⋎ ℓ)
+    → Γ ; pc ⊢G τᴬ ^ (ℓᴬ ⋎ ℓ)
 
-  _·_ : ∀ {Γ A A′ τᴮ ℓᴮ pc₀ pc ℓ}
+  _·_ : ∀ {Γ A A′ τᴮ ℓᴮ pc pc₀ ℓ}
     → Γ ; pc ⊢G A ⟦ pc₀ ⟧⇒ (τᴮ ^ ℓᴮ) ^ ℓ
     → Γ ; pc ⊢G A′
+    -- Note that ℓ₁ ⋎ ℓ₂ ≾ ℓ ⌿→ ℓ₁ ≾ ℓ ∧ ℓ₂ ≾ ℓ
     → {pc ≾ pc₀} → {ℓ ≾ pc₀}
     → {A′ ≲ A}
       --------------------------
+    -- We snap label ℓ on the result
     → Γ ; pc ⊢G τᴮ ^ (ℓᴮ ⋎ ℓ)
 
   ref : ∀ {Γ τᴬ ℓᴬ pc ℓ}
@@ -50,7 +53,20 @@ data _;_⊢G_ : Context → Label → Type → Set where
       ----------------------------
     → Γ ; pc ⊢G Ref (τᴬ ^ ℓᴬ) ^ ℓ
 
-  -- _:=_ : ∀ {}
+  _:=_ : ∀ {Γ τᴬ ℓᴬ A′ pc ℓ}
+    → Γ ; pc ⊢G Ref (τᴬ ^ ℓᴬ) ^ ℓ
+    → Γ ; pc ⊢G A′
+    -- The NSU check here is analogous to the check of function application
+    → {pc ≾ ℓᴬ} → {ℓ ≾ ℓᴬ}
+    → {A′ ≲ τᴬ ^ ℓᴬ}
+      -------------------
+    -- `Unit` never leaks information so it's fine to be low security.
+    → Γ ; pc ⊢G ` Unit ^ ᴸ
+
+  !_ : ∀ {Γ τᴬ ℓᴬ pc ℓ}
+    → Γ ; pc ⊢G Ref (τᴬ ^ ℓᴬ) ^ ℓ
+      -----------------------------
+    → Γ ; pc ⊢G τᴬ ^ (ℓᴬ ⋎ ℓ)
 
 -- Examples:
 --   TODO add more examples here
