@@ -23,8 +23,8 @@ data Active : ∀ {S T} → Cast S ⇒ T → Set where
   A-from* : ∀ {ι ℓ} → (c : Cast (` ι ^ *) ⇒ (` ι ^ ℓ)) → Active c
   A-sub : ∀ {ι ℓ₁ ℓ₂} {s₁ : StaticLabel ℓ₁} {s₂ : StaticLabel ℓ₂} → s₁ ≼ s₂ → (c : Cast (` ι ^ ℓ₁) ⇒ (` ι ^ ℓ₂)) → Active c
 
-ActiveNotInert : ∀ {A B} → (c : Cast A ⇒ B) → Active c ⊎ Inert c
-ActiveNotInert (cast (` A ^ ℓ₁) (` .A ^ ℓ₂) p (≲-ι cs)) with eq-unk ℓ₁ | eq-unk ℓ₂
+ActiveOrInert : ∀ {A B} → (c : Cast A ⇒ B) → Active c ⊎ Inert c
+ActiveOrInert (cast (` A ^ ℓ₁) (` .A ^ ℓ₂) p (≲-ι cs)) with eq-unk ℓ₁ | eq-unk ℓ₂
 ... | yes eq1 | yes eq2 rewrite eq1 | eq2 = inj₁ (A-from* _)
 ... | yes eq | no neq rewrite eq = inj₁ (A-from* _)
 ... | no neq | yes eq rewrite eq = inj₂ (I-inj neq _)
@@ -32,8 +32,12 @@ ActiveNotInert (cast (` A ^ ℓ₁) (` .A ^ ℓ₂) p (≲-ι cs)) with eq-unk �
 ...   | ≾-*₁ = contradiction refl neq1
 ...   | ≾-*₂ = inj₂ (I-inj (λ _ → neq2 refl) _)
 ...   | ≾-static sub = inj₁ (A-sub sub _)
-ActiveNotInert (cast (A₁ ⟦ pc₁ ⟧⇒ B₁ ^ ℓ₁) (A₂ ⟦ pc₂ ⟧⇒ B₂ ^ ℓ₂) p cs) = inj₂ (I-fun _)
-ActiveNotInert (cast (Ref A ^ ℓ₁) (Ref B ^ ℓ₂) p cs) = inj₂ (I-ref _)
+ActiveOrInert (cast (A₁ ⟦ pc₁ ⟧⇒ B₁ ^ ℓ₁) (A₂ ⟦ pc₂ ⟧⇒ B₂ ^ ℓ₂) p cs) = inj₂ (I-fun _)
+ActiveOrInert (cast (Ref A ^ ℓ₁) (Ref B ^ ℓ₂) p cs) = inj₂ (I-ref _)
+
+ActiveNotInert : ∀ {A B} {c : Cast A ⇒ B} → Active c → ¬ Inert c
+ActiveNotInert (A-from* _) (I-inj neq _) = contradiction refl neq
+ActiveNotInert (A-sub () _) (I-inj _ _)
 
 -- Γ ; Σ ; pc ⊢ M ⦂ A
 infix 4 _;_;_⊢_
