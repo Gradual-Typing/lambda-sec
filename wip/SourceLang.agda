@@ -56,7 +56,6 @@ data _;_⊢G_ : Context → Label → Type → Set where
   _:=_ : ∀ {Γ pc τᴬ ℓᴬ A′ ℓ}
     → Γ ; pc ⊢G Ref (τᴬ ^ ℓᴬ) ^ ℓ
     → Γ ; pc ⊢G A′
-    -- The NSU check here is analogous to the check of function application
     → {pc ≾ ℓᴬ} → {ℓ ≾ ℓᴬ}
     → {A′ ≲ τᴬ ^ ℓᴬ}
       -------------------

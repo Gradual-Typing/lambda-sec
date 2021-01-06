@@ -1,5 +1,8 @@
 module IFLabels where
 
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
+open import Relation.Nullary using (¬_; Dec; yes; no)
+
 data Label : Set where
   * : Label
   ᴴ : Label
@@ -51,3 +54,10 @@ data _≾_ : Label → Label → Set where
     → s₁ ≼ s₂
       ----------
     → ℓ₁ ≾ ℓ₂
+
+
+-- Helpers
+eq-unk : ∀ (ℓ : Label) → Dec (ℓ ≡ *)
+eq-unk * = yes refl
+eq-unk ᴴ = no (λ ())
+eq-unk ᴸ = no (λ ())
