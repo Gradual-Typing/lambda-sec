@@ -3,6 +3,7 @@ module SourceLang where
 open import IFLabels public
 open import Types public
 open import Variables public
+open import BlameLabels
 
 
 -- Defines the type system of the surface language.
@@ -36,9 +37,10 @@ data _;_⊢G_ : Context → Label → Type → Set where
       -----------------------
     → Γ ; pc ⊢G τᴬ ^ (ℓᴬ ⋎ ℓ)
 
-  _·_ : ∀ {Γ pc A A′ τᴮ ℓᴮ pc₀ ℓ}
+  _·_at_ : ∀ {Γ pc A A′ τᴮ ℓᴮ pc₀ ℓ}
     → Γ ; pc ⊢G A ⟦ pc₀ ⟧⇒ (τᴮ ^ ℓᴮ) ^ ℓ
     → Γ ; pc ⊢G A′
+    → BlameLabel
     -- Note that ℓ₁ ⋎ ℓ₂ ≾ ℓ ⌿→ ℓ₁ ≾ ℓ ∧ ℓ₂ ≾ ℓ
     → {pc ≾ pc₀} → {ℓ ≾ pc₀}
     → {A′ ≲ A}

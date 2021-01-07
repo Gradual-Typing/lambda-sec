@@ -77,10 +77,10 @@ data _;_;_⊢_ where
       ---------------------------
     → Γ ; Σ ; pc ⊢ τᴬ ^ (ℓᴬ ⋎ ℓ)
 
-  _·_ : ∀ {Γ Σ pc A τᴮ ℓᴮ ℓ}
-    → Γ ; Σ ; pc ⊢ A ⟦ pc ⟧⇒ (τᴮ ^ ℓᴮ) ^ ℓ
+  _·_ : ∀ {Γ Σ pc A τᴮ ℓᴮ pc₀ ℓ}
+    → Γ ; Σ ; pc ⊢ A ⟦ pc₀ ⟧⇒ (τᴮ ^ ℓᴮ) ^ ℓ
     → Γ ; Σ ; pc ⊢ A
-    → {ℓ ≾ pc}
+    → {pc ≾ pc₀} → {ℓ ≾ pc₀}
       --------------------------
     → Γ ; Σ ; pc ⊢ τᴮ ^ (ℓᴮ ⋎ ℓ)
 
@@ -109,6 +109,11 @@ data _;_;_⊢_ where
       ------------------
     → Γ ; Σ ; pc ⊢ B
 
+  blame : ∀ {Γ Σ pc A}
+    → BlameLabel
+      -----------------
+    → Γ ; Σ ; pc ⊢ A
+
 data Value where
 
   V-const : ∀ {Γ Σ pc ι} {k : rep ι} {ℓ} {s : StaticLabel ℓ}
@@ -117,4 +122,7 @@ data Value where
   V-ƛ : ∀ {Γ Σ pc A B pc₀ ℓ} {N : Γ , A ; Σ ; pc₀ ⊢ B} {s : StaticLabel ℓ}
     → Value {pc = pc} (ƛ N ^ s)
 
-  -- TODO: add a case for wrapped value here
+  V-cast : ∀ {Γ Σ pc A B} {V : Γ ; Σ ; pc ⊢ A} {c : Cast A ⇒ B}
+    → Value V → Inert c
+      -------------------
+    → Value (V ⟨ c ⟩)

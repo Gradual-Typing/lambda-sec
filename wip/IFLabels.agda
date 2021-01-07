@@ -61,3 +61,8 @@ eq-unk : ∀ (ℓ : Label) → Dec (ℓ ≡ *)
 eq-unk * = yes refl
 eq-unk ᴴ = no (λ ())
 eq-unk ᴸ = no (λ ())
+
+Refl≾ : ∀ {ℓ} → ℓ ≾ ℓ
+Refl≾ {ℓ = *} = ≾-*₁
+Refl≾ {ℓ = ᴴ} = ≾-static ≼-hh
+Refl≾ {ℓ = ᴸ} = ≾-static ≼-ll
