@@ -19,6 +19,12 @@ Refl≾ : ∀ {𝓁̂} → 𝓁̂ ≾ 𝓁̂
 Refl≾ {¿} = ≾-¿-r
 Refl≾ {l̂ _} = ≾-l Refl≼
 
+Low≼High : 𝐿 ≼ 𝐻
+Low≼High = ≼-l z≤n
+
+Low≾High : 𝐿̂ ≾ 𝐻̂
+Low≾High = ≾-l Low≼High
+
 {-
   A simple example:
     let _ = set x y in
@@ -68,12 +74,17 @@ module LabExample where
   ⊢M : ∀ {Γ} → Γ [ 𝐿̂ , 𝐿̂ ]⊢ M ⦂ Lab 𝐻̂ `𝔹
   ⊢M = ⊢to-label ⊢true (≾-l (≼-l z≤n))
 
+  -- Value labeled statically
   e : Term
-  e = `let L (`let M (` 1 · ` 0))
+  e = `let L
+           (`let M
+                 (` 1 · ` 0))
 
-  -- M̂ is labeled at runtime
+  -- Value labeled at runtime
   ê : Term
-  ê = `let L (`let (to-label-dyn (` 1) `true) (` 1 · ` 0))
+  ê = `let L
+           (`let (to-label-dyn (` 1) `true)
+                 (` 1 · ` 0))
 
   ⊢ê : `ℒ ∷ [] [ 𝐿̂ , 𝐿̂ ]⊢ ê ⦂ Lab 𝐿̂ `𝔹
   ⊢ê = ⊢let ⊢L (⊢let (⊢to-label-dyn refl ⊢true) (⊢· refl refl (≲-Lab ≾-¿-r ≲-𝔹) Refl≾) (≲-Lab ≾-¿-r ≲-𝔹))
@@ -89,5 +100,10 @@ module LabExample where
 
 module RefExample where
 
-  L : Term
-  L = {!!}
+  e : Term
+  e = `let (to-label 𝐻 `true)
+           (`let (unlabel (` 0))
+                 (new 𝐻 (` 0)))
+
+  ⊢e : [] [ 𝐿̂ , 𝐻̂ ]⊢ e ⦂ Ref 𝐻̂ `𝔹
+  ⊢e = ⊢let (⊢to-label ⊢true Low≾High) (⊢let (⊢unlabel refl) (⊢new refl Refl≾) ≲-𝔹) (≲-Lab Refl≾ ≲-𝔹)
