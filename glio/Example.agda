@@ -90,8 +90,11 @@ module LabExample where
   ⊢ê = ⊢let ⊢L (⊢let (⊢to-label-dyn refl ⊢true) (⊢· refl refl (≲-Lab ≾-¿-r ≲-𝔹) Refl≾) (≲-Lab ≾-¿-r ≲-𝔹))
               (≲-⇒ Refl≾ Refl≾ (≲-Lab ≾-¿-l ≲-𝔹) (≲-Lab Refl≾ ≲-𝔹))
 
-  run : 𝒱 (V-label 𝐻 ∷ []) ê ⊢ê [] 𝐿 42 ≡ error castError
-  run = refl
+  run-unsafe : 𝒱 (V-label 𝐻 ∷ []) ê ⊢ê [] 𝐿 42 ≡ error castError
+  run-unsafe = refl
+
+  run-safe : ∃[ conf ] (𝒱 (V-label 𝐿 ∷ []) ê ⊢ê [] 𝐿 42 ≡ result conf)
+  run-safe = ⟨ _ , refl ⟩
 
 module RefExample where
 
@@ -105,6 +108,11 @@ module RefExample where
            (`let (unlabel (` 0))
                  (new-dyn (` 2) (` 0)))
 
+  -- f : Term
+  -- f = `let (to-label-dyn (` 0) `true)
+  --          (`let (unlabel (` 0))
+  --                (new-dyn (` 3) (` 0)))
+
   -- The 1st program, e is rejected statically because nothing inhabits 𝐻 ≼ 𝐿
   ⊢e : [] [ 𝐿̂ , 𝐻̂ ]⊢ e ⦂ Ref 𝐿̂ `𝔹
   ⊢e = ⊢let (⊢to-label ⊢true Low≾High) (⊢let (⊢unlabel refl) (⊢new refl (≾-l {!!})) ≲-𝔹) (≲-Lab Refl≾ ≲-𝔹)
@@ -113,5 +121,8 @@ module RefExample where
   ⊢ê : `ℒ ∷ [] [ 𝐿̂ , 𝐻̂ ]⊢ ê ⦂ Ref ¿ `𝔹
   ⊢ê = ⊢let (⊢to-label ⊢true Low≾High) (⊢let (⊢unlabel refl) (⊢new-dyn refl refl) ≲-𝔹) (≲-Lab Refl≾ ≲-𝔹)
 
-  run : 𝒱 (V-label 𝐿 ∷ []) ê ⊢ê [] 𝐿 42 ≡ error NSUError
-  run = refl
+  run-unsafe : 𝒱 (V-label 𝐿 ∷ []) ê ⊢ê [] 𝐿 42 ≡ error NSUError
+  run-unsafe = refl
+
+  run-safe : ∃[ conf ] (𝒱 (V-label 𝐻 ∷ []) ê ⊢ê [] 𝐿 42 ≡ result conf)
+  run-safe = ⟨ ⟨ ⟨ 0 , 𝐻 , 𝐻 ⟩ ↦ ⟨ `𝔹 , V-true ⟩ ∷ [] , ⟨ V-ref ⟨ 0 , 𝐻 , 𝐻 ⟩ , 𝐻 ⟩ ⟩ , refl ⟩
