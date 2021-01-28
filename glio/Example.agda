@@ -60,6 +60,15 @@ module SimpleExample where
   run : ∃[ conf ] (𝒱 γ M ⊢M μ 𝐿 10 ≡ result conf)
   run = ⟨ _ , refl ⟩
 
+{-
+  let f = λ x : (Lab Low Bool) . x in
+    let v = to-label High true in
+      f v
+
+  let f = λ x : (Lab Low Bool) . x in
+    let v = to-label-dyn 𝓁 true in
+      f v
+-}
 module LabExample where
 
   L : Term
@@ -96,6 +105,15 @@ module LabExample where
   run-safe : ∃[ conf ] (𝒱 (V-label 𝐿 ∷ []) ê ⊢ê [] 𝐿 42 ≡ result conf)
   run-safe = ⟨ _ , refl ⟩
 
+{-
+  let x = to-label High true in
+    let y = unlabel x in
+      new Low y
+
+  let x = to-label High true in
+    let y = unlabel x in
+      new-dyn 𝓁 y
+-}
 module RefExample where
 
   e : Term
