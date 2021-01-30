@@ -69,6 +69,29 @@ module SimpleExample where
   run : ∃[ conf ] (𝒱 γ M ⊢M μ 𝐿 10 ≡ result conf)
   run = ⟨ _ , refl ⟩
 
+
+
+{-
+  let f = (λ x : (Lab Low Bool) . unit) : (Lab Low Bool → Unit) in
+    let g = (λ x : (Lab ¿ Bool) . (f x)) : (Lab ¿ Bool → Unit) in
+      let v = (to-label High true) : Lab High Bool in
+        g v
+-}
+module FunExample where
+
+  e = `let (ƛ `tt)
+            (`let (ƛ (` 1 · ` 0))
+                  (`let (to-label 𝐻 `true)
+                        (` 1 · ` 0)))
+
+  ⊢e : [] [ 𝐿̂ , 𝐿̂ ]⊢ e ⦂ `⊤
+  ⊢e = ⊢let {T = Lab 𝐿̂ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] `⊤} (⊢ƛ {T = Lab 𝐿̂ `𝔹} {𝓁̂₁ = 𝐿̂} ⊢tt)
+            (⊢let {T = Lab ¿ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] `⊤} (⊢ƛ {T = Lab ¿ `𝔹} {𝓁̂₁ = 𝐿̂} (⊢· refl refl (≲-Lab ≾-¿-l ≲-𝔹) Refl≾))
+                  (⊢let {T = Lab 𝐻̂ `𝔹} (⊢to-label ⊢true Low≾High) (⊢· refl refl (≲-Lab ≾-¿-r ≲-𝔹) Refl≾) Refl≲) Refl≲) Refl≲
+
+  run-unsafe : 𝒱 [] e ⊢e [] 𝐿 42 ≡ error castError
+  run-unsafe = refl
+
 {-
   -- The fully annotated version
   -- We omit the labels on λ-abstractions and function types
@@ -76,9 +99,10 @@ module SimpleExample where
     let v = (to-label High true) : (Lab High Bool) in
       f v
 
-  let f = (λ x : (Lab Low Bool) . x) : (Lab Low Bool → Lab Low Bool) in
-    let v = (to-label-dyn 𝓁 true) : (Lab ¿ Bool) in
-      f v
+  let 𝓁 = (user-input) : Label in
+    let f = (λ x : (Lab Low Bool) . x) : (Lab Low Bool → Lab Low Bool) in
+      let v = (to-label-dyn 𝓁 true) : (Lab ¿ Bool) in
+        f v
 -}
 module LabExample where
 
@@ -115,9 +139,10 @@ module LabExample where
     let y = (unlabel x) : Bool in
       new Low y
 
-  let x = (to-label High true) : (Lab High Bool) in
-    let y = (unlabel x) : Bool in
-      new-dyn 𝓁 y
+  let 𝓁 = (user-input) : Label in
+    let x = (to-label High true) : (Lab High Bool) in
+      let y = (unlabel x) : Bool in
+        new-dyn 𝓁 y
 -}
 module RefExample where
 
