@@ -19,6 +19,15 @@ Refl≾ : ∀ {𝓁̂} → 𝓁̂ ≾ 𝓁̂
 Refl≾ {¿} = ≾-¿-r
 Refl≾ {l̂ _} = ≾-l Refl≼
 
+
+Refl≲ : ∀ {T} → T ≲ T
+Refl≲ {`⊤} = ≲-⊤
+Refl≲ {`𝔹} = ≲-𝔹
+Refl≲ {`ℒ} = ≲-ℒ
+Refl≲ {Ref 𝓁̂ T} = ≲-Ref Refl≾ Refl≾ Refl≲ Refl≲
+Refl≲ {Lab 𝓁̂ T} = ≲-Lab Refl≾ Refl≲
+Refl≲ {S [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] T} = ≲-⇒ Refl≾ Refl≾ Refl≲ Refl≲
+
 Low≼High : 𝐿 ≼ 𝐻
 Low≼High = ≼-l z≤n
 
@@ -61,43 +70,39 @@ module SimpleExample where
   run = ⟨ _ , refl ⟩
 
 {-
-  let f = λ x : (Lab Low Bool) . x in
-    let v = to-label High true in
+  -- The fully annotated version
+  -- We omit the labels on λ-abstractions and function types
+  let f = (λ x : (Lab Low Bool) . x) : (Lab Low Bool → Lab Low Bool) in
+    let v = (to-label High true) : (Lab High Bool) in
       f v
 
-  let f = λ x : (Lab Low Bool) . x in
-    let v = to-label-dyn 𝓁 true in
+  let f = (λ x : (Lab Low Bool) . x) : (Lab Low Bool → Lab Low Bool) in
+    let v = (to-label-dyn 𝓁 true) : (Lab ¿ Bool) in
       f v
 -}
 module LabExample where
 
-  L : Term
-  L = ƛ (` 0)
-
-  ⊢L : ∀ {Γ} → Γ [ 𝐿̂ , 𝐿̂ ]⊢ L ⦂ (Lab 𝐿̂ `𝔹) [ 𝐿̂ ]⇒[ 𝐿̂ ] (Lab 𝐿̂ `𝔹)
-  ⊢L = ⊢ƛ (⊢` refl)
-
   -- Value labeled statically
   e : Term
-  e = `let L
+  e = `let (ƛ (` 0))
            (`let (to-label 𝐻 `true)
                  (` 1 · ` 0))
 
   -- Value labeled at runtime
   ê : Term
-  ê = `let L
+  ê = `let (ƛ (` 0))
            (`let (to-label-dyn (` 1) `true)
                  (` 1 · ` 0))
 
   -- The 1st program, e is rejected statically because nothing inhabits 𝐻 ≼ 𝐿
   ⊢e : [] [ 𝐿̂ , 𝐿̂ ]⊢ e ⦂ Lab 𝐿̂ `𝔹
-  ⊢e = ⊢let ⊢L (⊢let (⊢to-label ⊢true Low≾High) (⊢· refl refl (≲-Lab Refl≾ ≲-𝔹) Refl≾) (≲-Lab Refl≾ ≲-𝔹))
-             (≲-⇒ Refl≾ Refl≾ (≲-Lab (≾-l {!!}) ≲-𝔹) (≲-Lab Refl≾ ≲-𝔹))
+  ⊢e = ⊢let {T = Lab 𝐿̂ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] Lab 𝐿̂ `𝔹} (⊢ƛ {T = Lab 𝐿̂ `𝔹} {𝓁̂₁ = 𝐿̂} (⊢` refl))
+            (⊢let {T = Lab 𝐻̂ `𝔹} (⊢to-label ⊢true Low≾High) (⊢· refl refl {!!} Refl≾) Refl≲) Refl≲
 
   -- The 2nd program, ê typechecks but errors at runtime due to a castError
   ⊢ê : `ℒ ∷ [] [ 𝐿̂ , 𝐿̂ ]⊢ ê ⦂ Lab 𝐿̂ `𝔹
-  ⊢ê = ⊢let ⊢L (⊢let (⊢to-label-dyn refl ⊢true) (⊢· refl refl (≲-Lab ≾-¿-r ≲-𝔹) Refl≾) (≲-Lab ≾-¿-r ≲-𝔹))
-              (≲-⇒ Refl≾ Refl≾ (≲-Lab ≾-¿-l ≲-𝔹) (≲-Lab Refl≾ ≲-𝔹))
+  ⊢ê = ⊢let {T = Lab 𝐿̂ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] Lab 𝐿̂ `𝔹} (⊢ƛ {T = Lab 𝐿̂ `𝔹} {𝓁̂₁ = 𝐿̂} (⊢` refl))
+            (⊢let {T = Lab ¿ `𝔹} (⊢to-label-dyn refl ⊢true) (⊢· refl refl (≲-Lab ≾-¿-l ≲-𝔹) Refl≾) Refl≲) Refl≲
 
   run-unsafe : 𝒱 (V-label 𝐻 ∷ []) ê ⊢ê [] 𝐿 42 ≡ error castError
   run-unsafe = refl
@@ -106,12 +111,12 @@ module LabExample where
   run-safe = ⟨ _ , refl ⟩
 
 {-
-  let x = to-label High true in
-    let y = unlabel x in
+  let x = (to-label High true) : (Lab High Bool) in
+    let y = (unlabel x) : Bool in
       new Low y
 
-  let x = to-label High true in
-    let y = unlabel x in
+  let x = (to-label High true) : (Lab High Bool) in
+    let y = (unlabel x) : Bool in
       new-dyn 𝓁 y
 -}
 module RefExample where
@@ -126,18 +131,13 @@ module RefExample where
            (`let (unlabel (` 0))
                  (new-dyn (` 2) (` 0)))
 
-  -- f : Term
-  -- f = `let (to-label-dyn (` 0) `true)
-  --          (`let (unlabel (` 0))
-  --                (new-dyn (` 3) (` 0)))
-
   -- The 1st program, e is rejected statically because nothing inhabits 𝐻 ≼ 𝐿
   ⊢e : [] [ 𝐿̂ , 𝐻̂ ]⊢ e ⦂ Ref 𝐿̂ `𝔹
-  ⊢e = ⊢let (⊢to-label ⊢true Low≾High) (⊢let (⊢unlabel refl) (⊢new refl (≾-l {!!})) ≲-𝔹) (≲-Lab Refl≾ ≲-𝔹)
+  ⊢e = ⊢let {T = Lab 𝐻̂ `𝔹} (⊢to-label ⊢true Low≾High) (⊢let {T = `𝔹} (⊢unlabel refl) (⊢new refl {!!}) ≲-𝔹) Refl≲
 
   -- The 2nd program, ê typechecks but errors at runtime due to an NSUError
   ⊢ê : `ℒ ∷ [] [ 𝐿̂ , 𝐻̂ ]⊢ ê ⦂ Ref ¿ `𝔹
-  ⊢ê = ⊢let (⊢to-label ⊢true Low≾High) (⊢let (⊢unlabel refl) (⊢new-dyn refl refl) ≲-𝔹) (≲-Lab Refl≾ ≲-𝔹)
+  ⊢ê = ⊢let {T = Lab 𝐻̂ `𝔹} (⊢to-label ⊢true Low≾High) (⊢let {T = `𝔹} (⊢unlabel refl) (⊢new-dyn refl refl) ≲-𝔹) (≲-Lab Refl≾ ≲-𝔹)
 
   run-unsafe : 𝒱 (V-label 𝐿 ∷ []) ê ⊢ê [] 𝐿 42 ≡ error NSUError
   run-unsafe = refl
