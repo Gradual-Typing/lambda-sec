@@ -26,10 +26,10 @@ we use an interpreter as the dynamics instead of the denotational semantics pres
 
 + [[./TypeSafety.agda][TypeSafety]] contains the type safety theorem: well-typed GLIO programs do /not/ get stuck.
 
-+ [[Example.agda][Example]] - as the name suggests, contains an example.
++ [[Example.agda][Example]] - as the name suggests, contains several examples.
 
-*[WIP]*
++*[WIP]*+
 
-+ [[Subtyping.agda][Subtyping]] talks about subtyping relations that characterize safe casts between labels and types.
++ +[[Subtyping.agda][Subtyping]] talks about subtyping relations that characterize safe casts between labels and types.+
 
-+ [[BlameSubtyping.agda][BlameSubtyping]] is an attempt to formalize the blame-subtyping theorem for GLIO.
++ +[[BlameSubtyping.agda][BlameSubtyping]] is an attempt to formalize the blame-subtyping theorem for GLIO.+
