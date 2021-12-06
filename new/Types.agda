@@ -121,6 +121,24 @@ data _~_ where
     → S ₍ γ₁ ₎ ~ T ₍ γ₂ ₎
 
 {- Label join -}
+_⋎_ : StaticLabel → StaticLabel → StaticLabel
+low ⋎ low = low
+_   ⋎ _   = high
 
-{- Consistent join -}
--- infix 5 _⋎_
+{- Label meet -}
+_⋏_ : StaticLabel → StaticLabel → StaticLabel
+high ⋏ high = high
+_    ⋏ _    = low
+
+{- Label consistent join -}
+infix 5 _⋎̃_
+
+_⋎̃_ : Label → Label → Label
+l ℓ₁     ⋎̃ l ℓ₂   = l (ℓ₁ ⋎ ℓ₂)
+l high   ⋎̃ ⋆      = l high
+_        ⋎̃ ⋆      = ⋆
+⋆        ⋎̃ l high = l high
+⋆        ⋎̃ _      = ⋆
+
+⨆ : ∀ {A B} → A ~ B → Type
+⨆ A~B = {!!}
