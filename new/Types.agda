@@ -140,5 +140,20 @@ _        ⋎̃ ⋆      = ⋆
 ⋆        ⋎̃ l high = l high
 ⋆        ⋎̃ _      = ⋆
 
+{- Precision join -}
+private
+  ⨆ₗ : ∀ {γ₁ γ₂} → γ₁ ~ₗ γ₂ → Label
+  ⨆ᵣ : ∀ {S T} → S ~ᵣ T → RawType
+
 ⨆ : ∀ {A B} → A ~ B → Type
-⨆ A~B = {!!}
+
+⨆ₗ {⋆} {γ₂}        ⋆~  = γ₂
+⨆ₗ {γ₁} {⋆}        ~⋆  = γ₁
+⨆ₗ {- both low  -} l~l = l low
+⨆ₗ {- both high -} h~h = l high
+
+⨆ᵣ {` ι} {` ι} ~-ι = ` ι
+⨆ᵣ (~-ref A~B) = Ref (⨆ A~B)
+⨆ᵣ (~-fun pc₁~pc₂ A~C B~D) = [ ⨆ₗ pc₁~pc₂ ] ⨆ A~C ⇒ ⨆ B~D
+
+⨆ (~-ty γ₁~γ₂ S~T) = ⨆ᵣ S~T ₍ ⨆ₗ γ₁~γ₂ ₎
