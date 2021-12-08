@@ -26,7 +26,7 @@ data Type : Set
 
 infix 10 `_
 infix 6  [_]_⇒_
-infix 7  _₍_₎
+infix 7  _of_
 
 data RawType where
   `_      : Base → RawType
@@ -34,14 +34,14 @@ data RawType where
   [_]_⇒_ : Label → Type → Type → RawType
 
 data Type where
-  _₍_₎ : RawType → Label → Type
+  _of_ : RawType → Label → Type
 
 {- Type examples: -}
 _ : Type
-_ =  ([ ⋆ ] ` 𝔹 ₍ ⋆ ₎ ⇒ ` 𝔹 ₍ l high ₎) ₍ l low ₎
+_ =  ([ ⋆ ] ` 𝔹 of ⋆ ⇒ ` 𝔹 of l high ) of l low
 
 _ : Type
-_ = Ref (` Unit ₍ ⋆ ₎) ₍ l high ₎
+_ = Ref (` Unit of ⋆ ) of l high
 
 {- Subtyping -}
 infix 5 _⊑_
@@ -82,7 +82,7 @@ data _<:_ where
     → γ₁ <:ₗ γ₂
     → X  <:ᵣ Y
       ---------------------
-    → X ₍ γ₁ ₎ <: Y ₍ γ₂ ₎
+    → X of γ₁ <: Y of γ₂
 
 {- Consistency -}
 infix 5 _~ₗ_
@@ -118,7 +118,7 @@ data _~_ where
     → γ₁ ~ₗ γ₂
     → S  ~ᵣ T
       --------------------
-    → S ₍ γ₁ ₎ ~ T ₍ γ₂ ₎
+    → S of γ₁ ~ T of γ₂
 
 {- Label join -}
 _⋎_ : StaticLabel → StaticLabel → StaticLabel
@@ -131,14 +131,16 @@ high ⋏ high = high
 _    ⋏ _    = low
 
 {- Label consistent join -}
-infix 5 _⋎̃_
-
 _⋎̃_ : Label → Label → Label
 l ℓ₁     ⋎̃ l ℓ₂   = l (ℓ₁ ⋎ ℓ₂)
 l high   ⋎̃ ⋆      = l high
 _        ⋎̃ ⋆      = ⋆
 ⋆        ⋎̃ l high = l high
 ⋆        ⋎̃ _      = ⋆
+
+{- Stamping label on type -}
+stamp : Type → Label → Type
+stamp (T of γ₁ ) γ₂ = T of γ₁ ⋎̃ γ₂
 
 {- Precision join -}
 private
@@ -156,4 +158,4 @@ private
 ⨆ᵣ (~-ref A~B) = Ref (⨆ A~B)
 ⨆ᵣ (~-fun pc₁~pc₂ A~C B~D) = [ ⨆ₗ pc₁~pc₂ ] ⨆ A~C ⇒ ⨆ B~D
 
-⨆ (~-ty γ₁~γ₂ S~T) = ⨆ᵣ S~T ₍ ⨆ₗ γ₁~γ₂ ₎
+⨆ (~-ty γ₁~γ₂ S~T) = ⨆ᵣ S~T of ⨆ₗ γ₁~γ₂
