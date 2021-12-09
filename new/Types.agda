@@ -45,19 +45,19 @@ _ : Type
 _ = Ref (` Unit of ⋆ ) of l high
 
 {- Subtyping -}
-infix 5 _⊑_
+infix 5 _≼_
 infix 5 _<:ₗ_
 infix 5 _<:ᵣ_
 infix 5 _<:_
 
-data _⊑_ : StaticLabel → StaticLabel → Set where
-  l⊑l : low ⊑ low
-  l⊑h : low ⊑ high
-  h⊑h : high ⊑ high
+data _≼_ : StaticLabel → StaticLabel → Set where
+  l⊑l : low  ≼ low
+  l⊑h : low  ≼ high
+  h⊑h : high ≼ high
 
 data _<:ₗ_ : Label → Label → Set where
   <:-⋆ : ⋆ <:ₗ ⋆      {- neutral -}
-  <:-l : ∀ {ℓ₁ ℓ₂} → ℓ₁ ⊑ ℓ₂ → l ℓ₁ <:ₗ l ℓ₂
+  <:-l : ∀ {ℓ₁ ℓ₂} → ℓ₁ ≼ ℓ₂ → l ℓ₁ <:ₗ l ℓ₂
 
 data _<:ᵣ_ : RawType → RawType → Set
 data _<:_ :  Type → Type → Set
@@ -79,11 +79,11 @@ data _<:ᵣ_ where
     → [ pc₁ ] A ⇒ B <:ᵣ [ pc₂ ] C ⇒ D
 
 data _<:_ where
-  <:-ty : ∀ {γ₁ γ₂} {X Y}
-    → γ₁ <:ₗ γ₂
+  <:-ty : ∀ {g₁ g₂} {X Y}
+    → g₁ <:ₗ g₂
     → X  <:ᵣ Y
       ---------------------
-    → X of γ₁ <: Y of γ₂
+    → X of g₁ <: Y of g₂
 
 {- Consistency -}
 infix 5 _~ₗ_
@@ -91,8 +91,8 @@ infix 5 _~ᵣ_
 infix 5 _~_
 
 data _~ₗ_ : Label → Label → Set where
-  ⋆~  : ∀ {γ} → ⋆ ~ₗ γ
-  ~⋆  : ∀ {γ} → γ ~ₗ ⋆
+  ⋆~  : ∀ {g} → ⋆ ~ₗ g
+  ~⋆  : ∀ {g} → g ~ₗ ⋆
   l~l : l low ~ₗ l low
   h~h : l high ~ₗ l high
 
@@ -115,11 +115,47 @@ data _~ᵣ_ where
     → [ pc₁ ] A ⇒ B ~ᵣ [ pc₂ ] C ⇒ D
 
 data _~_ where
-  ~-ty : ∀ {γ₁ γ₂} {S T}
-    → γ₁ ~ₗ γ₂
+  ~-ty : ∀ {g₁ g₂} {S T}
+    → g₁ ~ₗ g₂
     → S  ~ᵣ T
       --------------------
-    → S of γ₁ ~ T of γ₂
+    → S of g₁ ~ T of g₂
+
+{- Consistent subtyping -}
+infix 5 _≾_  -- of labels
+infix 5 _≲ᵣ_ -- of raw types
+infix 5 _≲_  -- of types
+
+data _≾_ : Label → Label → Set where
+  ≾-⋆r : ∀ {g} → g ≾ ⋆
+  ≾-⋆l : ∀ {g} → ⋆ ≾ g
+  ≾-l  : ∀ {ℓ₁ ℓ₂} → ℓ₁ ≼ ℓ₂ → l ℓ₁ ≾ l ℓ₂
+
+data _≲ᵣ_ : RawType → RawType → Set
+data _≲_  : Type → Type → Set
+
+data _≲ᵣ_ where
+  ≲-ι : ∀ {ι} → ` ι ≲ᵣ ` ι
+
+  ≲-ref : ∀ {A B}
+    → A ≲ B
+    → B ≲ A
+      -----------------
+    → Ref A ≲ᵣ Ref B
+
+  ≲-fun : ∀ {pc₁ pc₂} {A B C D}
+    → pc₂ ≾ pc₁
+    → C ≲ A
+    → B ≲ D
+      -----------------------------------
+    → [ pc₁ ] A ⇒ B ≲ᵣ [ pc₂ ] C ⇒ D
+
+data _≲_ where
+  ≲-ty : ∀ {g₁ g₂} {S T}
+    → g₁ ≾ g₂
+    → S ≲ᵣ T
+      --------------------
+    → S of g₁ ≲ T of g₂
 
 {- Label join -}
 _⋎_ : StaticLabel → StaticLabel → StaticLabel
@@ -141,17 +177,17 @@ _        ⋎̃ ⋆      = ⋆
 
 {- Stamping label on type -}
 stamp : Type → Label → Type
-stamp (T of γ₁ ) γ₂ = T of γ₁ ⋎̃ γ₂
+stamp (T of g₁ ) g₂ = T of g₁ ⋎̃ g₂
 
 {- Precision join -}
 private
-  ⨆ₗ : ∀ {γ₁ γ₂} → γ₁ ~ₗ γ₂ → Label
+  ⨆ₗ : ∀ {g₁ g₂} → g₁ ~ₗ g₂ → Label
   ⨆ᵣ : ∀ {S T} → S ~ᵣ T → RawType
 
 ⨆ : ∀ {A B} → A ~ B → Type
 
-⨆ₗ {⋆} {γ₂}        ⋆~  = γ₂
-⨆ₗ {γ₁} {⋆}        ~⋆  = γ₁
+⨆ₗ {⋆} {g₂}        ⋆~  = g₂
+⨆ₗ {g₁} {⋆}        ~⋆  = g₁
 ⨆ₗ {- both low  -} l~l = l low
 ⨆ₗ {- both high -} h~h = l high
 
@@ -159,6 +195,6 @@ private
 ⨆ᵣ (~-ref A~B) = Ref (⨆ A~B)
 ⨆ᵣ (~-fun pc₁~pc₂ A~C B~D) = [ ⨆ₗ pc₁~pc₂ ] ⨆ A~C ⇒ ⨆ B~D
 
-⨆ (~-ty γ₁~γ₂ S~T) = ⨆ᵣ S~T of ⨆ₗ γ₁~γ₂
+⨆ (~-ty g₁~g₂ S~T) = ⨆ᵣ S~T of ⨆ₗ g₁~g₂
 
 Context = List Type
