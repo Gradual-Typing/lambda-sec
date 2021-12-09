@@ -2,6 +2,7 @@ module Types where
 
 open import Data.Bool using (Bool) renaming (_≟_ to _≟ᵇ_)
 open import Data.Unit using (⊤; tt)
+open import Data.List using (List)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; _≢_; refl; trans; sym; subst; cong; cong₂)
 
@@ -159,3 +160,5 @@ private
 ⨆ᵣ (~-fun pc₁~pc₂ A~C B~D) = [ ⨆ₗ pc₁~pc₂ ] ⨆ A~C ⇒ ⨆ B~D
 
 ⨆ (~-ty γ₁~γ₂ S~T) = ⨆ᵣ S~T of ⨆ₗ γ₁~γ₂
+
+Context = List Type
