@@ -186,7 +186,7 @@ _        ⋏̃ ⋆      = ⋆
 
 {- Stamping label on type -}
 stamp : Type → Label → Type
-stamp (T of g₁ ) g₂ = T of g₁ ⋎̃ g₂
+stamp (T of g₁) g₂ = T of g₁ ⋎̃ g₂
 
 {- Precision join -}
 private
@@ -207,6 +207,10 @@ private
 ⨆ (~-ty g₁~g₂ S~T) = ⨆ᵣ S~T of ⨆ₗ g₁~g₂
 
 {- Gradual meet -}
+infix 5 _⊓ₗ_
+infix 5 _⊓ᵣ_
+infix 5 _⊓_
+
 _⊓ₗ_ : Label → Label → Maybe Label
 l high ⊓ₗ l high = just (l high)
 l low  ⊓ₗ l low  = just (l low)
@@ -215,9 +219,23 @@ g      ⊓ₗ ⋆      = just g
 _      ⊓ₗ _      = nothing
 
 _⊓ᵣ_ : RawType → RawType → Maybe RawType
-
 _⊓_ : Type → Type → Maybe Type
-(S of g₁) ⊓ (T of g₂) =
+
+` Unit ⊓ᵣ ` Unit = just (` Unit)
+` Bool ⊓ᵣ ` Bool = just (` Bool)
+Ref A ⊓ᵣ Ref B =
+  do
+    A⊓B ← A ⊓ B
+    just (Ref A⊓B)
+[ pc₁ ] A ⇒ B ⊓ᵣ [ pc₂ ] C ⇒ D =
+  do
+    pc₁⊓pc₂ ← pc₁ ⊓ₗ pc₂
+    A⊓C ← A ⊓ C
+    B⊓D ← B ⊓ D
+    just ([ pc₁⊓pc₂ ] A⊓C ⇒ B⊓D)
+_ ⊓ᵣ _ = nothing
+
+S of g₁ ⊓ T of g₂ =
   do
     S⊓T   ← S ⊓ᵣ T
     g₁⊓g₂ ← g₁ ⊓ₗ g₂
@@ -237,7 +255,10 @@ _∧̃_ : Type → Type → Maybe Type
 
 ` Unit ∨̃ᵣ ` Unit = just (` Unit)
 ` Bool ∨̃ᵣ ` Bool = just (` Bool)
-(Ref A) ∨̃ᵣ (Ref B) = {!!}
+Ref A ∨̃ᵣ Ref B =
+  do
+  A⊓B ← A ⊓ B
+  just (Ref A⊓B)
 [ pc₁ ] A ⇒ B ∨̃ᵣ [ pc₂ ] C ⇒ D =
   do
     A∧̃C ← A ∧̃ C
@@ -247,7 +268,10 @@ _ ∨̃ᵣ _ = nothing
 
 ` Unit ∧̃ᵣ ` Unit = just (` Unit)
 ` Bool ∧̃ᵣ ` Bool = just (` Bool)
-(Ref A) ∧̃ᵣ (Ref B) = {!!}
+Ref A ∧̃ᵣ Ref B =
+  do
+    A⊓B ← A ⊓ B
+    just (Ref A⊓B)
 [ pc₁ ] A ⇒ B ∧̃ᵣ [ pc₂ ] C ⇒ D =
   do
     A∨̃C ← A ∨̃ C
@@ -255,12 +279,12 @@ _ ∨̃ᵣ _ = nothing
     just ([ pc₁ ⋎̃ pc₂ ] A∨̃C ⇒ B∧̃D)
 _ ∧̃ᵣ _ = nothing
 
-(S of g₁) ∨̃ (T of g₂) =
+S of g₁ ∨̃ T of g₂ =
   do
     S∨̃T ← S ∨̃ᵣ T
     just (S∨̃T of g₁ ⋎̃ g₂)
 
-(S of g₁) ∧̃ (T of g₂) =
+S of g₁ ∧̃ T of g₂ =
   do
     S∧̃T ← S ∧̃ᵣ T
     just (S∧̃T of g₁ ⋏̃ g₂)
