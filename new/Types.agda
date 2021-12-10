@@ -1,6 +1,7 @@
 module Types where
 
-open import Data.Bool using (Bool) renaming (_≟_ to _≟ᵇ_)
+open import Data.Maybe
+open import Data.Bool renaming (Bool to 𝔹; _≟_ to _≟ᵇ_)
 open import Data.Unit using (⊤; tt)
 open import Data.List using (List)
 open import Relation.Binary.PropositionalEquality
@@ -15,11 +16,11 @@ data Label : Set where
   l : StaticLabel → Label
 
 data Base : Set where
-  𝔹 : Base
+  Bool : Base
   Unit : Base
 
 rep : Base → Set
-rep 𝔹 = Bool
+rep Bool = 𝔹
 rep Unit = ⊤
 
 data RawType : Set
@@ -39,7 +40,7 @@ data Type where
 
 {- Type examples: -}
 _ : Type
-_ =  ([ ⋆ ] ` 𝔹 of ⋆ ⇒ ` 𝔹 of l high ) of l low
+_ =  ([ ⋆ ] ` Bool of ⋆ ⇒ ` Bool of l high ) of l low
 
 _ : Type
 _ = Ref (` Unit of ⋆ ) of l high
@@ -175,19 +176,27 @@ _        ⋎̃ ⋆      = ⋆
 ⋆        ⋎̃ l high = l high
 ⋆        ⋎̃ _      = ⋆
 
+{- Label consistent meet -}
+_⋏̃_ : Label → Label → Label
+l ℓ₁     ⋏̃ l ℓ₂   = l (ℓ₁ ⋏ ℓ₂)
+l low    ⋏̃ ⋆      = l low
+_        ⋏̃ ⋆      = ⋆
+⋆        ⋏̃ l low  = l low
+⋆        ⋏̃ _      = ⋆
+
 {- Stamping label on type -}
 stamp : Type → Label → Type
 stamp (T of g₁ ) g₂ = T of g₁ ⋎̃ g₂
 
 {- Precision join -}
 private
-  ⨆ₗ : ∀ {g₁ g₂} → g₁ ~ₗ g₂ → Label
-  ⨆ᵣ : ∀ {S T} → S ~ᵣ T → RawType
+  ⨆ₗ : ∀ {g₁ g₂} → g₁ ~ₗ g₂ → Label -- of labels
+  ⨆ᵣ : ∀ {S T} → S ~ᵣ T → RawType   -- of raw types
 
-⨆ : ∀ {A B} → A ~ B → Type
+⨆ : ∀ {A B} → A ~ B → Type          -- of types
 
-⨆ₗ {⋆} {g₂}        ⋆~  = g₂
-⨆ₗ {g₁} {⋆}        ~⋆  = g₁
+⨆ₗ {⋆} {g}         ⋆~  = g
+⨆ₗ {g} {⋆}         ~⋆  = g
 ⨆ₗ {- both low  -} l~l = l low
 ⨆ₗ {- both high -} h~h = l high
 
@@ -196,5 +205,64 @@ private
 ⨆ᵣ (~-fun pc₁~pc₂ A~C B~D) = [ ⨆ₗ pc₁~pc₂ ] ⨆ A~C ⇒ ⨆ B~D
 
 ⨆ (~-ty g₁~g₂ S~T) = ⨆ᵣ S~T of ⨆ₗ g₁~g₂
+
+{- Gradual meet -}
+_⊓ₗ_ : Label → Label → Maybe Label
+l high ⊓ₗ l high = just (l high)
+l low  ⊓ₗ l low  = just (l low)
+⋆      ⊓ₗ g      = just g
+g      ⊓ₗ ⋆      = just g
+_      ⊓ₗ _      = nothing
+
+_⊓ᵣ_ : RawType → RawType → Maybe RawType
+
+_⊓_ : Type → Type → Maybe Type
+(S of g₁) ⊓ (T of g₂) =
+  do
+    S⊓T   ← S ⊓ᵣ T
+    g₁⊓g₂ ← g₁ ⊓ₗ g₂
+    just (S⊓T of g₁⊓g₂)
+
+{- Consistent join of types -}
+infix 5 _∨̃ᵣ_
+infix 5 _∨̃_
+{- Consistent meet of types -}
+infix 5 _∧̃ᵣ_
+infix 5 _∧̃_
+
+_∨̃ᵣ_ : RawType → RawType → Maybe RawType
+_∧̃ᵣ_ : RawType → RawType → Maybe RawType
+_∨̃_ : Type → Type → Maybe Type
+_∧̃_ : Type → Type → Maybe Type
+
+` Unit ∨̃ᵣ ` Unit = just (` Unit)
+` Bool ∨̃ᵣ ` Bool = just (` Bool)
+(Ref A) ∨̃ᵣ (Ref B) = {!!}
+[ pc₁ ] A ⇒ B ∨̃ᵣ [ pc₂ ] C ⇒ D =
+  do
+    A∧̃C ← A ∧̃ C
+    B∨̃D ← B ∨̃ D
+    just ([ pc₁ ⋏̃ pc₂ ] A∧̃C ⇒ B∨̃D)
+_ ∨̃ᵣ _ = nothing
+
+` Unit ∧̃ᵣ ` Unit = just (` Unit)
+` Bool ∧̃ᵣ ` Bool = just (` Bool)
+(Ref A) ∧̃ᵣ (Ref B) = {!!}
+[ pc₁ ] A ⇒ B ∧̃ᵣ [ pc₂ ] C ⇒ D =
+  do
+    A∨̃C ← A ∨̃ C
+    B∧̃D ← B ∧̃ D
+    just ([ pc₁ ⋎̃ pc₂ ] A∨̃C ⇒ B∧̃D)
+_ ∧̃ᵣ _ = nothing
+
+(S of g₁) ∨̃ (T of g₂) =
+  do
+    S∨̃T ← S ∨̃ᵣ T
+    just (S∨̃T of g₁ ⋎̃ g₂)
+
+(S of g₁) ∧̃ (T of g₂) =
+  do
+    S∧̃T ← S ∧̃ᵣ T
+    just (S∧̃T of g₁ ⋏̃ g₂)
 
 Context = List Type
