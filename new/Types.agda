@@ -3,6 +3,7 @@ module Types where
 open import Data.Maybe
 open import Data.Bool renaming (Bool to 𝔹; _≟_ to _≟ᵇ_)
 open import Data.Unit using (⊤; tt)
+open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.List using (List)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; _≢_; refl; trans; sym; subst; cong; cong₂)
@@ -288,5 +289,35 @@ S of g₁ ∧̃ T of g₂ =
   do
     S∧̃T ← S ∧̃ᵣ T
     just (S∧̃T of g₁ ⋏̃ g₂)
+
+<:ₗ-refl : ∀ {g} → g <:ₗ g
+<:ₗ-refl {⋆}      = <:-⋆
+<:ₗ-refl {l high} = <:-l h⊑h
+<:ₗ-refl {l low}  = <:-l l⊑l
+
+~ₗ-refl : ∀ {g} → g ~ₗ g
+~ₗ-refl {⋆}      = ⋆~
+~ₗ-refl {l high} = h~h
+~ₗ-refl {l low}  = l~l
+
+{-
+       g₂
+   ≲  / | <:
+     /  |
+   g₁ - g
+      ~
+-}
+consis-sub-lbl : ∀ {g₁ g₂ : Label}
+  → g₁ ≾ g₂
+  → ∃[ g ] (g ~ₗ g₁) × (g <:ₗ g₂)
+consis-sub-lbl {g} {⋆} ≾-⋆r = ⟨ ⋆ , ⟨ ⋆~ , <:-⋆ ⟩ ⟩
+consis-sub-lbl {⋆} {g} ≾-⋆l = ⟨ g , ⟨ ~⋆ , <:ₗ-refl ⟩ ⟩
+consis-sub-lbl {l ℓ₁} {l ℓ₂} (≾-l ℓ₁≼ℓ₂) =
+  ⟨ l ℓ₁ , ⟨ ~ₗ-refl , <:-l ℓ₁≼ℓ₂ ⟩ ⟩
+
+consis-sub : ∀ {A B : Type}
+  → A ≲ B
+  → ∃[ C ] (C ~ A) × (C <: B)
+consis-sub {S of g₁} {T of g₂} (≲-ty x x₁) = {!!}
 
 Context = List Type
