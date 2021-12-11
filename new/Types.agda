@@ -5,6 +5,7 @@ open import Data.Bool renaming (Bool to 𝔹; _≟_ to _≟ᵇ_)
 open import Data.Unit using (⊤; tt)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.List using (List)
+open import Function using (case_of_)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; _≢_; refl; trans; sym; subst; cong; cong₂)
 
@@ -309,15 +310,45 @@ S of g₁ ∧̃ T of g₂ =
 -}
 consis-sub-lbl : ∀ {g₁ g₂ : Label}
   → g₁ ≾ g₂
-  → ∃[ g ] (g ~ₗ g₁) × (g <:ₗ g₂)
-consis-sub-lbl {g} {⋆} ≾-⋆r = ⟨ ⋆ , ⟨ ⋆~ , <:-⋆ ⟩ ⟩
-consis-sub-lbl {⋆} {g} ≾-⋆l = ⟨ g , ⟨ ~⋆ , <:ₗ-refl ⟩ ⟩
+  → ∃[ g ] (g₁ ~ₗ g) × (g <:ₗ g₂)
+consis-sub-lbl {g} {⋆} ≾-⋆r = ⟨ ⋆ , ⟨ ~⋆ , <:-⋆ ⟩ ⟩
+consis-sub-lbl {⋆} {g} ≾-⋆l = ⟨ g , ⟨ ⋆~ , <:ₗ-refl ⟩ ⟩
 consis-sub-lbl {l ℓ₁} {l ℓ₂} (≾-l ℓ₁≼ℓ₂) =
   ⟨ l ℓ₁ , ⟨ ~ₗ-refl , <:-l ℓ₁≼ℓ₂ ⟩ ⟩
 
+consis-sub-raw : ∀ {S T : RawType}
+  → S ≲ᵣ T
+  → ∃[ U ] (S ~ᵣ U) × (U <:ᵣ T)
 consis-sub : ∀ {A B : Type}
   → A ≲ B
-  → ∃[ C ] (C ~ A) × (C <: B)
-consis-sub {S of g₁} {T of g₂} (≲-ty x x₁) = {!!}
+  → ∃[ C ] (A ~ C) × (C <: B)
+
+≼-antisym : ∀ {ℓ₁ ℓ₂}
+  → ℓ₁ ≼ ℓ₂ → ℓ₂ ≼ ℓ₁
+  → ℓ₁ ≡ ℓ₂
+≼-antisym l⊑l l⊑l = refl
+≼-antisym h⊑h h⊑h = refl
+
+≾-antisym : ∀ {g₁ g₂}
+  → g₁ ≾ g₂ → g₂ ≾ g₁
+  → g₁ ~ₗ g₂
+≾-antisym ≾-⋆r _ = ~⋆
+≾-antisym ≾-⋆l _ = ⋆~
+≾-antisym (≾-l ℓ₁≼ℓ₂) (≾-l ℓ₂≼ℓ₂)
+  rewrite ≼-antisym ℓ₁≼ℓ₂ ℓ₂≼ℓ₂ = ~ₗ-refl
+
+≲-antisym : ∀ {A B}
+  → A ≲ B → B ≲ A
+  → A ~ B
+≲-antisym (≲-ty g₁≾g₂ S≲T) (≲-ty g₂≾g₁ T≲S) = {!!}
+
+consis-sub-raw {` ι} {` ι} ≲-ι = ⟨ ` ι , ⟨ ~-ι , <:-ι ⟩ ⟩
+consis-sub-raw {Ref A} {Ref B} (≲-ref A≲B B≲A) = {!!}
+consis-sub-raw (≲-fun x x₁ x₂) = {!!}
+
+consis-sub {S of g₁} {T of g₂} (≲-ty g₁≾g₂ S≲T) =
+  case consis-sub-lbl g₁≾g₂ of λ where
+    ⟨ g , ⟨ g~g₁ , g<:g₂ ⟩ ⟩ →
+      ⟨ {!!} of g , ⟨ ~-ty g~g₁ {!!} , <:-ty g<:g₂ {!!} ⟩ ⟩
 
 Context = List Type
