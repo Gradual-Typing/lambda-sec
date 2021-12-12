@@ -291,15 +291,70 @@ S of g₁ ∧̃ T of g₂ =
     S∧̃T ← S ∧̃ᵣ T
     just (S∧̃T of g₁ ⋏̃ g₂)
 
+≼-refl : ∀ {ℓ} → ℓ ≼ ℓ
+≼-refl {high}  = h⊑h
+≼-refl {low}   = l⊑l
+
 <:ₗ-refl : ∀ {g} → g <:ₗ g
-<:ₗ-refl {⋆}      = <:-⋆
-<:ₗ-refl {l high} = <:-l h⊑h
-<:ₗ-refl {l low}  = <:-l l⊑l
+<:ₗ-refl {⋆}   = <:-⋆
+<:ₗ-refl {l ℓ} = <:-l ≼-refl
 
 ~ₗ-refl : ∀ {g} → g ~ₗ g
 ~ₗ-refl {⋆}      = ⋆~
 ~ₗ-refl {l high} = h~h
 ~ₗ-refl {l low}  = l~l
+
+≾-refl : ∀ {g} → g ≾ g
+≾-refl {⋆} = ≾-⋆r
+≾-refl {l x} = ≾-l ≼-refl
+
+≲ᵣ-refl : ∀ {T} → T ≲ᵣ T
+≲-refl : ∀ {A} → A ≲ A
+
+≲ᵣ-refl {` ι} = ≲-ι
+≲ᵣ-refl {Ref A} = ≲-ref ≲-refl ≲-refl
+≲ᵣ-refl {[ pc ] A ⇒ B} = ≲-fun ≾-refl ≲-refl ≲-refl
+
+≲-refl {T of g} = ≲-ty ≾-refl ≲ᵣ-refl
+
+<:ᵣ-refl : ∀ {T} → T <:ᵣ T
+<:-refl : ∀ {A} → A <: A
+
+<:ᵣ-refl {` ι} = <:-ι
+<:ᵣ-refl {Ref A} = <:-ref <:-refl <:-refl
+<:ᵣ-refl {[ pc ] A ⇒ B} = <:-fun <:ₗ-refl <:-refl <:-refl
+
+<:-refl {T of g} = <:-ty <:ₗ-refl <:ᵣ-refl
+
+≼-antisym : ∀ {ℓ₁ ℓ₂}
+  → ℓ₁ ≼ ℓ₂ → ℓ₂ ≼ ℓ₁
+  → ℓ₁ ≡ ℓ₂
+≼-antisym l⊑l l⊑l = refl
+≼-antisym h⊑h h⊑h = refl
+
+≾-antisym : ∀ {g₁ g₂}
+  → g₁ ≾ g₂ → g₂ ≾ g₁
+  → g₁ ~ₗ g₂
+≾-antisym ≾-⋆r _ = ~⋆
+≾-antisym ≾-⋆l _ = ⋆~
+≾-antisym (≾-l ℓ₁≼ℓ₂) (≾-l ℓ₂≼ℓ₂)
+  rewrite ≼-antisym ℓ₁≼ℓ₂ ℓ₂≼ℓ₂ = ~ₗ-refl
+
+≲ᵣ-antisym : ∀ {S T}
+  → S ≲ᵣ T → T ≲ᵣ S
+  → S ~ᵣ T
+≲-antisym : ∀ {A B}
+  → A ≲ B → B ≲ A
+  → A ~ B
+
+≲ᵣ-antisym ≲-ι ≲-ι = ~-ι
+≲ᵣ-antisym (≲-ref A≲B B≲A) (≲-ref _ _) =
+  ~-ref (≲-antisym A≲B B≲A)
+≲ᵣ-antisym (≲-fun pc₂≾pc₁ C≲A B≲D) (≲-fun pc₁≾pc₂ A≲C D≲B) =
+  ~-fun (≾-antisym pc₁≾pc₂ pc₂≾pc₁) (≲-antisym A≲C C≲A) (≲-antisym B≲D D≲B)
+
+≲-antisym (≲-ty g₁≾g₂ S≲T) (≲-ty g₂≾g₁ T≲S) =
+  ~-ty (≾-antisym g₁≾g₂ g₂≾g₁) (≲ᵣ-antisym S≲T T≲S)
 
 {-
        g₂
@@ -323,27 +378,9 @@ consis-sub : ∀ {A B : Type}
   → A ≲ B
   → ∃[ C ] (A ~ C) × (C <: B)
 
-≼-antisym : ∀ {ℓ₁ ℓ₂}
-  → ℓ₁ ≼ ℓ₂ → ℓ₂ ≼ ℓ₁
-  → ℓ₁ ≡ ℓ₂
-≼-antisym l⊑l l⊑l = refl
-≼-antisym h⊑h h⊑h = refl
-
-≾-antisym : ∀ {g₁ g₂}
-  → g₁ ≾ g₂ → g₂ ≾ g₁
-  → g₁ ~ₗ g₂
-≾-antisym ≾-⋆r _ = ~⋆
-≾-antisym ≾-⋆l _ = ⋆~
-≾-antisym (≾-l ℓ₁≼ℓ₂) (≾-l ℓ₂≼ℓ₂)
-  rewrite ≼-antisym ℓ₁≼ℓ₂ ℓ₂≼ℓ₂ = ~ₗ-refl
-
-≲-antisym : ∀ {A B}
-  → A ≲ B → B ≲ A
-  → A ~ B
-≲-antisym (≲-ty g₁≾g₂ S≲T) (≲-ty g₂≾g₁ T≲S) = {!!}
-
 consis-sub-raw {` ι} {` ι} ≲-ι = ⟨ ` ι , ⟨ ~-ι , <:-ι ⟩ ⟩
-consis-sub-raw {Ref A} {Ref B} (≲-ref A≲B B≲A) = {!!}
+consis-sub-raw {Ref A} {Ref B} (≲-ref A≲B B≲A) =
+  ⟨ Ref B , ⟨ ~-ref (≲-antisym A≲B B≲A) , <:ᵣ-refl ⟩ ⟩
 consis-sub-raw (≲-fun x x₁ x₂) = {!!}
 
 consis-sub {S of g₁} {T of g₂} (≲-ty g₁≾g₂ S≲T) =
