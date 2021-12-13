@@ -1,5 +1,5 @@
 open import Data.List
-open import Data.Bool
+open import Data.Bool renaming (Bool to 𝔹)
 
 open import Syntax
 open import Types
@@ -43,4 +43,4 @@ pattern !_ M = op-deref ⦅ cons (ast M) nil ⦆
 pattern _:=_ L M = op-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆
 
 _ : Term
-_ = ((ƛ[ ⋆ ] (` 𝔹 of ⋆ ) ˙ (` 0) of high) · (` 0))
+_ = ((ƛ[ ⋆ ] (` Bool of ⋆ ) ˙ (` 0) of high) · (` 0))
