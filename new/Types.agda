@@ -356,36 +356,96 @@ S of g₁ ∧̃ T of g₂ =
 ≲-antisym (≲-ty g₁≾g₂ S≲T) (≲-ty g₂≾g₁ T≲S) =
   ~-ty (≾-antisym g₁≾g₂ g₂≾g₁) (≲ᵣ-antisym S≲T T≲S)
 
-{-
-       g₂
+~ₗ-sym : ∀ {g₁ g₂} → g₁ ~ₗ g₂ → g₂ ~ₗ g₁
+~ₗ-sym ⋆~ = ~⋆
+~ₗ-sym ~⋆ = ⋆~
+~ₗ-sym l~l = l~l
+~ₗ-sym h~h = h~h
+
+~ᵣ-sym : ∀ {S T} → S ~ᵣ T → T ~ᵣ S
+~-sym  : ∀ {A B} → A ~ B → B ~ A
+
+~ᵣ-sym ~-ι = ~-ι
+~ᵣ-sym (~-ref A~B) = ~-ref (~-sym A~B)
+~ᵣ-sym (~-fun pc₁~pc₂ A~C B~D) = ~-fun (~ₗ-sym pc₁~pc₂) (~-sym A~C) (~-sym B~D)
+
+~-sym (~-ty g₁~g₂ S~T) = ~-ty (~ₗ-sym g₁~g₂) (~ᵣ-sym S~T)
+
+{- Properties of consistent subtyping (≲):
+        B
    ≲  / | <:
      /  |
-   g₁ - g
+    A - C
       ~
+        B
+   ≲  / | ~
+     /  |
+    A - C
+      <:
 -}
-consis-sub-lbl : ∀ {g₁ g₂ : Label}
+≾-prop : ∀ {g₁ g₂ : Label}
   → g₁ ≾ g₂
   → ∃[ g ] (g₁ ~ₗ g) × (g <:ₗ g₂)
-consis-sub-lbl {g} {⋆} ≾-⋆r = ⟨ ⋆ , ⟨ ~⋆ , <:-⋆ ⟩ ⟩
-consis-sub-lbl {⋆} {g} ≾-⋆l = ⟨ g , ⟨ ⋆~ , <:ₗ-refl ⟩ ⟩
-consis-sub-lbl {l ℓ₁} {l ℓ₂} (≾-l ℓ₁≼ℓ₂) =
+≾-prop {g} {⋆} ≾-⋆r = ⟨ ⋆ , ⟨ ~⋆ , <:-⋆ ⟩ ⟩
+≾-prop {⋆} {g} ≾-⋆l = ⟨ g , ⟨ ⋆~ , <:ₗ-refl ⟩ ⟩
+≾-prop {l ℓ₁} {l ℓ₂} (≾-l ℓ₁≼ℓ₂) =
   ⟨ l ℓ₁ , ⟨ ~ₗ-refl , <:-l ℓ₁≼ℓ₂ ⟩ ⟩
 
-consis-sub-raw : ∀ {S T : RawType}
+≾-prop′ : ∀ {g₁ g₂ : Label}
+  → g₁ ≾ g₂
+  → ∃[ g ] (g₁ <:ₗ g) × (g ~ₗ g₂)
+≾-prop′ {g} {⋆} ≾-⋆r = ⟨ g , ⟨ <:ₗ-refl , ~⋆ ⟩ ⟩
+≾-prop′ {⋆} {g} ≾-⋆l = ⟨ ⋆ , ⟨ <:-⋆ , ⋆~ ⟩ ⟩
+≾-prop′ {l ℓ₁} {l ℓ₂} (≾-l ℓ₁≼ℓ₂) =
+  ⟨ l ℓ₂ , ⟨ <:-l ℓ₁≼ℓ₂ , ~ₗ-refl ⟩ ⟩
+
+≲ᵣ-prop : ∀ {S T : RawType}
   → S ≲ᵣ T
   → ∃[ U ] (S ~ᵣ U) × (U <:ᵣ T)
-consis-sub : ∀ {A B : Type}
+≲-prop : ∀ {A B : Type}
   → A ≲ B
   → ∃[ C ] (A ~ C) × (C <: B)
 
-consis-sub-raw {` ι} {` ι} ≲-ι = ⟨ ` ι , ⟨ ~-ι , <:-ι ⟩ ⟩
-consis-sub-raw {Ref A} {Ref B} (≲-ref A≲B B≲A) =
-  ⟨ Ref B , ⟨ ~-ref (≲-antisym A≲B B≲A) , <:ᵣ-refl ⟩ ⟩
-consis-sub-raw (≲-fun x x₁ x₂) = {!!}
+≲ᵣ-prop′ : ∀ {S T : RawType}
+  → S ≲ᵣ T
+  → ∃[ U ] (S <:ᵣ U) × (U ~ᵣ T)
+≲-prop′ : ∀ {A B : Type}
+  → A ≲ B
+  → ∃[ C ] (A <: C) × (C ~ B)
 
-consis-sub {S of g₁} {T of g₂} (≲-ty g₁≾g₂ S≲T) =
-  case consis-sub-lbl g₁≾g₂ of λ where
-    ⟨ g , ⟨ g~g₁ , g<:g₂ ⟩ ⟩ →
-      ⟨ {!!} of g , ⟨ ~-ty g~g₁ {!!} , <:-ty g<:g₂ {!!} ⟩ ⟩
+≲ᵣ-prop′ {` ι} {` ι} ≲-ι = ⟨ ` ι , ⟨ <:-ι , ~-ι ⟩ ⟩
+≲ᵣ-prop′ {Ref A} {Ref B} (≲-ref A≲B B≲A) =
+  ⟨ Ref A , ⟨ <:ᵣ-refl , ~-ref (≲-antisym A≲B B≲A) ⟩ ⟩
+≲ᵣ-prop′ {[ pc₁ ] A ⇒ B} {[ pc₂ ] C ⇒ D} (≲-fun pc₂≾pc₁ C≲A B≲D) =
+  case ≾-prop pc₂≾pc₁ of λ where
+    ⟨ pc , ⟨ pc₂~pc , pc<:pc₁ ⟩ ⟩ →
+      case ⟨ ≲-prop C≲A , ≲-prop′ B≲D ⟩ of λ where
+        ⟨ ⟨ A′ , ⟨ C~A′ , A′<:A ⟩ ⟩ , ⟨ B′ , ⟨ B<:B′ , B′~D ⟩ ⟩ ⟩ →
+          ⟨ [ pc ] A′ ⇒ B′ , ⟨ <:-fun pc<:pc₁ A′<:A B<:B′ , ~-fun (~ₗ-sym pc₂~pc) (~-sym C~A′) B′~D ⟩ ⟩
+
+≲-prop′ {S of g₁} {T of g₂} (≲-ty g₁≾g₂ S≲T) =
+  case ≾-prop′ g₁≾g₂ of λ where
+    ⟨ g , ⟨ g₁<:g , g~g₂ ⟩ ⟩ →
+      case ≲ᵣ-prop′ S≲T of λ where
+        ⟨ U , ⟨ S<:U , U~T ⟩ ⟩ →
+          ⟨ U of g , ⟨ <:-ty g₁<:g S<:U , ~-ty g~g₂ U~T ⟩ ⟩
+
+≲ᵣ-prop {` ι} {` ι} ≲-ι = ⟨ ` ι , ⟨ ~-ι , <:-ι ⟩ ⟩
+≲ᵣ-prop {Ref A} {Ref B} (≲-ref A≲B B≲A) =
+  ⟨ Ref B , ⟨ ~-ref (≲-antisym A≲B B≲A) , <:ᵣ-refl ⟩ ⟩
+≲ᵣ-prop {[ pc₁ ] A ⇒ B} {[ pc₂ ] C ⇒ D} (≲-fun pc₂≾pc₁ C≲A B≲D) =
+  case ≾-prop′ pc₂≾pc₁ of λ where
+    ⟨ pc , ⟨ pc₂<:pc , pc~pc₁ ⟩ ⟩ →
+      case ⟨ ≲-prop′ C≲A , ≲-prop B≲D ⟩ of λ where
+        ⟨ ⟨ A′ , ⟨ C<:A′ , A′~A ⟩ ⟩ , ⟨ B′ , ⟨ B~B′ , B′<:D ⟩ ⟩ ⟩ →
+          ⟨ [ pc ] A′ ⇒ B′ ,
+            ⟨ ~-fun (~ₗ-sym pc~pc₁) (~-sym A′~A) B~B′ , <:-fun pc₂<:pc C<:A′ B′<:D ⟩ ⟩
+
+≲-prop {S of g₁} {T of g₂} (≲-ty g₁≾g₂ S≲T) =
+  case ≾-prop g₁≾g₂ of λ where
+    ⟨ g , ⟨ g₁~g , g<:g₂ ⟩ ⟩ →
+      case ≲ᵣ-prop S≲T of λ where
+        ⟨ U , ⟨ S~U , U<:T ⟩ ⟩ →
+          ⟨ U of g , ⟨ ~-ty g₁~g S~U , <:-ty g<:g₂ U<:T ⟩ ⟩
 
 Context = List Type
