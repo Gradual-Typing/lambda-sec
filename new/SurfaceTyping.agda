@@ -8,7 +8,6 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Syntax
 open import Utils
 open import Types
-open import Heap
 open import SurfaceSyntax
 
 infix 4 _︔_︔_⊢ᴳ_⦂_
@@ -53,7 +52,7 @@ data _︔_︔_⊢ᴳ_⦂_ : Context → HeapContext → Label → Term → Type 
     → A ≲ S of g
     → pc ≾ g
       ----------------------------------------------------------
-    → Γ ︔ Σ ︔ pc ⊢ᴳ ref (S of g) M ⦂ (Ref (S of g)) of (l low)
+    → Γ ︔ Σ ︔ pc ⊢ᴳ ref (S of g) M ⦂ (Ref (S of g)) of l low
 
   ⊢deref : ∀ {Γ Σ pc M A g}
     → Γ ︔ Σ ︔ pc ⊢ᴳ M ⦂ (Ref A) of g
@@ -67,4 +66,4 @@ data _︔_︔_⊢ᴳ_⦂_ : Context → HeapContext → Label → Term → Type 
     → g ≾ g₁
     → pc ≾ g₁
       -----------------------------------------
-    → Γ ︔ Σ ︔ pc ⊢ᴳ L := M ⦂ ` Unit of (l low)
+    → Γ ︔ Σ ︔ pc ⊢ᴳ L := M ⦂ ` Unit of l low

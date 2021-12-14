@@ -10,7 +10,7 @@ open import Addr
 
 
 data Op : Set where
-  op-addr   : (a : Addr) → Op
+  op-addr   : (a : Addr) → (ℓ : StaticLabel) → Op
   op-lam    : (pc : Label) → Type → (ℓ : StaticLabel) → Op
   op-app    : Op
   op-const  : ∀ {ι} → rep ι → StaticLabel → Op
@@ -21,7 +21,7 @@ data Op : Set where
   op-cast   : ∀ {A B} → Cast A ⇒ B → Op
 
 sig : Op → List Sig
-sig (op-addr a)        = []
+sig (op-addr a ℓ)      = []
 sig (op-lam pc A ℓ)    = (ν ■) ∷ []
 sig op-app             = ■ ∷ ■ ∷ []
 sig (op-const k ℓ)     = []
@@ -35,7 +35,7 @@ open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug) public
 
 infixl 7  _·_
 
-pattern addr a = (op-addr a) ⦅ nil ⦆
+pattern addr_of_ a ℓ = (op-addr a ℓ) ⦅ nil ⦆
 pattern ƛ[_]_˙_of_ pc A N ℓ = (op-lam pc A ℓ) ⦅ cons (bind (ast N)) nil ⦆
 pattern _·_ L M = op-app ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern $_of_ k ℓ = (op-const k ℓ) ⦅ nil ⦆
