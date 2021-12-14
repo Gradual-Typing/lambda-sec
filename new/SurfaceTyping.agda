@@ -38,8 +38,8 @@ data _︔_︔_⊢ᴳ_⦂_ : Context → HeapContext → Label → Term → Type 
     → Γ ︔ Σ ︔ pc ⋎̃ g ⊢ᴳ M ⦂ A
     → Γ ︔ Σ ︔ pc ⋎̃ g ⊢ᴳ N ⦂ B
     → A ∨̃ B ≡ just C
-      --------------------------------------------
-    → Γ ︔ Σ ︔ pc ⊢ᴳ if L then M else N endif ⦂ C
+      ----------------------------------------------------
+    → Γ ︔ Σ ︔ pc ⊢ᴳ if L then M else N endif ⦂ stamp C g
 
   ⊢ann : ∀ {Γ Σ pc M A A′}
     → Γ ︔ Σ ︔ pc ⊢ᴳ M ⦂ A′
