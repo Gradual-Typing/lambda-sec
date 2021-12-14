@@ -9,6 +9,9 @@ open import Function using (case_of_)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; _≢_; refl; trans; sym; subst; cong; cong₂)
 
+open import Addr
+
+
 data StaticLabel : Set where
   high : StaticLabel
   low  : StaticLabel
@@ -449,3 +452,6 @@ S of g₁ ∧̃ T of g₂ =
           ⟨ U of g , ⟨ ~-ty g₁~g S~U , <:-ty g<:g₂ U<:T ⟩ ⟩
 
 Context = List Type
+{- Addr ↦ Type -}
+HeapContext = List (Addr × Type)
+
