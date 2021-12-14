@@ -14,6 +14,10 @@ infix 4 _︔_︔_⊢ᴳ_⦂_
 
 data _︔_︔_⊢ᴳ_⦂_ : Context → HeapContext → Label → Term → Type → Set where
 
+  ⊢const : ∀ {Γ Σ pc ι} {k : rep ι} {ℓ}
+      --------------------------------------
+    → Γ ︔ Σ ︔ pc ⊢ᴳ $ k of ℓ ⦂ ` ι of l ℓ
+
   ⊢var : ∀ {Γ Σ pc A x}
     → nth Γ x ≡ just A
       ---------------------------
