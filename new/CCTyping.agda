@@ -58,7 +58,7 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
   ⊢ref : ∀ {Γ Σ pc M S}
     → Γ ︔ Σ ︔ pc ⊢ M ⦂ S of pc
       ---------------------------------------------------------- CCRef
-    → Γ ︔ Σ ︔ pc ⊢ ref (S of pc) M ⦂ (Ref (S of pc)) of l low
+    → Γ ︔ Σ ︔ pc ⊢ ref[ S of pc ] M ⦂ (Ref (S of pc)) of l low
 
   ⊢deref : ∀ {Γ Σ pc M A g}
     → Γ ︔ Σ ︔ pc ⊢ M ⦂ (Ref A) of g

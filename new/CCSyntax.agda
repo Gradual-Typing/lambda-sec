@@ -40,7 +40,7 @@ pattern ƛ[_]_˙_of_ pc A N ℓ = (op-lam pc A ℓ) ⦅ cons (bind (ast N)) nil 
 pattern _·_ L M = op-app ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern $_of_ k ℓ = (op-const k ℓ) ⦅ nil ⦆
 pattern if_then_else_endif L M N = op-if ⦅ cons (ast L) (cons (ast M) (cons (ast N) nil)) ⦆
-pattern ref A M = (op-ref A) ⦅ cons (ast M) nil ⦆
+pattern ref[_]_ A M = (op-ref A) ⦅ cons (ast M) nil ⦆
 pattern !_ M = op-deref ⦅ cons (ast M) nil ⦆
 pattern _:=_ L M = op-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern _⟨_⟩ M c = (op-cast c) ⦅ cons (ast M) nil ⦆
