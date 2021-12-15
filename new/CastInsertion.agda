@@ -12,19 +12,29 @@ open import TypeBasedCast
 open import SurfaceLang
   renaming (`_ to `ᴳ_;
             $_of_ to $ᴳ_of_;
-            ƛ[_]_˙_of_ to ƛᴳ[_]_˙_of_)
+            ƛ[_]_˙_of_ to ƛᴳ[_]_˙_of_;
+            !_ to !ᴳ_)
 open import CC renaming (Term to CCTerm)
 
 compile : ∀ {Γ Σ pc A} (M : Term) → Γ ︔ Σ ︔ pc ⊢ᴳ M ⦂ A → CCTerm
 compile ($ᴳ k of ℓ) ⊢const = $ k of ℓ
 compile (`ᴳ x) (⊢var x∈Γ) = ` x
-compile (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = {!!}
-compile (L · M at p) (⊢app ⊢L ⊢M A′≲A g≾pc′ pc≾pc′) = {!!}
-compile (if L then M else N at p) (⊢if ⊢L ⊢M ⊢N eq) = {!!}
+compile (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ƛ[ pc ] A ˙ compile N ⊢N of ℓ
+compile (L · M at p) (⊢app {A′ = A′} ⊢L ⊢M A′≲A g≾pc′ pc≾pc′) =
+  case ≲-prop A′≲A of λ where
+    ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ →
+      (compile L ⊢L) · (compile M ⊢M ⟨ cast A′ B p A′~B ⟩)
+compile (if L then M else N at p) (⊢if ⊢L ⊢M ⊢N A∨̃B≡C) = {!!}
 compile (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A) =
   case ≲-prop A′≲A of λ where
     ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ →
       compile M ⊢M ⟨ cast A′ B p A′~B ⟩
-compile (ref[ T of g ] M at p) (⊢ref ⊢M A≲Sg pc≾g) = {!!}
-compile (! M) (⊢deref ⊢M) = {!!}
-compile (L := M at p) (⊢assign ⊢L ⊢M A≲Sg1 g≾g1 pc≾g1) = {!!}
+compile (ref[ S of g ] M at p) (⊢ref {A = A} ⊢M A≲Sg pc≾g) =
+  case ≲-prop A≲Sg of λ where
+    ⟨ B , ⟨ A~B , B<:Sg ⟩ ⟩ →
+      ref[ S of g ] (compile M ⊢M ⟨ cast A B p A~B ⟩)
+compile (!ᴳ M) (⊢deref ⊢M) = ! (compile M ⊢M)
+compile (L := M at p) (⊢assign {A = A} ⊢L ⊢M A≲Sg1 g≾g1 pc≾g1) =
+  case ≲-prop A≲Sg1 of λ where
+    ⟨ B , ⟨ A~B , B<:Sg1 ⟩ ⟩ →
+      (compile L ⊢L) := (compile M ⊢M ⟨ cast A B p A~B ⟩)
