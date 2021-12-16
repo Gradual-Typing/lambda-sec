@@ -24,7 +24,15 @@ compile (L · M at p) (⊢app {A′ = A′} ⊢L ⊢M A′≲A g≾pc′ pc≾pc
   case ≲-prop A′≲A of λ where
     ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ →
       (compile L ⊢L) · (compile M ⊢M ⟨ cast A′ B p A′~B ⟩)
-compile (if L then M else N at p) (⊢if ⊢L ⊢M ⊢N A∨̃B≡C) = {!!}
+compile (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B≡C) =
+  case consis-join-≲ {A} {B} A∨̃B≡C of λ where
+    ⟨ A≲C , B≲C ⟩ →
+      case ⟨ ≲-prop A≲C , ≲-prop B≲C ⟩ of λ where
+        ⟨ ⟨ A′ , ⟨ A~A′ , A′<:C ⟩ ⟩ , ⟨ B′ , ⟨ B~B′ , B′<:C ⟩ ⟩ ⟩ →
+          if (compile L ⊢L)
+            then (compile M ⊢M ⟨ cast A A′ p A~A′ ⟩)
+            else (compile N ⊢N ⟨ cast B B′ p B~B′ ⟩)
+          endif
 compile (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A) =
   case ≲-prop A′≲A of λ where
     ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ →
