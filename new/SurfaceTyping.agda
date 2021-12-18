@@ -14,60 +14,60 @@ infix 4 _︔_︔_⊢ᴳ_⦂_
 
 data _︔_︔_⊢ᴳ_⦂_ : Context → HeapContext → Label → Term → Type → Set where
 
-  ⊢const : ∀ {Γ Σ pc ι} {k : rep ι} {ℓ}
+  ⊢const : ∀ {Γ Σ gc ι} {k : rep ι} {ℓ}
       -------------------------------------- Const
-    → Γ ︔ Σ ︔ pc ⊢ᴳ $ k of ℓ ⦂ ` ι of l ℓ
+    → Γ ︔ Σ ︔ gc ⊢ᴳ $ k of ℓ ⦂ ` ι of l ℓ
 
-  ⊢var : ∀ {Γ Σ pc A x}
+  ⊢var : ∀ {Γ Σ gc A x}
     → nth Γ x ≡ just A
       --------------------------- Var
-    → Γ ︔ Σ ︔ pc ⊢ᴳ ` x ⦂ A
+    → Γ ︔ Σ ︔ gc ⊢ᴳ ` x ⦂ A
 
-  ⊢lam : ∀ {Γ Σ pc pc′ A B N ℓ}
-    → (A ∷ Γ) ︔ Σ ︔ pc′ ⊢ᴳ N ⦂ B
+  ⊢lam : ∀ {Γ Σ gc pc A B N ℓ}
+    → (A ∷ Γ) ︔ Σ ︔ (l pc) ⊢ᴳ N ⦂ B
       ------------------------------------------------------------- Lam
-    → Γ ︔ Σ ︔ pc ⊢ᴳ ƛ[ pc′ ] A ˙ N of ℓ ⦂ ([ pc′ ] A ⇒ B) of l ℓ
+    → Γ ︔ Σ ︔ gc ⊢ᴳ ƛ[ pc ] A ˙ N of ℓ ⦂ ([ l pc ] A ⇒ B) of l ℓ
 
-  ⊢app : ∀ {Γ Σ pc pc′ A A′ B L M g p}
-    → Γ ︔ Σ ︔ pc ⊢ᴳ L ⦂ ([ pc′ ] A ⇒ B) of g
-    → Γ ︔ Σ ︔ pc ⊢ᴳ M ⦂ A′
+  ⊢app : ∀ {Γ Σ gc gc′ A A′ B L M g p}
+    → Γ ︔ Σ ︔ gc ⊢ᴳ L ⦂ ([ gc′ ] A ⇒ B) of g
+    → Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ A′
     → A′ ≲ A
-    → g ≾ pc′
-    → pc ≾ pc′
+    → g ≾ gc′
+    → gc ≾ gc′
       --------------------------------------- App
-    → Γ ︔ Σ ︔ pc ⊢ᴳ L · M at p ⦂ stamp B g
+    → Γ ︔ Σ ︔ gc ⊢ᴳ L · M at p ⦂ stamp B g
 
-  ⊢if : ∀ {Γ Σ pc A B C L M N g p}
-    → Γ ︔ Σ ︔ pc ⊢ᴳ L ⦂ ` Bool of g
-    → Γ ︔ Σ ︔ pc ⋎̃ g ⊢ᴳ M ⦂ A
-    → Γ ︔ Σ ︔ pc ⋎̃ g ⊢ᴳ N ⦂ B
+  ⊢if : ∀ {Γ Σ gc A B C L M N g p}
+    → Γ ︔ Σ ︔ gc ⊢ᴳ L ⦂ ` Bool of g
+    → Γ ︔ Σ ︔ gc ⋎̃ g ⊢ᴳ M ⦂ A
+    → Γ ︔ Σ ︔ gc ⋎̃ g ⊢ᴳ N ⦂ B
     → A ∨̃ B ≡ just C
       ---------------------------------------------------- If
-    → Γ ︔ Σ ︔ pc ⊢ᴳ if L then M else N at p ⦂ stamp C g
+    → Γ ︔ Σ ︔ gc ⊢ᴳ if L then M else N at p ⦂ stamp C g
 
-  ⊢ann : ∀ {Γ Σ pc M A A′ p}
-    → Γ ︔ Σ ︔ pc ⊢ᴳ M ⦂ A′
+  ⊢ann : ∀ {Γ Σ gc M A A′ p}
+    → Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ A′
     → A′ ≲ A
       --------------------------------- Ann
-    → Γ ︔ Σ ︔ pc ⊢ᴳ M ꞉ A at p ⦂ A
+    → Γ ︔ Σ ︔ gc ⊢ᴳ M ꞉ A at p ⦂ A
 
-  ⊢ref : ∀ {Γ Σ pc M A S g p}
-    → Γ ︔ Σ ︔ pc ⊢ᴳ M ⦂ A
-    → A ≲ S of g
-    → pc ≾ g
+  ⊢ref : ∀ {Γ Σ gc M T g ℓ p}
+    → Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ T of g
+    → T of g ≲ T of l ℓ
+    → gc ≾ l ℓ
       --------------------------------------------------------------- Ref
-    → Γ ︔ Σ ︔ pc ⊢ᴳ ref[ S of g ] M at p ⦂ (Ref (S of g)) of l low
+    → Γ ︔ Σ ︔ gc ⊢ᴳ ref[ ℓ ] M at p ⦂ (Ref (T of l ℓ)) of l low
 
-  ⊢deref : ∀ {Γ Σ pc M A g}
-    → Γ ︔ Σ ︔ pc ⊢ᴳ M ⦂ (Ref A) of g
+  ⊢deref : ∀ {Γ Σ gc M A g}
+    → Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ (Ref A) of g
       -------------------------------- Deref
-    → Γ ︔ Σ ︔ pc ⊢ᴳ ! M ⦂ stamp A g
+    → Γ ︔ Σ ︔ gc ⊢ᴳ ! M ⦂ stamp A g
 
-  ⊢assign : ∀ {Γ Σ pc L M A S g g₁ p}
-    → Γ ︔ Σ ︔ pc ⊢ᴳ L ⦂ (Ref (S of g₁)) of g
-    → Γ ︔ Σ ︔ pc ⊢ᴳ M ⦂ A
+  ⊢assign : ∀ {Γ Σ gc L M A S g g₁ p}
+    → Γ ︔ Σ ︔ gc ⊢ᴳ L ⦂ (Ref (S of g₁)) of g
+    → Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ A
     → A ≲ S of g₁
     → g ≾ g₁
-    → pc ≾ g₁
+    → gc ≾ g₁
       --------------------------------------------- Assign
-    → Γ ︔ Σ ︔ pc ⊢ᴳ L := M at p ⦂ ` Unit of l low
+    → Γ ︔ Σ ︔ gc ⊢ᴳ L := M at p ⦂ ` Unit of l low
