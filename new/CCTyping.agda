@@ -18,68 +18,68 @@ infix 4 _︔_︔_⊢_⦂_
 
 data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type → Set where
 
-  ⊢const : ∀ {Γ Σ pc ι} {k : rep ι} {ℓ}
+  ⊢const : ∀ {Γ Σ gc ι} {k : rep ι} {ℓ}
       -------------------------------------- CCConst
-    → Γ ︔ Σ ︔ pc ⊢ $ k of ℓ ⦂ ` ι of l ℓ
+    → Γ ︔ Σ ︔ gc ⊢ $ k of ℓ ⦂ ` ι of l ℓ
 
-  ⊢addr : ∀ {Γ Σ pc A a ℓ}
+  ⊢addr : ∀ {Γ Σ gc A a ℓ}
     → key _≟_ Σ a ≡ just A
       ------------------------------------------ CCAddr
-    → Γ ︔ Σ ︔ pc ⊢ addr a of ℓ ⦂ Ref A of l ℓ
+    → Γ ︔ Σ ︔ gc ⊢ addr a of ℓ ⦂ Ref A of l ℓ
 
-  ⊢var : ∀ {Γ Σ pc A x}
+  ⊢var : ∀ {Γ Σ gc A x}
     → nth Γ x ≡ just A
       --------------------------- CCVar
-    → Γ ︔ Σ ︔ pc ⊢ ` x ⦂ A
+    → Γ ︔ Σ ︔ gc ⊢ ` x ⦂ A
 
-  ⊢lam : ∀ {Γ Σ pc pc′ A B N ℓ}
-    → (A ∷ Γ) ︔ Σ ︔ pc′ ⊢ N ⦂ B
+  ⊢lam : ∀ {Γ Σ gc pc A B N ℓ}
+    → (A ∷ Γ) ︔ Σ ︔ (l pc) ⊢ N ⦂ B
       ------------------------------------------------------------- CCLam
-    → Γ ︔ Σ ︔ pc ⊢ ƛ[ pc′ ] A ˙ N of ℓ ⦂ ([ pc′ ] A ⇒ B) of l ℓ
+    → Γ ︔ Σ ︔ gc ⊢ ƛ[ pc ] A ˙ N of ℓ ⦂ ([ l pc ] A ⇒ B) of l ℓ
 
-  ⊢app : ∀ {Γ Σ pc A B L M}
-    → Γ ︔ Σ ︔ pc ⊢ L ⦂ ([ pc ] A ⇒ B) of pc
-    → Γ ︔ Σ ︔ pc ⊢ M ⦂ A
+  ⊢app : ∀ {Γ Σ gc A B L M}
+    → Γ ︔ Σ ︔ gc ⊢ L ⦂ ([ gc ] A ⇒ B) of gc
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
       --------------------------------- CCApp
-    → Γ ︔ Σ ︔ pc ⊢ L · M ⦂ stamp B pc
+    → Γ ︔ Σ ︔ gc ⊢ L · M ⦂ stamp B gc
 
-  ⊢if : ∀ {Γ Σ pc A L M N g}
-    → Γ ︔ Σ ︔ pc ⊢ L ⦂ ` Bool of g
-    → Γ ︔ Σ ︔ pc ⋎̃ g ⊢ M ⦂ A
-    → Γ ︔ Σ ︔ pc ⋎̃ g ⊢ N ⦂ A
+  ⊢if : ∀ {Γ Σ gc A L M N g}
+    → Γ ︔ Σ ︔ gc ⊢ L ⦂ ` Bool of g
+    → Γ ︔ Σ ︔ gc ⋎̃ g ⊢ M ⦂ A
+    → Γ ︔ Σ ︔ gc ⋎̃ g ⊢ N ⦂ A
       ---------------------------------------------------- CCIf
-    → Γ ︔ Σ ︔ pc ⊢ if L then M else N endif ⦂ stamp A g
+    → Γ ︔ Σ ︔ gc ⊢ if L then M else N endif ⦂ stamp A g
 
-  ⊢cast : ∀ {Γ Σ pc A B M} {c : Cast A ⇒ B}
-    → Γ ︔ Σ ︔ pc ⊢ M ⦂ A
+  ⊢cast : ∀ {Γ Σ gc A B M} {c : Cast A ⇒ B}
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
       --------------------------------------- CCCast
-    → Γ ︔ Σ ︔ pc ⊢ M ⟨ c ⟩ ⦂ B
+    → Γ ︔ Σ ︔ gc ⊢ M ⟨ c ⟩ ⦂ B
 
-  ⊢ref : ∀ {Γ Σ pc M S}
-    → Γ ︔ Σ ︔ pc ⊢ M ⦂ S of pc
+  ⊢ref : ∀ {Γ Σ M T ℓ}
+    → Γ ︔ Σ ︔ (l ℓ) ⊢ M ⦂ T of l ℓ
       ---------------------------------------------------------- CCRef
-    → Γ ︔ Σ ︔ pc ⊢ ref[ S of pc ] M ⦂ (Ref (S of pc)) of l low
+    → Γ ︔ Σ ︔ (l ℓ) ⊢ ref[ ℓ ] M ⦂ (Ref (T of l ℓ)) of l low
 
-  ⊢deref : ∀ {Γ Σ pc M A g}
-    → Γ ︔ Σ ︔ pc ⊢ M ⦂ (Ref A) of g
+  ⊢deref : ∀ {Γ Σ gc M A g}
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ (Ref A) of g
       -------------------------------- CCDeref
-    → Γ ︔ Σ ︔ pc ⊢ ! M ⦂ stamp A g
+    → Γ ︔ Σ ︔ gc ⊢ ! M ⦂ stamp A g
 
-  ⊢assign : ∀ {Γ Σ pc L M S}
-    → Γ ︔ Σ ︔ pc ⊢ L ⦂ (Ref (S of pc)) of pc
-    → Γ ︔ Σ ︔ pc ⊢ M ⦂ S of pc
+  ⊢assign : ∀ {Γ Σ gc L M S}
+    → Γ ︔ Σ ︔ gc ⊢ L ⦂ (Ref (S of gc)) of gc
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ S of gc
       ----------------------------------------- CCAssign
-    → Γ ︔ Σ ︔ pc ⊢ L := M ⦂ ` Unit of l low
+    → Γ ︔ Σ ︔ gc ⊢ L := M ⦂ ` Unit of l low
 
-  ⊢sub : ∀ {Γ Σ pc A B M}
-    → Γ ︔ Σ ︔ pc ⊢ M ⦂ A
+  ⊢sub : ∀ {Γ Σ gc A B M}
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
     → A <: B
       -------------------- CCSub
-    → Γ ︔ Σ ︔ pc ⊢ M ⦂ B
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ B
 
-  ⊢sub-pc : ∀ {Γ Σ pc pc′ A M}
-    → Γ ︔ Σ ︔ pc′ ⊢ M ⦂ A
-    → pc <:ₗ pc′
+  ⊢sub-pc : ∀ {Γ Σ gc gc′ A M}
+    → Γ ︔ Σ ︔ gc′ ⊢ M ⦂ A
+    → gc <:ₗ gc′
       -------------------------- CCSubPC
-    → Γ ︔ Σ ︔ pc ⊢ M ⦂ A
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
 
