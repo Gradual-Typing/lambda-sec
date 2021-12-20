@@ -37,11 +37,19 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
       ------------------------------------------------------------- CCLam
     → Γ ︔ Σ ︔ gc ⊢ ƛ[ pc ] A ˙ N of ℓ ⦂ ([ l pc ] A ⇒ B) of l ℓ
 
-  ⊢app : ∀ {Γ Σ gc A B L M}
-    → Γ ︔ Σ ︔ gc ⊢ L ⦂ ([ gc ] A ⇒ B) of gc
+  ⊢app : ∀ {Γ Σ pc pc′ A B L M ℓ}
+    → Γ ︔ Σ ︔ (l pc) ⊢ L ⦂ ([ (l pc′) ] A ⇒ B) of (l ℓ)
+    → Γ ︔ Σ ︔ (l pc) ⊢ M ⦂ A
+    → ℓ ≼ pc′
+    → pc ≼ pc′
+      --------------------------------------- CCApp
+    → Γ ︔ Σ ︔ l pc ⊢ L · M # static ⦂ stamp B (l ℓ)
+
+  ⊢app-dyn : ∀ {Γ Σ gc gc′ A B L M g}
+    → Γ ︔ Σ ︔ gc ⊢ L ⦂ ([ gc′ ] A ⇒ B) of g
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
-      --------------------------------- CCApp
-    → Γ ︔ Σ ︔ gc ⊢ L · M ⦂ stamp B gc
+      --------------------------------------- CCAppDyn
+    → Γ ︔ Σ ︔ gc ⊢ L · M # dyn ⦂ stamp B g
 
   ⊢if : ∀ {Γ Σ gc A L M N g}
     → Γ ︔ Σ ︔ gc ⊢ L ⦂ ` Bool of g
@@ -55,10 +63,16 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
       --------------------------------------- CCCast
     → Γ ︔ Σ ︔ gc ⊢ M ⟨ c ⟩ ⦂ B
 
-  ⊢ref : ∀ {Γ Σ M T ℓ}
-    → Γ ︔ Σ ︔ (l ℓ) ⊢ M ⦂ T of l ℓ
+  ⊢ref : ∀ {Γ Σ pc M T ℓ}
+    → Γ ︔ Σ ︔ (l pc) ⊢ M ⦂ T of l ℓ
+    → pc ≼ ℓ
       ---------------------------------------------------------- CCRef
-    → Γ ︔ Σ ︔ (l ℓ) ⊢ ref[ ℓ ] M ⦂ (Ref (T of l ℓ)) of l low
+    → Γ ︔ Σ ︔ (l pc) ⊢ ref[ ℓ ] M # static ⦂ (Ref (T of l ℓ)) of l low
+
+  ⊢ref-dyn : ∀ {Γ Σ gc M T ℓ}
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ T of l ℓ
+      ---------------------------------------------------------- CCRefDyn
+    → Γ ︔ Σ ︔ gc ⊢ ref[ ℓ ] M # dyn ⦂ (Ref (T of l ℓ)) of l low
 
   ⊢deref : ∀ {Γ Σ gc M A g}
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ (Ref A) of g
@@ -76,10 +90,3 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
     → A <: B
       -------------------- CCSub
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ B
-
-  ⊢sub-pc : ∀ {Γ Σ gc gc′ A M}
-    → Γ ︔ Σ ︔ gc′ ⊢ M ⦂ A
-    → gc <:ₗ gc′
-      -------------------------- CCSubPC
-    → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
-

@@ -16,14 +16,18 @@ open import SurfaceLang
             !_ to !ᴳ_)
 open import CC renaming (Term to CCTerm)
 
-compile : ∀ {Γ Σ pc A} (M : Term) → Γ ︔ Σ ︔ pc ⊢ᴳ M ⦂ A → CCTerm
+compile : ∀ {Γ Σ gc A} (M : Term) → Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ A → CCTerm
 compile ($ᴳ k of ℓ) ⊢const = $ k of ℓ
 compile (`ᴳ x) (⊢var x∈Γ) = ` x
 compile (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ƛ[ pc ] A ˙ compile N ⊢N of ℓ
-compile (L · M at p) (⊢app {A′ = A′} ⊢L ⊢M A′≲A g≾pc′ pc≾pc′) =
+compile (L · M at p) (⊢app {gc = gc} {gc′} {A} {A′} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′) =
   case ≲-prop A′≲A of λ where
     ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ →
-      (compile L ⊢L) · (compile M ⊢M ⟨ cast A′ B p A′~B ⟩)
+      {- Insert `# static` if gc , gc′, and g are all static, `# dyn` otherwise -}
+      case ⟨ gc , ⟨ gc′ , g ⟩ ⟩ of λ where
+        ⟨ l _ , ⟨ l _ , l _ ⟩ ⟩ →
+             (compile L ⊢L) · (compile M ⊢M ⟨ cast A′ B p A′~B ⟩) # static
+        _ → (compile L ⊢L) · (compile M ⊢M ⟨ cast A′ B p A′~B ⟩) # dyn
 compile (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B≡C) =
   case consis-join-≲ {A} {B} A∨̃B≡C of λ where
     ⟨ A≲C , B≲C ⟩ →
@@ -37,12 +41,48 @@ compile (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A) =
   case ≲-prop A′≲A of λ where
     ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ →
       compile M ⊢M ⟨ cast A′ B p A′~B ⟩
-compile (ref[ S of g ] M at p) (⊢ref {A = A} ⊢M A≲Sg pc≾g) =
-  case ≲-prop A≲Sg of λ where
-    ⟨ B , ⟨ A~B , B<:Sg ⟩ ⟩ →
-      ref[ S of g ] (compile M ⊢M ⟨ cast A B p A~B ⟩)
+compile (ref[ ℓ ] M at p) (⊢ref {gc = gc} {T = T} {g} ⊢M Tg≲Tℓ gc≾ℓ) =
+  case ≲-prop Tg≲Tℓ of λ where
+    ⟨ A , ⟨ Tg~A , A<:Tℓ ⟩ ⟩ →
+      {- Insert `# static` if gc is static and `# dyn` otherwise -}
+      case gc of λ where
+        (l _) → ref[ ℓ ] (compile M ⊢M ⟨ cast (T of g) A p Tg~A ⟩) # static
+        ⋆     → ref[ ℓ ] (compile M ⊢M ⟨ cast (T of g) A p Tg~A ⟩) # dyn
 compile (!ᴳ M) (⊢deref ⊢M) = ! (compile M ⊢M)
-compile (L := M at p) (⊢assign {A = A} ⊢L ⊢M A≲Sg1 g≾g1 pc≾g1) =
+compile (L := M at p) (⊢assign {A = A} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1) =
   case ≲-prop A≲Sg1 of λ where
     ⟨ B , ⟨ A~B , B<:Sg1 ⟩ ⟩ →
       (compile L ⊢L) := (compile M ⊢M ⟨ cast A B p A~B ⟩)
+
+
+compile-preserve : ∀ {Γ Σ gc A} (M : Term)
+  → (⊢M : Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ A)
+  → Γ ︔ Σ ︔ gc ⊢ compile M ⊢M ⦂ A
+compile-preserve .($ᴳ _ of _) ⊢const = {!!}
+compile-preserve .(`ᴳ _) (⊢var x) = {!!}
+compile-preserve .(ƛᴳ[ _ ] _ ˙ _ of _) (⊢lam ⊢M) = {!!}
+compile-preserve (L · M at p) (⊢app {gc = gc} {gc′} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′)
+  with ≲-prop A′≲A
+... | ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩
+  with gc | gc′ | g
+... | ⋆   | _   | _ = ⊢app-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A)
+... | l _ | ⋆   | _ = ⊢app-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A)
+... | l _ | l _ | ⋆ = ⊢app-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A)
+... | l pc | l pc′ | l ℓ =
+  case ⟨ g≾gc′ , gc≾gc′ ⟩ of λ where
+    ⟨ ≾-l ℓ≼pc′ , ≾-l pc≼pc′ ⟩ →
+      ⊢app (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A) ℓ≼pc′ pc≼pc′
+compile-preserve .(if _ then _ else _ at _) (⊢if ⊢M ⊢M₁ ⊢M₂ x) = {!!}
+compile-preserve {Γ} {Σ} {pc} {A} (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A)
+  with ≲-prop A′≲A
+... | ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ = {!!}
+compile-preserve (ref[ ℓ ] M at p) (⊢ref {gc = gc} ⊢M Tg≲Tℓ gc≾ℓ)
+  with ≲-prop Tg≲Tℓ
+... | ⟨ A , ⟨ Tg~A , A<:Tℓ ⟩ ⟩
+  with gc
+...   | ⋆ = ⊢ref-dyn (⊢sub (⊢cast (compile-preserve M ⊢M)) A<:Tℓ)
+...   | l pc =
+  case gc≾ℓ of λ where
+    (≾-l pc≼ℓ) → ⊢ref (⊢sub (⊢cast (compile-preserve M ⊢M)) A<:Tℓ) pc≼ℓ
+compile-preserve .(!ᴳ _) (⊢deref ⊢M) = {!!}
+compile-preserve (L := M at p) (⊢assign ⊢L ⊢M A≲Sg1 g≾g1 pc≾g1) = {!!}
