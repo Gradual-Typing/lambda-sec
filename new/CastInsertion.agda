@@ -52,6 +52,7 @@ compile (!ᴳ M) (⊢deref ⊢M) = ! (compile M ⊢M)
 compile (L := M at p) (⊢assign {gc = gc} {A = A} {g = g} {g₁} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1) =
   case ≲-prop A≲Sg1 of λ where
     ⟨ B , ⟨ A~B , B<:Sg1 ⟩ ⟩ →
+      {- Insert `# static` if gc , g, and g₁ are all static, `# dyn` otherwise -}
       case ⟨ gc , ⟨ g , g₁ ⟩ ⟩ of λ where
         ⟨ l _ , ⟨ l _ , l _ ⟩ ⟩ →
              (compile L ⊢L) := (compile M ⊢M ⟨ cast A B p A~B ⟩) # static
@@ -61,9 +62,9 @@ compile (L := M at p) (⊢assign {gc = gc} {A = A} {g = g} {g₁} ⊢L ⊢M A≲
 compile-preserve : ∀ {Γ Σ gc A} (M : Term)
   → (⊢M : Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ A)
   → Γ ︔ Σ ︔ gc ⊢ compile M ⊢M ⦂ A
-compile-preserve .($ᴳ _ of _) ⊢const = {!!}
-compile-preserve .(`ᴳ _) (⊢var x) = {!!}
-compile-preserve .(ƛᴳ[ _ ] _ ˙ _ of _) (⊢lam ⊢M) = {!!}
+compile-preserve ($ᴳ k of ℓ) ⊢const = ⊢const
+compile-preserve (`ᴳ x) (⊢var x∈Γ) = ⊢var x∈Γ
+compile-preserve (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ⊢lam (compile-preserve N ⊢N)
 compile-preserve (L · M at p) (⊢app {gc = gc} {gc′} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′)
   with ≲-prop A′≲A
 ... | ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩
@@ -75,7 +76,14 @@ compile-preserve (L · M at p) (⊢app {gc = gc} {gc′} {g = g} ⊢L ⊢M A′�
   case ⟨ g≾gc′ , gc≾gc′ ⟩ of λ where
     ⟨ ≾-l ℓ≼pc′ , ≾-l pc≼pc′ ⟩ →
       ⊢app (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A) ℓ≼pc′ pc≼pc′
-compile-preserve .(if _ then _ else _ at _) (⊢if ⊢M ⊢M₁ ⊢M₂ x) = {!!}
+compile-preserve (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B≡C)
+  with consis-join-≲ {A} {B} A∨̃B≡C
+... | ⟨ A≲C , B≲C ⟩
+  with ≲-prop A≲C | ≲-prop B≲C
+... | ⟨ A′ , ⟨ A~A′ , A′<:C ⟩ ⟩ | ⟨ B′ , ⟨ B~B′ , B′<:C ⟩ ⟩ =
+  ⊢if (compile-preserve L ⊢L)
+      (⊢sub (⊢cast (compile-preserve M ⊢M)) A′<:C)
+      (⊢sub (⊢cast (compile-preserve N ⊢N)) B′<:C)
 compile-preserve {Γ} {Σ} {pc} {A} (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A)
   with ≲-prop A′≲A
 ... | ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ = ⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A
@@ -87,7 +95,7 @@ compile-preserve (ref[ ℓ ] M at p) (⊢ref {gc = gc} ⊢M Tg≲Tℓ gc≾ℓ)
 ...   | l pc =
   case gc≾ℓ of λ where
     (≾-l pc≼ℓ) → ⊢ref (⊢sub (⊢cast (compile-preserve M ⊢M)) A<:Tℓ) pc≼ℓ
-compile-preserve .(!ᴳ _) (⊢deref ⊢M) = {!!}
+compile-preserve (!ᴳ M) (⊢deref ⊢M) = ⊢deref (compile-preserve M ⊢M)
 compile-preserve (L := M at p) (⊢assign {gc = gc} {g = g} {g₁} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1)
   with ≲-prop A≲Sg1
 ... | ⟨ B , ⟨ A~B , B<:Sg1 ⟩ ⟩
