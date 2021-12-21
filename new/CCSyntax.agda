@@ -21,7 +21,7 @@ data Op : Set where
   op-if     : Op
   op-ref    : StaticLabel → Ensure → Op
   op-deref  : Op
-  op-assign : Op
+  op-assign : Ensure → Op
   op-cast   : ∀ {A B} → Cast A ⇒ B → Op
 
 sig : Op → List Sig
@@ -32,19 +32,19 @@ sig (op-const k ℓ)     = []
 sig op-if              = ■ ∷ ■ ∷ ■ ∷ []
 sig (op-ref ℓ e)       = ■ ∷ []
 sig op-deref           = ■ ∷ []
-sig op-assign          = ■ ∷ ■ ∷ []
+sig (op-assign e)      = ■ ∷ ■ ∷ []
 sig (op-cast c)        = ■ ∷ []
 
 open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug) public
 
 infixl 7  _·_#_
 
-pattern addr_of_ a ℓ = (op-addr a ℓ) ⦅ nil ⦆
-pattern ƛ[_]_˙_of_ pc A N ℓ = (op-lam pc A ℓ) ⦅ cons (bind (ast N)) nil ⦆
-pattern _·_#_ L M e = (op-app e) ⦅ cons (ast L) (cons (ast M) nil) ⦆
-pattern $_of_ k ℓ = (op-const k ℓ) ⦅ nil ⦆
+pattern addr_of_ a ℓ             = (op-addr a ℓ) ⦅ nil ⦆
+pattern ƛ[_]_˙_of_ pc A N ℓ      = (op-lam pc A ℓ) ⦅ cons (bind (ast N)) nil ⦆
+pattern _·_#_ L M e              = (op-app e) ⦅ cons (ast L) (cons (ast M) nil) ⦆
+pattern $_of_ k ℓ                = (op-const k ℓ) ⦅ nil ⦆
 pattern if_then_else_endif L M N = op-if ⦅ cons (ast L) (cons (ast M) (cons (ast N) nil)) ⦆
-pattern ref[_]_#_ ℓ M e = (op-ref ℓ e) ⦅ cons (ast M) nil ⦆
-pattern !_ M = op-deref ⦅ cons (ast M) nil ⦆
-pattern _:=_ L M = op-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆
-pattern _⟨_⟩ M c = (op-cast c) ⦅ cons (ast M) nil ⦆
+pattern ref[_]_#_ ℓ M e          = (op-ref ℓ e) ⦅ cons (ast M) nil ⦆
+pattern !_ M                     = op-deref ⦅ cons (ast M) nil ⦆
+pattern _:=_#_ L M e             = (op-assign e) ⦅ cons (ast L) (cons (ast M) nil) ⦆
+pattern _⟨_⟩ M c                 = (op-cast c) ⦅ cons (ast M) nil ⦆

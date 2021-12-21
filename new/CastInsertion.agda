@@ -49,10 +49,13 @@ compile (ref[ ℓ ] M at p) (⊢ref {gc = gc} {T = T} {g} ⊢M Tg≲Tℓ gc≾�
         (l _) → ref[ ℓ ] (compile M ⊢M ⟨ cast (T of g) A p Tg~A ⟩) # static
         ⋆     → ref[ ℓ ] (compile M ⊢M ⟨ cast (T of g) A p Tg~A ⟩) # dyn
 compile (!ᴳ M) (⊢deref ⊢M) = ! (compile M ⊢M)
-compile (L := M at p) (⊢assign {A = A} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1) =
+compile (L := M at p) (⊢assign {gc = gc} {A = A} {g = g} {g₁} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1) =
   case ≲-prop A≲Sg1 of λ where
     ⟨ B , ⟨ A~B , B<:Sg1 ⟩ ⟩ →
-      (compile L ⊢L) := (compile M ⊢M ⟨ cast A B p A~B ⟩)
+      case ⟨ gc , ⟨ g , g₁ ⟩ ⟩ of λ where
+        ⟨ l _ , ⟨ l _ , l _ ⟩ ⟩ →
+             (compile L ⊢L) := (compile M ⊢M ⟨ cast A B p A~B ⟩) # static
+        _ → (compile L ⊢L) := (compile M ⊢M ⟨ cast A B p A~B ⟩) # dyn
 
 
 compile-preserve : ∀ {Γ Σ gc A} (M : Term)
@@ -75,7 +78,7 @@ compile-preserve (L · M at p) (⊢app {gc = gc} {gc′} {g = g} ⊢L ⊢M A′�
 compile-preserve .(if _ then _ else _ at _) (⊢if ⊢M ⊢M₁ ⊢M₂ x) = {!!}
 compile-preserve {Γ} {Σ} {pc} {A} (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A)
   with ≲-prop A′≲A
-... | ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ = {!!}
+... | ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ = ⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A
 compile-preserve (ref[ ℓ ] M at p) (⊢ref {gc = gc} ⊢M Tg≲Tℓ gc≾ℓ)
   with ≲-prop Tg≲Tℓ
 ... | ⟨ A , ⟨ Tg~A , A<:Tℓ ⟩ ⟩
@@ -85,4 +88,14 @@ compile-preserve (ref[ ℓ ] M at p) (⊢ref {gc = gc} ⊢M Tg≲Tℓ gc≾ℓ)
   case gc≾ℓ of λ where
     (≾-l pc≼ℓ) → ⊢ref (⊢sub (⊢cast (compile-preserve M ⊢M)) A<:Tℓ) pc≼ℓ
 compile-preserve .(!ᴳ _) (⊢deref ⊢M) = {!!}
-compile-preserve (L := M at p) (⊢assign ⊢L ⊢M A≲Sg1 g≾g1 pc≾g1) = {!!}
+compile-preserve (L := M at p) (⊢assign {gc = gc} {g = g} {g₁} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1)
+  with ≲-prop A≲Sg1
+... | ⟨ B , ⟨ A~B , B<:Sg1 ⟩ ⟩
+  with gc | g | g₁
+... | ⋆   | _   | _ = ⊢assign-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1)
+... | l _ | ⋆   | _ = ⊢assign-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1)
+... | l _ | l _ | ⋆ = ⊢assign-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1)
+... | l pc | l ℓ | l ℓ₁ =
+  case ⟨ g≾g1 , gc≾g1 ⟩ of λ where
+    ⟨ ≾-l ℓ≼ℓ₁ , ≾-l pc≼ℓ₁ ⟩ →
+      ⊢assign (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1) ℓ≼ℓ₁ pc≼ℓ₁
