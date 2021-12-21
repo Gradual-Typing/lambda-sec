@@ -1,4 +1,4 @@
-module CastInsertion where
+module Compile where
 
 open import Data.Nat
 open import Data.Product using (_×_) renaming (_,_ to ⟨_,_⟩)
