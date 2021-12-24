@@ -37,19 +37,11 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
       ------------------------------------------------------------- CCLam
     → Γ ︔ Σ ︔ gc ⊢ ƛ[ pc ] A ˙ N of ℓ ⦂ ([ l pc ] A ⇒ B) of l ℓ
 
-  ⊢app : ∀ {Γ Σ pc pc′ A B L M ℓ}
-    → Γ ︔ Σ ︔ (l pc) ⊢ L ⦂ ([ (l pc′) ] A ⇒ B) of (l ℓ)
-    → Γ ︔ Σ ︔ (l pc) ⊢ M ⦂ A
-    → ℓ ≼ pc′
-    → pc ≼ pc′
-      --------------------------------------- CCApp
-    → Γ ︔ Σ ︔ l pc ⊢ L · M # static ⦂ stamp B (l ℓ)
-
-  ⊢app-dyn : ∀ {Γ Σ gc gc′ A B L M g}
-    → Γ ︔ Σ ︔ gc ⊢ L ⦂ ([ gc′ ] A ⇒ B) of g
+  ⊢app : ∀ {Γ Σ gc A B L M g}
+    → Γ ︔ Σ ︔ gc ⊢ L ⦂ ([ gc ⋎̃ g ] A ⇒ B) of g
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
-      --------------------------------------- CCAppDyn
-    → Γ ︔ Σ ︔ gc ⊢ L · M # dyn ⦂ stamp B g
+      --------------------------------------- CCApp
+    → Γ ︔ Σ ︔ gc ⊢ L · M ⦂ stamp B g
 
   ⊢if : ∀ {Γ Σ gc A L M N g}
     → Γ ︔ Σ ︔ gc ⊢ L ⦂ ` Bool of g

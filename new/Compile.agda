@@ -20,14 +20,14 @@ compile : ∀ {Γ Σ gc A} (M : Term) → Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ A → CC
 compile ($ᴳ k of ℓ) ⊢const = $ k of ℓ
 compile (`ᴳ x) (⊢var x∈Γ) = ` x
 compile (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ƛ[ pc ] A ˙ compile N ⊢N of ℓ
-compile (L · M at p) (⊢app {gc = gc} {gc′} {A} {A′} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′) =
+compile (L · M at p) (⊢app {gc = gc} {gc′} {A} {A′} {B} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′) =
   case ≲-prop A′≲A of λ where
-    ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩ →
-      {- Insert `# static` if gc , gc′, and g are all static, `# dyn` otherwise -}
-      case ⟨ gc , ⟨ gc′ , g ⟩ ⟩ of λ where
-        ⟨ l _ , ⟨ l _ , l _ ⟩ ⟩ →
-             (compile L ⊢L) · (compile M ⊢M ⟨ cast A′ B p A′~B ⟩) # static
-        _ → (compile L ⊢L) · (compile M ⊢M ⟨ cast A′ B p A′~B ⟩) # dyn
+    ⟨ C , ⟨ A′~C , C<:A ⟩ ⟩ →
+      case ⟨ ≾-prop′ gc≾gc′ , ≾-prop′ g≾gc′ ⟩ of λ where
+        ⟨ ⟨ g₁ , ⟨ gc<:g₁ , g₁~gc′ ⟩ ⟩ , ⟨ g₂ , ⟨ g<:g₂ , g₂~gc′ ⟩ ⟩ ⟩ →
+          let c = cast (([ gc′ ] A ⇒ B) of g) (([ g₁ ⋎̃ g₂ ] A ⇒ B) of g) p
+                       (~-ty ~ₗ-refl (~-fun (consis-join-~ₗ g₁~gc′ g₂~gc′) ~-refl ~-refl)) in
+          (compile L ⊢L ⟨ c ⟩) · (compile M ⊢M ⟨ cast A′ C p A′~C ⟩)
 compile (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B≡C) =
   case consis-join-≲ {A} {B} A∨̃B≡C of λ where
     ⟨ A≲C , B≲C ⟩ →
@@ -68,14 +68,10 @@ compile-preserve (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ⊢lam (compile-pre
 compile-preserve (L · M at p) (⊢app {gc = gc} {gc′} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′)
   with ≲-prop A′≲A
 ... | ⟨ B , ⟨ A′~B , B<:A ⟩ ⟩
-  with gc | gc′ | g
-... | ⋆   | _   | _ = ⊢app-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A)
-... | l _ | ⋆   | _ = ⊢app-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A)
-... | l _ | l _ | ⋆ = ⊢app-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A)
-... | l pc | l pc′ | l ℓ =
-  case ⟨ g≾gc′ , gc≾gc′ ⟩ of λ where
-    ⟨ ≾-l ℓ≼pc′ , ≾-l pc≼pc′ ⟩ →
-      ⊢app (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A) ℓ≼pc′ pc≼pc′
+  with ≾-prop′ gc≾gc′ | ≾-prop′ g≾gc′
+... | ⟨ g₁ , ⟨ gc<:g₁ , g₁~gc′ ⟩ ⟩ | ⟨ g₂ , ⟨ g<:g₂ , g₂~gc′ ⟩ ⟩ =
+  ⊢app (⊢sub (⊢cast (compile-preserve L ⊢L)) (<:-ty <:ₗ-refl (<:-fun (consis-join-<:ₗ gc<:g₁ g<:g₂) <:-refl <:-refl)))
+       (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A)
 compile-preserve (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B≡C)
   with consis-join-≲ {A} {B} A∨̃B≡C
 ... | ⟨ A≲C , B≲C ⟩

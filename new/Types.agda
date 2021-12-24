@@ -176,18 +176,32 @@ _    ⋏ _    = low
 {- Label consistent join -}
 _⋎̃_ : Label → Label → Label
 l ℓ₁     ⋎̃ l ℓ₂   = l (ℓ₁ ⋎ ℓ₂)
-l high   ⋎̃ ⋆      = l high
+-- l high   ⋎̃ ⋆      = l high
 _        ⋎̃ ⋆      = ⋆
-⋆        ⋎̃ l high = l high
+-- ⋆        ⋎̃ l high = l high
 ⋆        ⋎̃ _      = ⋆
 
 {- Label consistent meet -}
 _⋏̃_ : Label → Label → Label
 l ℓ₁     ⋏̃ l ℓ₂   = l (ℓ₁ ⋏ ℓ₂)
-l low    ⋏̃ ⋆      = l low
+-- l low    ⋏̃ ⋆      = l low
 _        ⋏̃ ⋆      = ⋆
-⋆        ⋏̃ l low  = l low
+-- ⋆        ⋏̃ l low  = l low
 ⋆        ⋏̃ _      = ⋆
+
+consis-join-~ₗ : ∀ {g₁ g₂ g}
+  → g₁ ~ₗ g
+  → g₂ ~ₗ g
+  → g ~ₗ g₁ ⋎̃ g₂
+consis-join-~ₗ ⋆~ ⋆~ = ~⋆
+consis-join-~ₗ ⋆~ ~⋆ = ⋆~
+consis-join-~ₗ ⋆~ l~l = ~⋆
+consis-join-~ₗ ⋆~ h~h = ~⋆
+consis-join-~ₗ ~⋆ _ = ⋆~
+consis-join-~ₗ l~l ⋆~ = ~⋆
+consis-join-~ₗ l~l l~l = l~l
+consis-join-~ₗ h~h ⋆~ = ~⋆
+consis-join-~ₗ h~h h~h = h~h
 
 {- Stamping label on type -}
 stamp : Type → Label → Type
@@ -306,6 +320,13 @@ S of g₁ ∧̃ T of g₂ =
 ~ₗ-refl {⋆}      = ⋆~
 ~ₗ-refl {l high} = h~h
 ~ₗ-refl {l low}  = l~l
+
+~ᵣ-refl : ∀ {T} → T ~ᵣ T
+~-refl : ∀ {A} → A ~ A
+~ᵣ-refl {` ι} = ~-ι
+~ᵣ-refl {Ref A} = ~-ref ~-refl
+~ᵣ-refl {[ gc ] A ⇒ B} = ~-fun ~ₗ-refl ~-refl ~-refl
+~-refl {T of g} = ~-ty ~ₗ-refl ~ᵣ-refl
 
 ≾-refl : ∀ {g} → g ≾ g
 ≾-refl {⋆} = ≾-⋆r
@@ -538,9 +559,9 @@ consis-meet-≾ : ∀ {g₁ g₂ g}
   → g₁ ⋏̃ g₂ ≡ g
   → g ≾ g₁ × g ≾ g₂
 consis-meet-≾ {⋆} {⋆} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
-consis-meet-≾ {⋆} {l low} {l low} refl = ⟨ ≾-⋆r , ≾-l l⊑l ⟩
+consis-meet-≾ {⋆} {l low} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆l ⟩
 consis-meet-≾ {⋆} {l high} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆l ⟩
-consis-meet-≾ {l low} {⋆} {l low} refl = ⟨ ≾-l l⊑l , ≾-⋆r ⟩
+consis-meet-≾ {l low} {⋆} {⋆} refl = ⟨ ≾-⋆l , ≾-⋆r ⟩
 consis-meet-≾ {l high} {⋆} {⋆} refl = ⟨ ≾-⋆l , ≾-⋆r ⟩
 consis-meet-≾ {l ℓ₁} {l ℓ₂} {l ℓ} refl =
   case meet-≼ {ℓ₁} {ℓ₂} {ℓ} refl of λ where
@@ -551,8 +572,8 @@ consis-join-≾ : ∀ {g₁ g₂ g}
   → g₁ ≾ g × g₂ ≾ g
 consis-join-≾ {⋆} {⋆} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
 consis-join-≾ {⋆} {l low} {⋆} refl = ⟨ ≾-⋆l , ≾-⋆r ⟩
-consis-join-≾ {⋆} {l high} {l high} refl = ⟨ ≾-⋆l , ≾-l h⊑h ⟩
-consis-join-≾ {l high} {⋆} {l high} refl = ⟨ ≾-l h⊑h , ≾-⋆l ⟩
+consis-join-≾ {⋆} {l high} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
+consis-join-≾ {l high} {⋆} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
 consis-join-≾ {l low} {⋆} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
 consis-join-≾ {l ℓ₁} {l ℓ₂} {l ℓ} refl =
   case join-≼ {ℓ₁} {ℓ₂} {ℓ} refl of λ where
@@ -629,6 +650,27 @@ consis-join-≲ {S of g₁} {T of g₂} {C}
   case ⟨ consis-join-≲ᵣ {S} {T} S∨̃T≡U , consis-join-≾ {g₁} {g₂} refl ⟩ of λ where
     ⟨ ⟨ S≲U , T≲U ⟩ , ⟨ g₁≾g₁⋎̃g₂ , g₂≾g₁⋎̃g₂ ⟩ ⟩ →
       λ { refl → ⟨ ≲-ty g₁≾g₁⋎̃g₂ S≲U , ≲-ty g₂≾g₁⋎̃g₂ T≲U ⟩ }
+
+join-≼′ : ∀ {ℓ₁ ℓ₁′ ℓ₂ ℓ₂′}
+  → ℓ₁ ≼ ℓ₁′
+  → ℓ₂ ≼ ℓ₂′
+  → (ℓ₁ ⋎ ℓ₂) ≼ (ℓ₁′ ⋎ ℓ₂′)
+join-≼′ l⊑l l⊑l = l⊑l
+join-≼′ l⊑l l⊑h = l⊑h
+join-≼′ l⊑l h⊑h = h⊑h
+join-≼′ l⊑h l⊑l = l⊑h
+join-≼′ l⊑h l⊑h = l⊑h
+join-≼′ l⊑h h⊑h = h⊑h
+join-≼′ h⊑h _ = h⊑h
+
+consis-join-<:ₗ : ∀ {g₁ g₁′ g₂ g₂′}
+  → g₁ <:ₗ g₁′
+  → g₂ <:ₗ g₂′
+  → g₁ ⋎̃ g₂ <:ₗ g₁′ ⋎̃ g₂′
+consis-join-<:ₗ <:-⋆ <:-⋆ = <:-⋆
+consis-join-<:ₗ <:-⋆ (<:-l x) = <:-⋆
+consis-join-<:ₗ (<:-l x) <:-⋆ = <:-⋆
+consis-join-<:ₗ (<:-l ℓ₁≼ℓ₁′) (<:-l ℓ₂≼ℓ₂′) = <:-l (join-≼′ ℓ₁≼ℓ₁′ ℓ₂≼ℓ₂′)
 
 Context = List Type
 {- Addr ↦ Type -}
