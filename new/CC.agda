@@ -11,12 +11,19 @@ open import CCSyntax Cast_⇒_ public
 open import CCTyping Cast_⇒_ public
 
 
-data Injection : ∀ {A B} → Cast A ⇒ B → Set where
-  inj : ∀ {S T g} → (c : Cast (S of g) ⇒ (T of ⋆)) → g ≢ ⋆ → Injection c
-
 -- Value forming cast
 data Inert : ∀ {A B} → Cast A ⇒ B → Set where
-  I-inj : ∀ {A B} {c : Cast A ⇒ B} → Injection c → Inert c
+  I-base-inj : ∀ {ι ℓ} → (c : Cast (` ι of ℓ) ⇒ (` ι of ⋆)) → Inert c
+  I-fun : ∀ {A B C D gc₁ gc₂ g₁ g₂}
+    → (c : Cast (([ gc₁ ] A ⇒ B) of g₁) ⇒ (([ gc₂ ] C ⇒ D) of g₂))
+    → Inert c
+  I-ref : ∀ {A B g₁ g₂}
+    → (c : Cast ((Ref A) of g₁) ⇒ ((Ref B) of g₂))
+    → Inert c
+
+data Active : ∀ {A B} → Cast A ⇒ B → Set where
+  A-base-id : ∀ {ι g} → (c : Cast (` ι of g) ⇒ (` ι of g)) → Active c
+  A-base-proj : ∀ {ι ℓ} → (c : Cast (` ι of ⋆) ⇒ (` ι of l ℓ)) → Active c
 
 data Value : Term → Set where
   V-addr : ∀ {a ℓ} → Value (addr a of ℓ)
