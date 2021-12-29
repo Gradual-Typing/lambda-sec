@@ -64,11 +64,11 @@ dyn-pc ≼ ℓ
 
             Value V    lookup a Σ ≡ T of ℓ₁    pc ⊔ ℓ ≼ ℓ₁
 ---------------------------------------------------------------------------- AssignNSU
-  a of ℓ := V # static | μ | Σ ⊢ μ | pc —→ unit of low | a ↦ V ∷ μ
+  a of ℓ := V # dyn | μ | Σ ⊢ μ | pc —→ unit of low | a ↦ V ∷ μ
 
             Value V    lookup a Σ ≡ T of ℓ₁    pc ⊔ ℓ ⋠ ℓ₁
 ---------------------------------------------------------------------------- AssignNSUFail
-  a of ℓ := V # static | μ | Σ ⊢ μ | pc —→ error nsu-error
+  a of ℓ := V # dyn | μ | Σ ⊢ μ | pc —→ error nsu-error
 
          lookup a μ ≡ V
 ------------------------------- Deref
