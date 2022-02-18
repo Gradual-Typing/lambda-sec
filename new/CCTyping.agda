@@ -71,11 +71,10 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
       -------------------------------- CCDeref
     → Γ ︔ Σ ︔ gc ⊢ ! M ⦂ stamp A g
 
-  ⊢assign : ∀ {Γ Σ pc L M S ℓ ℓ₁}
-    → Γ ︔ Σ ︔ (l pc) ⊢ L ⦂ (Ref (S of l ℓ₁)) of l ℓ
-    → Γ ︔ Σ ︔ (l pc) ⊢ M ⦂ S of l ℓ₁
-    → ℓ ≼ ℓ₁
-    → pc ≼ ℓ₁
+  ⊢assign : ∀ {Γ Σ pc L M S ℓ}
+    → Γ ︔ Σ ︔ (l pc) ⊢ L ⦂ (Ref (S of l ℓ)) of l ℓ
+    → Γ ︔ Σ ︔ (l pc) ⊢ M ⦂ S of l ℓ
+    → pc ≼ ℓ
       --------------------------------------------- CCAssign
     → Γ ︔ Σ ︔ (l pc) ⊢ L := M # static ⦂ ` Unit of l low
 

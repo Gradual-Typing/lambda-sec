@@ -49,13 +49,13 @@ compile (ref[ ℓ ] M at p) (⊢ref {gc = gc} {T = T} {g} ⊢M Tg≲Tℓ gc≾�
         (l _) → ref[ ℓ ] (compile M ⊢M ⟨ cast (T of g) A p Tg~A ⟩) # static
         ⋆     → ref[ ℓ ] (compile M ⊢M ⟨ cast (T of g) A p Tg~A ⟩) # dyn
 compile (!ᴳ M) (⊢deref ⊢M) = ! (compile M ⊢M)
-compile (L := M at p) (⊢assign {gc = gc} {A = A} {g = g} {g₁} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1) =
-  case ≲-prop A≲Sg1 of λ where
-    ⟨ B , ⟨ A~B , B<:Sg1 ⟩ ⟩ →
-      {- Insert `# static` if gc , g, and g₁ are all static, `# dyn` otherwise -}
-      case ⟨ gc , ⟨ g , g₁ ⟩ ⟩ of λ where
-        ⟨ l _ , ⟨ l _ , l _ ⟩ ⟩ →
-             (compile L ⊢L) := (compile M ⊢M ⟨ cast A B p A~B ⟩) # static
+compile (L := M at p) (⊢assign {gc = gc} {A = A} {S} {g} {g₁} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1) =
+  case ⟨ ≲-prop A≲Sg1 , ≾-prop g≾g1 ⟩ of λ where
+    ⟨ ⟨ B , ⟨ A~B , B<:Sg1 ⟩ ⟩ , ⟨ g₂ , ⟨ g~g₂ , g₂<:g₁ ⟩ ⟩ ⟩ →
+      {- Insert `# static` if gc and g₁ are static, `# dyn` otherwise -}
+      case ⟨ gc , g₁ ⟩ of λ where
+        ⟨ l _ , l _ ⟩ →
+             (compile L ⊢L ⟨ cast (Ref (S of g₁) of g) (Ref (S of g₁) of g₂) p (~-ty g~g₂ ~ᵣ-refl) ⟩) := (compile M ⊢M ⟨ cast A B p A~B ⟩) # static
         _ → (compile L ⊢L) := (compile M ⊢M ⟨ cast A B p A~B ⟩) # dyn
 
 
@@ -93,13 +93,13 @@ compile-preserve (ref[ ℓ ] M at p) (⊢ref {gc = gc} ⊢M Tg≲Tℓ gc≾ℓ)
     (≾-l pc≼ℓ) → ⊢ref (⊢sub (⊢cast (compile-preserve M ⊢M)) A<:Tℓ) pc≼ℓ
 compile-preserve (!ᴳ M) (⊢deref ⊢M) = ⊢deref (compile-preserve M ⊢M)
 compile-preserve (L := M at p) (⊢assign {gc = gc} {g = g} {g₁} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1)
-  with ≲-prop A≲Sg1
-... | ⟨ B , ⟨ A~B , B<:Sg1 ⟩ ⟩
-  with gc | g | g₁
-... | ⋆   | _   | _ = ⊢assign-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1)
-... | l _ | ⋆   | _ = ⊢assign-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1)
-... | l _ | l _ | ⋆ = ⊢assign-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1)
-... | l pc | l ℓ | l ℓ₁ =
-  case ⟨ g≾g1 , gc≾g1 ⟩ of λ where
-    ⟨ ≾-l ℓ≼ℓ₁ , ≾-l pc≼ℓ₁ ⟩ →
-      ⊢assign (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1) ℓ≼ℓ₁ pc≼ℓ₁
+  with ≲-prop A≲Sg1 | ≾-prop g≾g1
+... | ⟨ B , ⟨ A~B , B<:Sg1 ⟩ ⟩ | ⟨ g₂ , ⟨ g~g₂ , g₂<:g₁ ⟩ ⟩
+  with gc | g₁
+... | ⋆    | _ = ⊢assign-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1)
+... | l _  | ⋆ = ⊢assign-dyn (compile-preserve L ⊢L) (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1)
+... | l pc | l ℓ₁ =
+  case gc≾g1 of λ where
+    (≾-l pc≼ℓ₁) →
+      ⊢assign (⊢sub (⊢cast (compile-preserve L ⊢L)) (<:-ty g₂<:g₁ <:ᵣ-refl))
+              (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Sg1) pc≼ℓ₁
