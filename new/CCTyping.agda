@@ -55,34 +55,36 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
       --------------------------------------- CCCast
     → Γ ︔ Σ ︔ gc ⊢ M ⟨ c ⟩ ⦂ B
 
-  ⊢ref : ∀ {Γ Σ pc M T ℓ}
-    → Γ ︔ Σ ︔ (l pc) ⊢ M ⦂ T of l ℓ
-    → pc ≼ ℓ
-      ---------------------------------------------------------- CCRef
-    → Γ ︔ Σ ︔ (l pc) ⊢ ref[ ℓ ] M # static ⦂ (Ref (T of l ℓ)) of l low
-
-  ⊢ref-dyn : ∀ {Γ Σ gc M T ℓ}
+  ⊢ref : ∀ {Γ Σ gc M T ℓ}
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ T of l ℓ
-      ---------------------------------------------------------- CCRefDyn
-    → Γ ︔ Σ ︔ gc ⊢ ref[ ℓ ] M # dyn ⦂ (Ref (T of l ℓ)) of l low
+    → gc ≾ l ℓ
+      ---------------------------------------------------------- CCRef
+    → Γ ︔ Σ ︔ gc ⊢ ref[ ℓ ] M ⦂ (Ref (T of l ℓ)) of l low
 
   ⊢deref : ∀ {Γ Σ gc M A g}
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ (Ref A) of g
       -------------------------------- CCDeref
     → Γ ︔ Σ ︔ gc ⊢ ! M ⦂ stamp A g
 
-  ⊢assign : ∀ {Γ Σ pc L M S ℓ}
-    → Γ ︔ Σ ︔ (l pc) ⊢ L ⦂ (Ref (S of l ℓ)) of l ℓ
-    → Γ ︔ Σ ︔ (l pc) ⊢ M ⦂ S of l ℓ
-    → pc ≼ ℓ
+  ⊢assign : ∀ {Γ Σ gc L M S g}
+    → Γ ︔ Σ ︔ gc ⊢ L ⦂ (Ref (S of g)) of g
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ S of g
+    → gc ≾ g
       --------------------------------------------- CCAssign
-    → Γ ︔ Σ ︔ (l pc) ⊢ L := M # static ⦂ ` Unit of l low
+    → Γ ︔ Σ ︔ gc ⊢ L := M ⦂ ` Unit of l low
 
-  ⊢assign-dyn : ∀ {Γ Σ gc L M S g g₁}
+  ⊢nsu-ref : ∀ {Γ Σ gc A M ℓ}
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
+    → gc ≾ l ℓ
+      ------------------------------ CCNSURef
+    → Γ ︔ Σ ︔ gc ⊢ nsu-ref ℓ M ⦂ A
+
+  ⊢nsu-assign : ∀ {Γ Σ gc A L M S g g₁}
     → Γ ︔ Σ ︔ gc ⊢ L ⦂ (Ref (S of g₁)) of g
-    → Γ ︔ Σ ︔ gc ⊢ M ⦂ S of g₁
-      --------------------------------------------- CCAssignDyn
-    → Γ ︔ Σ ︔ gc ⊢ L := M # dyn ⦂ ` Unit of l low
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
+    → gc ≾ g₁
+      --------------------------------- CCNSUAssign
+    → Γ ︔ Σ ︔ gc ⊢ nsu-assign L M ⦂ A
 
   ⊢sub : ∀ {Γ Σ gc A B M}
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
