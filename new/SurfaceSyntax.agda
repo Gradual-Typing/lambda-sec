@@ -30,7 +30,7 @@ sig op-deref           = ■ ∷ []
 sig (op-assign p)      = ■ ∷ ■ ∷ []
 -- sig (op-input ℓ)    = []
 
-open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug) public
+open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug; rename) public
 
 infixl 7  _·_at_
 

@@ -28,7 +28,7 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
     → Γ ︔ Σ ︔ gc ⊢ addr a of ℓ ⦂ Ref A of l ℓ
 
   ⊢var : ∀ {Γ Σ gc A x}
-    → nth Γ x ≡ just A
+    → Γ ∋ x ⦂ A
       --------------------------- CCVar
     → Γ ︔ Σ ︔ gc ⊢ ` x ⦂ A
 
@@ -50,39 +50,41 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
       ---------------------------------------------------- CCIf
     → Γ ︔ Σ ︔ gc ⊢ if L then M else N endif ⦂ stamp A g
 
+  ⊢let : ∀ {Γ Σ gc M N A B}
+    → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
+    → (A ∷ Γ) ︔ Σ ︔ gc ⊢ N ⦂ B
+      -------------------------- Let
+    → Γ ︔ Σ ︔ gc ⊢ `let M N ⦂ B
+
   ⊢cast : ∀ {Γ Σ gc A B M} {c : Cast A ⇒ B}
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
       --------------------------------------- CCCast
     → Γ ︔ Σ ︔ gc ⊢ M ⟨ c ⟩ ⦂ B
 
-  ⊢ref : ∀ {Γ Σ gc M T ℓ}
-    → Γ ︔ Σ ︔ gc ⊢ M ⦂ T of l ℓ
-    → gc ≾ l ℓ
+  ⊢ref : ∀ {Γ Σ M T ℓ}
+    → Γ ︔ Σ ︔ l ℓ ⊢ M ⦂ T of l ℓ
       ---------------------------------------------------------- CCRef
-    → Γ ︔ Σ ︔ gc ⊢ ref[ ℓ ] M ⦂ (Ref (T of l ℓ)) of l low
+    → Γ ︔ Σ ︔ l ℓ ⊢ ref[ ℓ ] M ⦂ (Ref (T of l ℓ)) of l low
 
   ⊢deref : ∀ {Γ Σ gc M A g}
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ (Ref A) of g
       -------------------------------- CCDeref
     → Γ ︔ Σ ︔ gc ⊢ ! M ⦂ stamp A g
 
-  ⊢assign : ∀ {Γ Σ gc L M S g}
-    → Γ ︔ Σ ︔ gc ⊢ L ⦂ (Ref (S of g)) of g
-    → Γ ︔ Σ ︔ gc ⊢ M ⦂ S of g
-    → gc ≾ g
+  ⊢assign : ∀ {Γ Σ L M S g}
+    → Γ ︔ Σ ︔ g ⊢ L ⦂ (Ref (S of g)) of g
+    → Γ ︔ Σ ︔ g ⊢ M ⦂ S of g
       --------------------------------------------- CCAssign
-    → Γ ︔ Σ ︔ gc ⊢ L := M ⦂ ` Unit of l low
+    → Γ ︔ Σ ︔ g ⊢ L := M ⦂ ` Unit of l low
 
   ⊢nsu-ref : ∀ {Γ Σ gc A M ℓ}
-    → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
-    → gc ≾ l ℓ
+    → Γ ︔ Σ ︔ l ℓ ⊢ M ⦂ A
       ------------------------------ CCNSURef
     → Γ ︔ Σ ︔ gc ⊢ nsu-ref ℓ M ⦂ A
 
   ⊢nsu-assign : ∀ {Γ Σ gc A L M S g g₁}
     → Γ ︔ Σ ︔ gc ⊢ L ⦂ (Ref (S of g₁)) of g
-    → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
-    → gc ≾ g₁
+    → Γ ︔ Σ ︔ g₁ ⊢ M ⦂ A
       --------------------------------- CCNSUAssign
     → Γ ︔ Σ ︔ gc ⊢ nsu-assign L M ⦂ A
 

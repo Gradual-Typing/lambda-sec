@@ -15,6 +15,7 @@ data Op : Set where
   op-app    : Op
   op-const  : ∀ {ι} → rep ι → StaticLabel → Op
   op-if     : Op
+  op-let    : Op
   op-ref    : StaticLabel → Op
   op-deref  : Op
   op-assign : Op
@@ -28,6 +29,7 @@ sig (op-lam pc A ℓ)    = (ν ■) ∷ []
 sig op-app             = ■ ∷ ■ ∷ []
 sig (op-const k ℓ)     = []
 sig op-if              = ■ ∷ ■ ∷ ■ ∷ []
+sig op-let             = ■ ∷ (ν ■) ∷ []
 sig (op-ref ℓ)         = ■ ∷ []
 sig op-deref           = ■ ∷ []
 sig op-assign          = ■ ∷ ■ ∷ []
@@ -38,12 +40,14 @@ sig op-nsu-assign      = ■ ∷ ■ ∷ []
 open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug) public
 
 infixl 7  _·_
+infix 8 _⟨_⟩
 
 pattern addr_of_ a ℓ             = (op-addr a ℓ) ⦅ nil ⦆
 pattern ƛ[_]_˙_of_ pc A N ℓ      = (op-lam pc A ℓ) ⦅ cons (bind (ast N)) nil ⦆
 pattern _·_ L M                  = op-app ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern $_of_ k ℓ                = (op-const k ℓ) ⦅ nil ⦆
 pattern if_then_else_endif L M N = op-if ⦅ cons (ast L) (cons (ast M) (cons (ast N) nil)) ⦆
+pattern `let M N                 = op-let ⦅ cons (ast M) (cons (bind (ast N)) nil) ⦆
 pattern ref[_]_ ℓ M              = (op-ref ℓ) ⦅ cons (ast M) nil ⦆
 pattern !_ M                     = op-deref ⦅ cons (ast M) nil ⦆
 pattern _:=_ L M                 = op-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆

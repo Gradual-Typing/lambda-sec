@@ -19,7 +19,7 @@ data _︔_︔_⊢ᴳ_⦂_ : Context → HeapContext → Label → Term → Type 
     → Γ ︔ Σ ︔ gc ⊢ᴳ $ k of ℓ ⦂ ` ι of l ℓ
 
   ⊢var : ∀ {Γ Σ gc A x}
-    → nth Γ x ≡ just A
+    → Γ ∋ x ⦂ A
       --------------------------- Var
     → Γ ︔ Σ ︔ gc ⊢ᴳ ` x ⦂ A
 
