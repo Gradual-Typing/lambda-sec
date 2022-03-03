@@ -18,11 +18,8 @@ open import SurfaceLang
             ƛ[_]_˙_of_ to ƛᴳ[_]_˙_of_;
             !_ to !ᴳ_)
 open import CC renaming (Term to CCTerm)
+open import Preservation using (rename-↑1-pres)
 
-postulate
-  rename-↑1-pres : ∀ {Γ Σ gc M A B}
-    → Γ ︔ Σ ︔ gc ⊢ M ⦂ B
-    → (A ∷ Γ) ︔ Σ ︔ gc ⊢ rename (↑ 1) M ⦂ B
 
 compile : ∀ {Γ Σ gc A} (M : Term) → Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ A → CCTerm
 compile ($ᴳ k of ℓ) ⊢const = $ k of ℓ
