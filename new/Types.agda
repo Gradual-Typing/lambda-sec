@@ -32,7 +32,7 @@ data RawType : Set
 data Type : Set
 
 infix 10 `_
-infix 6  [_]_⇒_
+infix 8  [_]_⇒_
 infix 7  _of_
 
 data RawType where
@@ -45,7 +45,7 @@ data Type where
 
 {- Type examples: -}
 _ : Type
-_ =  ([ ⋆ ] ` Bool of ⋆ ⇒ ` Bool of l high ) of l low
+_ =  [ ⋆ ] (` Bool of ⋆) ⇒ (` Bool of l high) of l low
 
 _ : Type
 _ = Ref (` Unit of ⋆ ) of l high
