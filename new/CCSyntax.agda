@@ -22,6 +22,7 @@ data Op : Set where
   op-cast   : ∀ {A B} → Cast A ⇒ B → Op
   op-nsu-ref : StaticLabel → Op
   op-nsu-assign : Op
+  op-prot   : StaticLabel → Op
 
 sig : Op → List Sig
 sig (op-addr a ℓ)      = []
@@ -36,6 +37,7 @@ sig op-assign          = ■ ∷ ■ ∷ []
 sig (op-cast c)        = ■ ∷ []
 sig (op-nsu-ref ℓ)     = ■ ∷ []
 sig op-nsu-assign      = ■ ∷ ■ ∷ []
+sig (op-prot ℓ)        = ■ ∷ []
 
 open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug) public
 
@@ -54,3 +56,4 @@ pattern _:=_ L M                 = op-assign ⦅ cons (ast L) (cons (ast M) nil)
 pattern _⟨_⟩ M c                 = (op-cast c) ⦅ cons (ast M) nil ⦆
 pattern nsu-ref ℓ M              = (op-nsu-ref ℓ) ⦅ cons (ast M) nil ⦆
 pattern nsu-assign L M           = op-nsu-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆
+pattern prot ℓ M                 = (op-prot ℓ) ⦅ cons (ast M) nil ⦆ {- protection term -}
