@@ -98,3 +98,7 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
     → A <: B
       -------------------- CCSub
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ B
+
+  ⊢error : ∀ {Γ Σ gc A e}
+      --------------------------- CCError
+    → Γ ︔ Σ ︔ gc ⊢ error e ⦂ A

@@ -6,8 +6,13 @@ open import Data.List
 open import Data.Bool renaming (Bool to 𝔹)
 
 open import Syntax
+open import BlameLabels
 open import Addr
 
+
+data Error : Set where
+  blame : BlameLabel → Error
+  nsu-error : Error
 
 data Op : Set where
   op-addr   : (a : Addr) → (ℓ : StaticLabel) → Op
@@ -23,6 +28,7 @@ data Op : Set where
   op-nsu-ref : StaticLabel → Op
   op-nsu-assign : Op
   op-prot   : StaticLabel → Op
+  op-error  : Error → Op
 
 sig : Op → List Sig
 sig (op-addr a ℓ)      = []
@@ -38,6 +44,7 @@ sig (op-cast c)        = ■ ∷ []
 sig (op-nsu-ref ℓ)     = ■ ∷ []
 sig op-nsu-assign      = ■ ∷ ■ ∷ []
 sig (op-prot ℓ)        = ■ ∷ []
+sig (op-error e)       = []
 
 open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug) public
 
@@ -57,3 +64,4 @@ pattern _⟨_⟩ M c                 = (op-cast c) ⦅ cons (ast M) nil ⦆
 pattern nsu-ref ℓ M              = (op-nsu-ref ℓ) ⦅ cons (ast M) nil ⦆
 pattern nsu-assign L M           = op-nsu-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern prot ℓ M                 = (op-prot ℓ) ⦅ cons (ast M) nil ⦆ {- protection term -}
+pattern error e                  = (op-error e) ⦅ nil ⦆             {- error: blame / nsu -}
