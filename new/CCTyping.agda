@@ -91,7 +91,7 @@ data _︔_︔_⊢_⦂_ : Context → HeapContext → Label → Term → Type →
   ⊢prot : ∀ {Γ Σ gc A M ℓ}
     → Γ ︔ Σ ︔ gc ⋎̃ l ℓ ⊢ M ⦂ A
       --------------------------------------- CCProt
-    → Γ ︔ Σ ︔ gc ⊢ prot ℓ M ⦂ stamp A (l ℓ)
+    → Γ ︔ Σ ︔ gc ⊢ prot[ ℓ ] M ⦂ stamp A (l ℓ)
 
   ⊢sub : ∀ {Γ Σ gc A B M}
     → Γ ︔ Σ ︔ gc ⊢ M ⦂ A

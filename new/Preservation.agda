@@ -40,6 +40,7 @@ rename-pres (⊢assign ⊢L ⊢M) ⊢ρ = ⊢assign (rename-pres ⊢L ⊢ρ) (re
 rename-pres (⊢nsu-ref ⊢M) ⊢ρ = ⊢nsu-ref (rename-pres ⊢M ⊢ρ)
 rename-pres (⊢nsu-assign ⊢L ⊢M) ⊢ρ = ⊢nsu-assign (rename-pres ⊢L ⊢ρ) (rename-pres ⊢M ⊢ρ)
 rename-pres (⊢prot ⊢M) ⊢ρ = ⊢prot (rename-pres ⊢M ⊢ρ)
+rename-pres ⊢error ⊢ρ = ⊢error
 rename-pres (⊢sub ⊢M A<:B) ⊢ρ = ⊢sub (rename-pres ⊢M ⊢ρ) A<:B
 
 rename-↑1-pres : ∀ {Γ Σ gc M A B}
