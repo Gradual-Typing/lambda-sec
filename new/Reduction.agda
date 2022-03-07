@@ -1,8 +1,11 @@
-open import Relation.Nullary using (¬_; Dec; yes; no)
+open import Data.Nat
 open import Data.List hiding ([_])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
+open import Data.Maybe
+open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
+open import Utils
 open import Heap
 open import Types
 open import TypeBasedCast
@@ -92,3 +95,8 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → ¬ (pc ≼ ℓ)
       ------------------------------------------------- NSUFailRef
     → nsu-ref ℓ M ∣ μ ∣ pc —→ error nsu-error ∣ μ
+
+  deref : ∀ {V μ pc a ℓ ℓ₁}
+    → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
+      -------------------------------------------------- Deref
+    → ! (addr a of ℓ) ∣ μ ∣ pc —→ prot[ ℓ ] V ∣ μ
