@@ -672,6 +672,41 @@ consis-join-<:ₗ <:-⋆ (<:-l x) = <:-⋆
 consis-join-<:ₗ (<:-l x) <:-⋆ = <:-⋆
 consis-join-<:ₗ (<:-l ℓ₁≼ℓ₁′) (<:-l ℓ₂≼ℓ₂′) = <:-l (join-≼′ ℓ₁≼ℓ₁′ ℓ₂≼ℓ₂′)
 
+<:ₗ-antisym : ∀ {g₁ g₂}
+  → g₁ <:ₗ g₂ → g₂ <:ₗ g₁
+  → g₁ ≡ g₂
+<:ₗ-antisym <:-⋆ <:-⋆ = refl
+<:ₗ-antisym (<:-l ℓ₁≼ℓ₂) (<:-l ℓ₂≼ℓ₁) = cong l (≼-antisym ℓ₁≼ℓ₂ ℓ₂≼ℓ₁)
+
+<:ᵣ-antisym : ∀ {S T}
+  → S <:ᵣ T → T <:ᵣ S
+  → S ≡ T
+<:-antisym : ∀ {A B}
+  → A <: B → B <: A
+  → A ≡ B
+<:ᵣ-antisym <:-ι <:-ι = refl
+<:ᵣ-antisym (<:-ref A<:B B<:A) (<:-ref _ _) = cong Ref_ (<:-antisym A<:B B<:A)
+<:ᵣ-antisym {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} (<:-fun gc₂<:gc₁ C<:A B<:D) (<:-fun gc₁<:gc₂ A<:C D<:B) =
+  let eq1 : [ gc₁ ] A ⇒ B ≡ [ gc₁ ] C ⇒ D
+      eq1 = cong₂ (λ □₁ □₂ → [ gc₁ ] □₁ ⇒ □₂) (<:-antisym A<:C C<:A) (<:-antisym B<:D D<:B)
+      eq2 : [ gc₁ ] C ⇒ D ≡ [ gc₂ ] C ⇒ D
+      eq2 = cong (λ □ → [ □ ] C ⇒ D) (<:ₗ-antisym gc₁<:gc₂ gc₂<:gc₁) in
+    trans eq1 eq2
+<:-antisym {S of g₁} {T of g₂} (<:-ty g₁<:g₂ S<:T) (<:-ty g₂<:g₁ T<:S) =
+  cong₂ (λ □₁ □₂ → □₁ of □₂) (<:ᵣ-antisym S<:T T<:S) (<:ₗ-antisym g₁<:g₂ g₂<:g₁)
+
+≼-trans : ∀ {ℓ₁ ℓ₂ ℓ₃}
+  → ℓ₁ ≼ ℓ₂ → ℓ₂ ≼ ℓ₃ → ℓ₁ ≼ ℓ₃
+≼-trans l⊑l l⊑l = l⊑l
+≼-trans l⊑l l⊑h = l⊑h
+≼-trans l⊑h h⊑h = l⊑h
+≼-trans h⊑h h⊑h = h⊑h
+
+<:ₗ-trans : ∀ {g₁ g₂ g₃}
+  → g₁ <:ₗ g₂ → g₂ <:ₗ g₃ → g₁ <:ₗ g₃
+<:ₗ-trans <:-⋆ <:-⋆ = <:-⋆
+<:ₗ-trans (<:-l ℓ₁≼ℓ₂) (<:-l ℓ₂≼ℓ₃) = <:-l (≼-trans ℓ₁≼ℓ₂ ℓ₂≼ℓ₃)
+
 Context = List Type
 {- Addr ↦ Type -}
 HeapContext = List (Addr × Type)
