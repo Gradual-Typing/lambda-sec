@@ -716,5 +716,5 @@ low ≼? low = yes l⊑l
 
 Context = List Type
 {- Addr ↦ Type -}
-Heagcontext = List (Addr × Type)
+HeapContext = List (Addr × Type)
 
