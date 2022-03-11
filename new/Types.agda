@@ -6,6 +6,7 @@ open import Data.Unit using (⊤; tt)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.List using (List)
 open import Function using (case_of_)
+open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; _≢_; refl; trans; sym; subst; cong; cong₂)
 
@@ -77,19 +78,19 @@ data _<:ᵣ_ where
       ----------------
     → Ref A <:ᵣ Ref B
 
-  <:-fun : ∀ {pc₁ pc₂} {A B C D}
-    → pc₂ <:ₗ pc₁
+  <:-fun : ∀ {gc₁ gc₂} {A B C D}
+    → gc₂ <:ₗ gc₁
     → C <: A
     → B <: D
       ----------------------------------
-    → [ pc₁ ] A ⇒ B <:ᵣ [ pc₂ ] C ⇒ D
+    → [ gc₁ ] A ⇒ B <:ᵣ [ gc₂ ] C ⇒ D
 
 data _<:_ where
-  <:-ty : ∀ {g₁ g₂} {X Y}
+  <:-ty : ∀ {g₁ g₂} {S T}
     → g₁ <:ₗ g₂
-    → X  <:ᵣ Y
+    → S  <:ᵣ T
       ---------------------
-    → X of g₁ <: Y of g₂
+    → S of g₁ <: T of g₂
 
 {- Consistency -}
 infix 5 _~ₗ_
@@ -113,12 +114,12 @@ data _~ᵣ_ where
       ---------------
     → Ref A ~ᵣ Ref B
 
-  ~-fun : ∀ {pc₁ pc₂} {A B C D}
-    → pc₁ ~ₗ pc₂
+  ~-fun : ∀ {gc₁ gc₂} {A B C D}
+    → gc₁ ~ₗ gc₂
     → A ~ C
     → B ~ D
       ---------------------------------
-    → [ pc₁ ] A ⇒ B ~ᵣ [ pc₂ ] C ⇒ D
+    → [ gc₁ ] A ⇒ B ~ᵣ [ gc₂ ] C ⇒ D
 
 data _~_ where
   ~-ty : ∀ {g₁ g₂} {S T}
@@ -149,12 +150,12 @@ data _≲ᵣ_ where
       -----------------
     → Ref A ≲ᵣ Ref B
 
-  ≲-fun : ∀ {pc₁ pc₂} {A B C D}
-    → pc₂ ≾ pc₁
+  ≲-fun : ∀ {gc₁ gc₂} {A B C D}
+    → gc₂ ≾ gc₁
     → C ≲ A
     → B ≲ D
       -----------------------------------
-    → [ pc₁ ] A ⇒ B ≲ᵣ [ pc₂ ] C ⇒ D
+    → [ gc₁ ] A ⇒ B ≲ᵣ [ gc₂ ] C ⇒ D
 
 data _≲_ where
   ≲-ty : ∀ {g₁ g₂} {S T}
@@ -221,7 +222,7 @@ private
 
 ⨆ᵣ {` ι} {` ι} ~-ι = ` ι
 ⨆ᵣ (~-ref A~B) = Ref (⨆ A~B)
-⨆ᵣ (~-fun pc₁~pc₂ A~C B~D) = [ ⨆ₗ pc₁~pc₂ ] ⨆ A~C ⇒ ⨆ B~D
+⨆ᵣ (~-fun gc₁~gc₂ A~C B~D) = [ ⨆ₗ gc₁~gc₂ ] ⨆ A~C ⇒ ⨆ B~D
 
 ⨆ (~-ty g₁~g₂ S~T) = ⨆ᵣ S~T of ⨆ₗ g₁~g₂
 
@@ -246,12 +247,12 @@ Ref A ⊓ᵣ Ref B =
   do
     A⊓B ← A ⊓ B
     just (Ref A⊓B)
-[ pc₁ ] A ⇒ B ⊓ᵣ [ pc₂ ] C ⇒ D =
+[ gc₁ ] A ⇒ B ⊓ᵣ [ gc₂ ] C ⇒ D =
   do
-    pc₁⊓pc₂ ← pc₁ ⊓ₗ pc₂
+    gc₁⊓gc₂ ← gc₁ ⊓ₗ gc₂
     A⊓C ← A ⊓ C
     B⊓D ← B ⊓ D
-    just ([ pc₁⊓pc₂ ] A⊓C ⇒ B⊓D)
+    just ([ gc₁⊓gc₂ ] A⊓C ⇒ B⊓D)
 _ ⊓ᵣ _ = nothing
 
 S of g₁ ⊓ T of g₂ =
@@ -278,11 +279,11 @@ Ref A ∨̃ᵣ Ref B =
   do
   A⊓B ← A ⊓ B
   just (Ref A⊓B)
-[ pc₁ ] A ⇒ B ∨̃ᵣ [ pc₂ ] C ⇒ D =
+[ gc₁ ] A ⇒ B ∨̃ᵣ [ gc₂ ] C ⇒ D =
   do
     A∧̃C ← A ∧̃ C
     B∨̃D ← B ∨̃ D
-    just ([ pc₁ ⋏̃ pc₂ ] A∧̃C ⇒ B∨̃D)
+    just ([ gc₁ ⋏̃ gc₂ ] A∧̃C ⇒ B∨̃D)
 _ ∨̃ᵣ _ = nothing
 
 ` Unit ∧̃ᵣ ` Unit = just (` Unit)
@@ -291,11 +292,11 @@ Ref A ∧̃ᵣ Ref B =
   do
     A⊓B ← A ⊓ B
     just (Ref A⊓B)
-[ pc₁ ] A ⇒ B ∧̃ᵣ [ pc₂ ] C ⇒ D =
+[ gc₁ ] A ⇒ B ∧̃ᵣ [ gc₂ ] C ⇒ D =
   do
     A∨̃C ← A ∨̃ C
     B∧̃D ← B ∧̃ D
-    just ([ pc₁ ⋎̃ pc₂ ] A∨̃C ⇒ B∧̃D)
+    just ([ gc₁ ⋎̃ gc₂ ] A∨̃C ⇒ B∧̃D)
 _ ∧̃ᵣ _ = nothing
 
 S of g₁ ∨̃ T of g₂ =
@@ -337,7 +338,7 @@ S of g₁ ∧̃ T of g₂ =
 
 ≲ᵣ-refl {` ι} = ≲-ι
 ≲ᵣ-refl {Ref A} = ≲-ref ≲-refl ≲-refl
-≲ᵣ-refl {[ pc ] A ⇒ B} = ≲-fun ≾-refl ≲-refl ≲-refl
+≲ᵣ-refl {[ gc ] A ⇒ B} = ≲-fun ≾-refl ≲-refl ≲-refl
 
 ≲-refl {T of g} = ≲-ty ≾-refl ≲ᵣ-refl
 
@@ -346,7 +347,7 @@ S of g₁ ∧̃ T of g₂ =
 
 <:ᵣ-refl {` ι} = <:-ι
 <:ᵣ-refl {Ref A} = <:-ref <:-refl <:-refl
-<:ᵣ-refl {[ pc ] A ⇒ B} = <:-fun <:ₗ-refl <:-refl <:-refl
+<:ᵣ-refl {[ gc ] A ⇒ B} = <:-fun <:ₗ-refl <:-refl <:-refl
 
 <:-refl {T of g} = <:-ty <:ₗ-refl <:ᵣ-refl
 
@@ -374,8 +375,8 @@ S of g₁ ∧̃ T of g₂ =
 ≲ᵣ-antisym ≲-ι ≲-ι = ~-ι
 ≲ᵣ-antisym (≲-ref A≲B B≲A) (≲-ref _ _) =
   ~-ref (≲-antisym A≲B B≲A)
-≲ᵣ-antisym (≲-fun pc₂≾pc₁ C≲A B≲D) (≲-fun pc₁≾pc₂ A≲C D≲B) =
-  ~-fun (≾-antisym pc₁≾pc₂ pc₂≾pc₁) (≲-antisym A≲C C≲A) (≲-antisym B≲D D≲B)
+≲ᵣ-antisym (≲-fun gc₂≾gc₁ C≲A B≲D) (≲-fun gc₁≾gc₂ A≲C D≲B) =
+  ~-fun (≾-antisym gc₁≾gc₂ gc₂≾gc₁) (≲-antisym A≲C C≲A) (≲-antisym B≲D D≲B)
 
 ≲-antisym (≲-ty g₁≾g₂ S≲T) (≲-ty g₂≾g₁ T≲S) =
   ~-ty (≾-antisym g₁≾g₂ g₂≾g₁) (≲ᵣ-antisym S≲T T≲S)
@@ -391,7 +392,7 @@ S of g₁ ∧̃ T of g₂ =
 
 ~ᵣ-sym ~-ι = ~-ι
 ~ᵣ-sym (~-ref A~B) = ~-ref (~-sym A~B)
-~ᵣ-sym (~-fun pc₁~pc₂ A~C B~D) = ~-fun (~ₗ-sym pc₁~pc₂) (~-sym A~C) (~-sym B~D)
+~ᵣ-sym (~-fun gc₁~gc₂ A~C B~D) = ~-fun (~ₗ-sym gc₁~gc₂) (~-sym A~C) (~-sym B~D)
 
 ~-sym (~-ty g₁~g₂ S~T) = ~-ty (~ₗ-sym g₁~g₂) (~ᵣ-sym S~T)
 
@@ -440,12 +441,12 @@ S of g₁ ∧̃ T of g₂ =
 ≲ᵣ-prop′ {` ι} {` ι} ≲-ι = ⟨ ` ι , ⟨ <:-ι , ~-ι ⟩ ⟩
 ≲ᵣ-prop′ {Ref A} {Ref B} (≲-ref A≲B B≲A) =
   ⟨ Ref A , ⟨ <:ᵣ-refl , ~-ref (≲-antisym A≲B B≲A) ⟩ ⟩
-≲ᵣ-prop′ {[ pc₁ ] A ⇒ B} {[ pc₂ ] C ⇒ D} (≲-fun pc₂≾pc₁ C≲A B≲D) =
-  case ≾-prop pc₂≾pc₁ of λ where
-    ⟨ pc , ⟨ pc₂~pc , pc<:pc₁ ⟩ ⟩ →
+≲ᵣ-prop′ {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} (≲-fun gc₂≾gc₁ C≲A B≲D) =
+  case ≾-prop gc₂≾gc₁ of λ where
+    ⟨ gc , ⟨ gc₂~gc , gc<:gc₁ ⟩ ⟩ →
       case ⟨ ≲-prop C≲A , ≲-prop′ B≲D ⟩ of λ where
         ⟨ ⟨ A′ , ⟨ C~A′ , A′<:A ⟩ ⟩ , ⟨ B′ , ⟨ B<:B′ , B′~D ⟩ ⟩ ⟩ →
-          ⟨ [ pc ] A′ ⇒ B′ , ⟨ <:-fun pc<:pc₁ A′<:A B<:B′ , ~-fun (~ₗ-sym pc₂~pc) (~-sym C~A′) B′~D ⟩ ⟩
+          ⟨ [ gc ] A′ ⇒ B′ , ⟨ <:-fun gc<:gc₁ A′<:A B<:B′ , ~-fun (~ₗ-sym gc₂~gc) (~-sym C~A′) B′~D ⟩ ⟩
 
 ≲-prop′ {S of g₁} {T of g₂} (≲-ty g₁≾g₂ S≲T) =
   case ≾-prop′ g₁≾g₂ of λ where
@@ -457,13 +458,13 @@ S of g₁ ∧̃ T of g₂ =
 ≲ᵣ-prop {` ι} {` ι} ≲-ι = ⟨ ` ι , ⟨ ~-ι , <:-ι ⟩ ⟩
 ≲ᵣ-prop {Ref A} {Ref B} (≲-ref A≲B B≲A) =
   ⟨ Ref B , ⟨ ~-ref (≲-antisym A≲B B≲A) , <:ᵣ-refl ⟩ ⟩
-≲ᵣ-prop {[ pc₁ ] A ⇒ B} {[ pc₂ ] C ⇒ D} (≲-fun pc₂≾pc₁ C≲A B≲D) =
-  case ≾-prop′ pc₂≾pc₁ of λ where
-    ⟨ pc , ⟨ pc₂<:pc , pc~pc₁ ⟩ ⟩ →
+≲ᵣ-prop {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} (≲-fun gc₂≾gc₁ C≲A B≲D) =
+  case ≾-prop′ gc₂≾gc₁ of λ where
+    ⟨ gc , ⟨ gc₂<:gc , gc~gc₁ ⟩ ⟩ →
       case ⟨ ≲-prop′ C≲A , ≲-prop B≲D ⟩ of λ where
         ⟨ ⟨ A′ , ⟨ C<:A′ , A′~A ⟩ ⟩ , ⟨ B′ , ⟨ B~B′ , B′<:D ⟩ ⟩ ⟩ →
-          ⟨ [ pc ] A′ ⇒ B′ ,
-            ⟨ ~-fun (~ₗ-sym pc~pc₁) (~-sym A′~A) B~B′ , <:-fun pc₂<:pc C<:A′ B′<:D ⟩ ⟩
+          ⟨ [ gc ] A′ ⇒ B′ ,
+            ⟨ ~-fun (~ₗ-sym gc~gc₁) (~-sym A′~A) B~B′ , <:-fun gc₂<:gc C<:A′ B′<:D ⟩ ⟩
 
 ≲-prop {S of g₁} {T of g₂} (≲-ty g₁≾g₂ S≲T) =
   case ≾-prop g₁≾g₂ of λ where
@@ -502,12 +503,12 @@ meet-≼ {low} {low} {low} refl = ⟨ l⊑l , l⊑l ⟩
 ~ᵣ→≲ᵣ (~-ref A~B) =
   case ~→≲ A~B of λ where
     ⟨ A≲B , B≲A ⟩ → ⟨ ≲-ref A≲B B≲A , ≲-ref B≲A A≲B ⟩
-~ᵣ→≲ᵣ (~-fun pc₁~pc₂ A~C B~D) =
-  case ~ₗ→≾ pc₁~pc₂ of λ where
-    ⟨ pc₁≾pc₂ , pc₂≾pc₁ ⟩ →
+~ᵣ→≲ᵣ (~-fun gc₁~gc₂ A~C B~D) =
+  case ~ₗ→≾ gc₁~gc₂ of λ where
+    ⟨ gc₁≾gc₂ , gc₂≾gc₁ ⟩ →
       case ⟨ ~→≲ A~C , ~→≲ B~D ⟩ of λ where
         ⟨ ⟨ A≲C , C≲A ⟩ , ⟨ B≲D , D≲B ⟩ ⟩ →
-          ⟨ ≲-fun pc₂≾pc₁ C≲A B≲D , ≲-fun pc₁≾pc₂ A≲C D≲B ⟩
+          ⟨ ≲-fun gc₂≾gc₁ C≲A B≲D , ≲-fun gc₁≾gc₂ A≲C D≲B ⟩
 ~→≲ (~-ty g₁~g₂ S~T) =
   case ⟨ ~ₗ→≾ g₁~g₂ , ~ᵣ→≲ᵣ S~T ⟩ of λ where
     ⟨ ⟨ g₁≾g₂ , g₂≾g₁ ⟩ , ⟨ S≲T , T≲S ⟩ ⟩ →
@@ -539,14 +540,14 @@ grad-meet-~ᵣ {Ref A} {Ref B} {U}
   case grad-meet-~ {A} {B} A⊓B≡C of λ where
     ⟨ A~C , B~C ⟩ →
       λ { refl → ⟨ ~-ref A~C , ~-ref B~C ⟩ }
-grad-meet-~ᵣ {[ pc₁ ] A ⇒ B} {[ pc₂ ] C ⇒ D} {U}
-  with pc₁ ⊓ₗ pc₂ in pc₁⊓pc₂≡pc | A ⊓ C in A⊓C≡A′ | B ⊓ D in B⊓D≡B′
-... | just pc | just A′ | just B′ =
-  case grad-meet-~ₗ pc₁⊓pc₂≡pc of λ where
-    ⟨ pc₁~pc , pc₂~pc ⟩ →
+grad-meet-~ᵣ {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} {U}
+  with gc₁ ⊓ₗ gc₂ in gc₁⊓gc₂≡gc | A ⊓ C in A⊓C≡A′ | B ⊓ D in B⊓D≡B′
+... | just gc | just A′ | just B′ =
+  case grad-meet-~ₗ gc₁⊓gc₂≡gc of λ where
+    ⟨ gc₁~gc , gc₂~gc ⟩ →
       case ⟨ grad-meet-~ {A} {C} A⊓C≡A′ , grad-meet-~ {B} {D} B⊓D≡B′ ⟩ of λ where
         ⟨ ⟨ A~A′ , C~A′ ⟩ , ⟨ B~B′ , D~B′ ⟩ ⟩ →
-          λ { refl → ⟨ ~-fun pc₁~pc A~A′ B~B′ , ~-fun pc₂~pc C~A′ D~B′ ⟩ }
+          λ { refl → ⟨ ~-fun gc₁~gc A~A′ B~B′ , ~-fun gc₂~gc C~A′ D~B′ ⟩ }
 grad-meet-~ {S of g₁} {T of g₂} {C}
   with S ⊓ᵣ T in S⊓T≡U | g₁ ⊓ₗ g₂ in g₁⊓g₂≡g
 ... | just U | just g =
@@ -607,14 +608,14 @@ consis-meet-≲ᵣ {Ref A} {Ref B} {U}
       case ⟨ ~→≲ A~C , ~→≲ B~C ⟩ of λ where
         ⟨ ⟨ A≲C , C≲A ⟩ , ⟨ B≲C , C≲B ⟩ ⟩ →
           λ { refl → ⟨ ≲-ref C≲A A≲C , ≲-ref C≲B B≲C ⟩ }
-consis-meet-≲ᵣ {[ pc₁ ] A ⇒ B} {[ pc₂ ] C ⇒ D} {U}
+consis-meet-≲ᵣ {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} {U}
   with A ∨̃ C in A∨̃C≡A′ | B ∧̃ D in B∧̃D≡B′
 ... | just A′ | just B′ =
-  case consis-join-≾ {pc₁} {pc₂} refl of λ where
-    ⟨ pc₁≾pc₁⋎̃pc₂ , pc₂≾pc₁⋎̃pc₂ ⟩ →
+  case consis-join-≾ {gc₁} {gc₂} refl of λ where
+    ⟨ gc₁≾gc₁⋎̃gc₂ , gc₂≾gc₁⋎̃gc₂ ⟩ →
       case ⟨ consis-join-≲ {A} {C} A∨̃C≡A′ , consis-meet-≲ {B} {D} B∧̃D≡B′ ⟩ of λ where
         ⟨ ⟨ A≲A′ , C≲A′ ⟩ , ⟨ B′≲B , B′≲D ⟩ ⟩ →
-          λ { refl → ⟨ ≲-fun pc₁≾pc₁⋎̃pc₂ A≲A′ B′≲B , ≲-fun pc₂≾pc₁⋎̃pc₂ C≲A′ B′≲D ⟩ }
+          λ { refl → ⟨ ≲-fun gc₁≾gc₁⋎̃gc₂ A≲A′ B′≲B , ≲-fun gc₂≾gc₁⋎̃gc₂ C≲A′ B′≲D ⟩ }
 consis-meet-≲ {S of g₁} {T of g₂} {C}
   with S ∧̃ᵣ T in S∧̃T≡U
 ... | just U =
@@ -636,14 +637,14 @@ consis-join-≲ᵣ {Ref A} {Ref B} {U}
       case ⟨ ~→≲ A~C , ~→≲ B~C ⟩ of λ where
         ⟨ ⟨ A≲C , C≲A ⟩ , ⟨ B≲C , C≲B ⟩ ⟩ →
           λ { refl → ⟨ ≲-ref A≲C C≲A , ≲-ref B≲C C≲B ⟩ }
-consis-join-≲ᵣ {[ pc₁ ] A ⇒ B} {[ pc₂ ] C ⇒ D} {U}
+consis-join-≲ᵣ {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} {U}
   with A ∧̃ C in A∧̃C≡A′ | B ∨̃ D in B∨̃D≡B′
 ... | just A′ | just B′ =
-  case consis-meet-≾ {pc₁} {pc₂} refl of λ where
-    ⟨ pc₁⋏̃pc₂≾pc₁ , pc₁⋏̃pc₂≾pc₂ ⟩ →
+  case consis-meet-≾ {gc₁} {gc₂} refl of λ where
+    ⟨ gc₁⋏̃gc₂≾gc₁ , gc₁⋏̃gc₂≾gc₂ ⟩ →
       case ⟨ consis-meet-≲ {A} {C} A∧̃C≡A′ , consis-join-≲ {B} {D} B∨̃D≡B′ ⟩ of λ where
         ⟨ ⟨ A′≲A , A′≲C ⟩ , ⟨ B≲B′ , D≲B′ ⟩ ⟩ →
-          λ { refl → ⟨ ≲-fun pc₁⋏̃pc₂≾pc₁ A′≲A B≲B′ , ≲-fun pc₁⋏̃pc₂≾pc₂ A′≲C D≲B′ ⟩ }
+          λ { refl → ⟨ ≲-fun gc₁⋏̃gc₂≾gc₁ A′≲A B≲B′ , ≲-fun gc₁⋏̃gc₂≾gc₂ A′≲C D≲B′ ⟩ }
 consis-join-≲ {S of g₁} {T of g₂} {C}
   with S ∨̃ᵣ T in S∨̃T≡U
 ... | just U =
@@ -707,7 +708,13 @@ consis-join-<:ₗ (<:-l ℓ₁≼ℓ₁′) (<:-l ℓ₂≼ℓ₂′) = <:-l (jo
 <:ₗ-trans <:-⋆ <:-⋆ = <:-⋆
 <:ₗ-trans (<:-l ℓ₁≼ℓ₂) (<:-l ℓ₂≼ℓ₃) = <:-l (≼-trans ℓ₁≼ℓ₂ ℓ₂≼ℓ₃)
 
+_≼?_ : ∀ ℓ₁ ℓ₂ → Dec (ℓ₁ ≼ ℓ₂)
+high ≼? high = yes h⊑h
+high ≼? low = no λ ()
+low ≼? high = yes l⊑h
+low ≼? low = yes l⊑l
+
 Context = List Type
 {- Addr ↦ Type -}
-HeapContext = List (Addr × Type)
+Heagcontext = List (Addr × Type)
 
