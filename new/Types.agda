@@ -703,10 +703,20 @@ consis-join-<:ₗ (<:-l ℓ₁≼ℓ₁′) (<:-l ℓ₂≼ℓ₂′) = <:-l (jo
 ≼-trans l⊑h h⊑h = l⊑h
 ≼-trans h⊑h h⊑h = h⊑h
 
-<:ₗ-trans : ∀ {g₁ g₂ g₃}
-  → g₁ <:ₗ g₂ → g₂ <:ₗ g₃ → g₁ <:ₗ g₃
+<:ₗ-trans : ∀ {g₁ g₂ g₃} → g₁ <:ₗ g₂ → g₂ <:ₗ g₃ → g₁ <:ₗ g₃
 <:ₗ-trans <:-⋆ <:-⋆ = <:-⋆
 <:ₗ-trans (<:-l ℓ₁≼ℓ₂) (<:-l ℓ₂≼ℓ₃) = <:-l (≼-trans ℓ₁≼ℓ₂ ℓ₂≼ℓ₃)
+
+<:ᵣ-trans : ∀ {S T U} → S <:ᵣ T → T <:ᵣ U → S <:ᵣ U
+<:-trans  : ∀ {A B C} → A <: B → B <: C → A <: C
+
+<:ᵣ-trans <:-ι <:-ι = <:-ι
+<:ᵣ-trans (<:-ref A<:B B<:A) (<:-ref B<:C C<:B) =
+  <:-ref (<:-trans A<:B B<:C) (<:-trans C<:B B<:A)
+<:ᵣ-trans (<:-fun gc₂<:gc₁ B₁<:A₁ A₂<:B₂) (<:-fun gc₃<:gc₂ C₁<:B₁ B₂<:C₂) =
+  <:-fun (<:ₗ-trans gc₃<:gc₂ gc₂<:gc₁) (<:-trans C₁<:B₁ B₁<:A₁) (<:-trans A₂<:B₂ B₂<:C₂)
+<:-trans (<:-ty g₁<:g₂ S<:T) (<:-ty g₂<:g₃ T<:U) =
+  <:-ty (<:ₗ-trans g₁<:g₂ g₂<:g₃) (<:ᵣ-trans S<:T T<:U)
 
 _≼?_ : ∀ ℓ₁ ℓ₂ → Dec (ℓ₁ ≼ ℓ₂)
 high ≼? high = yes h⊑h

@@ -1,8 +1,8 @@
 module TypeBasedCast where
 
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Relation.Binary.PropositionalEquality
-  using (_≡_; _≢_; refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
+open import Function using (case_of_)
 
 open import Types
 open import BlameLabels
@@ -20,7 +20,8 @@ data Inert_⇒_ : ∀ (g₁ g₂ : Label) → Set where
 
 -- ⋆ ⇒ g₂ is active
 data Active_⇒_ : ∀ (g₁ g₂ : Label) → Set where
-  A-label : ∀ {g₂} → Active ⋆ ⇒ g₂
+  A-id⋆ : Active ⋆ ⇒ ⋆
+  A-proj : ∀ {ℓ} → Active ⋆ ⇒ (l ℓ)
 
 -- Value forming cast
 data Inert : ∀ {A B} → Cast A ⇒ B → Set where
@@ -52,7 +53,13 @@ data Active : ∀ {A B} → Cast A ⇒ B → Set where
 
   A-fun : ∀ {A B C D gc₁ gc₂ g₁ g₂}
     → (c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂))
-    → Active gc₁ ⇒ gc₂ ⊎ Active g₁ ⇒ g₂
+    → Active g₁ ⇒ g₂
+      --------------------------------------
+    → Active c
+
+  A-fun-pc : ∀ {A B C D gc₁ gc₂ g₁ g₂}
+    → (c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂))
+    → Active gc₁ ⇒ gc₂ → Inert g₁ ⇒ g₂
       --------------------------------------
     → Active c
 
@@ -70,12 +77,17 @@ active-or-inert (cast (` ι of l ℓ) (` ι of ⋆) p (~-ty _ ~-ι)) = inj₂ (I
 active-or-inert (cast (` ι of l low) (` ι of l low) p (~-ty l~l ~-ι)) = inj₁ (A-base-id _)
 active-or-inert (cast (` ι of l high) (` ι of l high) p (~-ty h~h ~-ι)) = inj₁ (A-base-id _)
 {- Ref -}
-active-or-inert (cast (Ref A of ⋆) (Ref B of g₂) p (~-ty _ (~-ref _))) = inj₁ (A-ref _ A-label)
-active-or-inert (cast (Ref A of l ℓ) (Ref B of g₂) p (~-ty _ (~-ref _))) = inj₂ (I-ref _ I-label)
+active-or-inert (cast (Ref A of ⋆) (Ref B of ⋆) p (~-ty _ (~-ref _))) = inj₁ (A-ref _ A-id⋆)
+active-or-inert (cast (Ref A of ⋆) (Ref B of l ℓ₂) p (~-ty _ (~-ref _))) = inj₁ (A-ref _ A-proj)
+active-or-inert (cast (Ref A of l ℓ₁) (Ref B of g₂) p (~-ty _ (~-ref _))) = inj₂ (I-ref _ I-label)
 {- Fun -}
-active-or-inert (cast ([ l pc ] A ⇒ B of l ℓ) ([ gc₂ ] C ⇒ D of g₂) p (~-ty _ (~-fun _ _ _))) =
+active-or-inert (cast ([ l pc ] A ⇒ B of l _) ([ gc₂ ] C ⇒ D of g₂) p (~-ty _ (~-fun _ _ _))) =
   inj₂ (I-fun _ I-label I-label)
-active-or-inert (cast ([ l pc ] A ⇒ B of ⋆) ([ gc₂ ] C ⇒ D of g₂) p (~-ty _ (~-fun _ _ _))) =
-  inj₁ (A-fun _ (inj₂ A-label))
-active-or-inert (cast ([ ⋆ ] A ⇒ B of g) ([ gc₂ ] C ⇒ D of g₂) p (~-ty _ (~-fun _ _ _))) =
-  inj₁ (A-fun _ (inj₁ A-label))
+active-or-inert (cast ([ _ ] A ⇒ B of ⋆  ) ([ _   ] C ⇒ D of ⋆  ) p (~-ty _ (~-fun _ _ _))) =
+  inj₁ (A-fun _ A-id⋆)
+active-or-inert (cast ([ _ ] A ⇒ B of ⋆  ) ([ _   ] C ⇒ D of l _) p (~-ty _ (~-fun _ _ _))) =
+  inj₁ (A-fun _ A-proj)
+active-or-inert (cast ([ ⋆ ] A ⇒ B of l ℓ) ([ ⋆   ] C ⇒ D of _  ) p (~-ty _ (~-fun _ _ _))) =
+  inj₁ (A-fun-pc _ A-id⋆ I-label)
+active-or-inert (cast ([ ⋆ ] A ⇒ B of l ℓ) ([ l _ ] C ⇒ D of _  ) p (~-ty _ (~-fun _ _ _))) =
+  inj₁ (A-fun-pc _ A-proj I-label)
