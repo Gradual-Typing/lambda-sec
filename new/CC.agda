@@ -34,7 +34,11 @@ canonical⋆ (⊢sub ⊢V (<:-ty {S = T′} <:-⋆ T′<:T)) v =
 apply-cast : ∀ {Γ Σ gc A B} → (V : Term) → Γ ︔ Σ ︔ gc ⊢ V ⦂ A → Value V → (c : Cast A ⇒ B) → Active c → Term
 -- V ⟨ ` ι of g ⇒ ` ι of g ⟩ —→ V
 apply-cast V ⊢V v c (A-base-id .c) = V
-apply-cast V ⊢V v c (A-base-proj .c) = {!!}
+apply-cast V ⊢V v c (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty ⋆~ ~-ι))) =
+  case canonical⋆ ⊢V v of λ where
+    ⟨ _ , _ , ⟨ cast (` ι of l ℓ′) (` ι of ⋆) q (~-ty ~⋆ ~-ι) ,
+                W , refl , I-base-inj _ , <:-ι ⟩ ⟩ →
+      {!!}
 {- Order of reduction:
         V ⟨ [ pc′ ] A₁ → A₂ of ℓ′ ⇒ [ ⋆ ] B₁ → B₂ of ⋆ ⟩ ⟨ [ ⋆ ] C₁ → C₂ of ⋆ ⇒ [ pc ] D₁ → D₂ of ℓ ⟩
    —→ V ⟨ [ pc′ ] A₁ → A₂ of ℓ  ⇒ [ ⋆ ] B₁ → B₂ of ℓ ⟩ ⟨ [ ⋆ ] C₁ → C₂ of ℓ ⇒ [ pc ] D₁ → D₂ of ℓ ⟩  , if ℓ′ ≼ ℓ
@@ -42,7 +46,7 @@ apply-cast V ⊢V v c (A-base-proj .c) = {!!}
    -}
 apply-cast V ⊢V v c (A-fun (cast ([ gc₁ ] C₁ ⇒ C₂ of ⋆) ([ gc₂ ] D₁ ⇒ D₂ of g) p (~-ty _ C~D)) a) =
   case canonical⋆ ⊢V v of λ where
-    ⟨ _ , _ , ⟨ cast ([ gc₁′ ] A₁ ⇒ A₂ of l ℓ′) ([ gc₂′ ] B₁ ⇒ B₂ of ⋆) q (~-ty _ A~B) ,
+    ⟨ _ , _ , ⟨ cast ([ gc₁′ ] A₁ ⇒ A₂ of l ℓ′) ([ gc₂′ ] B₁ ⇒ B₂ of ⋆) q (~-ty ~⋆ A~B) ,
                 W , refl , I-fun _ I-label I-label , <:-fun gc₁<:gc₂′ C₁<:B₁ B₂<:C₂ ⟩ ⟩ →
       case a of λ where
         -- We don't touch the security effects in this case, only propagate the labels on types
@@ -67,7 +71,7 @@ apply-cast V ⊢V v c (A-fun (cast ([ gc₁ ] C₁ ⇒ C₂ of ⋆) ([ gc₂ ] D
 apply-cast V ⊢V v c (A-fun-pc .c a i) = {!!}
 apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~RefD)) a) =
   case canonical⋆ ⊢V v of λ where
-    ⟨ _ , _ , ⟨ cast (Ref A of l ℓ′) (Ref B of ⋆) q (~-ty _ RefA~RefB) ,
+    ⟨ _ , _ , ⟨ cast (Ref A of l ℓ′) (Ref B of ⋆) q (~-ty ~⋆ RefA~RefB) ,
                 W , refl , I-ref _ I-label , <:-ref B<:C C<:B ⟩ ⟩ →
       case a of λ where
         --      W ⟨ Ref A of ℓ′ ⇒ Ref B of ⋆  ⟩ ⟨ Ref C of ⋆  ⇒ Ref D of ⋆ ⟩
