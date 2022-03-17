@@ -22,7 +22,7 @@ data Value : Term → Set where
     → Value V → Inert c → Value (V ⟨ c ⟩)
 
 canonical⋆ : ∀ {Γ Σ gc V T}
-  → Γ ︔ Σ ︔ gc ⊢ V ⦂ T of ⋆
+  → Γ ; Σ ; gc ⊢ V ⦂ T of ⋆
   → Value V
   → ∃[ A ] ∃[ T′ ] Σ[ c ∈ Cast A ⇒ (T′ of ⋆) ] ∃[ W ] (V ≡ W ⟨ c ⟩) × (Inert c) × (T′ <:ᵣ T)
 canonical⋆ (⊢cast ⊢W) (V-cast {V = W} {c} w i) = ⟨ _ , _ , ⟨ c , W , refl , i , <:ᵣ-refl ⟩ ⟩
@@ -31,7 +31,7 @@ canonical⋆ (⊢sub ⊢V (<:-ty {S = T′} <:-⋆ T′<:T)) v =
     ⟨ A , T″ , ⟨ c , W , refl , i , T″<:T′ ⟩ ⟩ →
       ⟨ A , T″ , ⟨ c , W , refl , i , <:ᵣ-trans T″<:T′ T′<:T ⟩ ⟩
 
-apply-cast : ∀ {Γ Σ gc A B} → (V : Term) → Γ ︔ Σ ︔ gc ⊢ V ⦂ A → Value V → (c : Cast A ⇒ B) → Active c → Term
+apply-cast : ∀ {Γ Σ gc A B} → (V : Term) → Γ ; Σ ; gc ⊢ V ⦂ A → Value V → (c : Cast A ⇒ B) → Active c → Term
 -- V ⟨ ` ι of g ⇒ ` ι of g ⟩ —→ V
 apply-cast V ⊢V v c (A-base-id .c) = V
 apply-cast V ⊢V v c (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty ⋆~ ~-ι))) =

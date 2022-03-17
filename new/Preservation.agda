@@ -19,10 +19,10 @@ ext-pres ⊢ρ {0} eq = eq
 ext-pres ⊢ρ {suc x} Γ∋x = ⊢ρ Γ∋x
 
 rename-pres : ∀ {Γ Δ : Context} {Σ gc A M ρ}
-  → Γ ︔ Σ ︔ gc ⊢ M ⦂ A
+  → Γ ; Σ ; gc ⊢ M ⦂ A
   → ρ ⦂ Γ ⇒ Δ
     -----------------------------
-  → Δ ︔ Σ ︔ gc ⊢ rename ρ M ⦂ A
+  → Δ ; Σ ; gc ⊢ rename ρ M ⦂ A
 rename-pres ⊢const ⊢ρ = ⊢const
 rename-pres (⊢addr eq) ⊢ρ = ⊢addr eq
 rename-pres (⊢var Γ∋x) ⊢ρ = ⊢var (⊢ρ Γ∋x)
@@ -44,6 +44,6 @@ rename-pres ⊢error ⊢ρ = ⊢error
 rename-pres (⊢sub ⊢M A<:B) ⊢ρ = ⊢sub (rename-pres ⊢M ⊢ρ) A<:B
 
 rename-↑1-pres : ∀ {Γ Σ gc M A B}
-  → Γ ︔ Σ ︔ gc ⊢ M ⦂ B
-  → (A ∷ Γ) ︔ Σ ︔ gc ⊢ rename (↑ 1) M ⦂ B
+  → Γ ; Σ ; gc ⊢ M ⦂ B
+  → (A ∷ Γ) ; Σ ; gc ⊢ rename (↑ 1) M ⦂ B
 rename-↑1-pres ⊢M = rename-pres ⊢M (λ {x} {A} Γ∋x → Γ∋x)

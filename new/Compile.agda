@@ -21,7 +21,7 @@ open import CC renaming (Term to CCTerm)
 open import Preservation using (rename-↑1-pres)
 
 
-compile : ∀ {Γ Σ gc A} (M : Term) → Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ A → CCTerm
+compile : ∀ {Γ Σ gc A} (M : Term) → Γ ; Σ ; gc ⊢ᴳ M ⦂ A → CCTerm
 compile ($ᴳ k of ℓ) ⊢const = $ k of ℓ
 compile (`ᴳ x) (⊢var x∈Γ) = ` x
 compile (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ƛ[ pc ] A ˙ compile N ⊢N of ℓ
@@ -64,8 +64,8 @@ compile (L := M at p) (⊢assign {gc = gc} {A = A} {S} {g} {g₁} ⊢L ⊢M A≲
 
 
 compile-preserve : ∀ {Γ Σ gc A} (M : Term)
-  → (⊢M : Γ ︔ Σ ︔ gc ⊢ᴳ M ⦂ A)
-  → Γ ︔ Σ ︔ gc ⊢ compile M ⊢M ⦂ A
+  → (⊢M : Γ ; Σ ; gc ⊢ᴳ M ⦂ A)
+  → Γ ; Σ ; gc ⊢ compile M ⊢M ⦂ A
 compile-preserve ($ᴳ k of ℓ) ⊢const = ⊢const
 compile-preserve (`ᴳ x) (⊢var Γ∋x) = ⊢var Γ∋x
 compile-preserve (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ⊢lam (compile-preserve N ⊢N)
