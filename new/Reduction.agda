@@ -1,4 +1,5 @@
 open import Data.Nat
+open import Data.Unit using (⊤; tt)
 open import Data.List hiding ([_])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
@@ -84,7 +85,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → Value V
     → a ≡ length μ  {- address a is fresh -}
       ----------------------------------------------------------------- Ref
-    → ref[ ℓ ] V ∣ μ ∣ pc —→ addr a of low ∣ ⟨ a , ⟨ V , ℓ ⟩ ⟩ ∷ μ
+    → ref[ ℓ ] V ∣ μ ∣ pc —→ addr a of low ∣ ⟨ a , V , ℓ ⟩ ∷ μ
 
   nsu-check-ref : ∀ {M μ pc ℓ}
     → pc ≼ ℓ
@@ -92,7 +93,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → nsu-ref ℓ M ∣ μ ∣ pc —→ M ∣ μ
 
   nsu-fail-ref : ∀ {M μ pc ℓ}
-    → ¬ (pc ≼ ℓ)
+    → ¬ pc ≼ ℓ
       ------------------------------------------------- NSUFailRef
     → nsu-ref ℓ M ∣ μ ∣ pc —→ error nsu-error ∣ μ
 
@@ -100,3 +101,30 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
       -------------------------------------------------- Deref
     → ! (addr a of ℓ) ∣ μ ∣ pc —→ prot[ ℓ ] V ∣ μ
+
+  assign : ∀ {V V₁ μ pc a ℓ ℓ₁}
+    → Value V
+    → key _≟_ μ a ≡ just ⟨ V₁ , ℓ₁ ⟩
+      --------------------------------------------------------------------- Assign
+    → (addr a of ℓ) := V ∣ μ ∣ pc —→ $ tt of low ∣ ⟨ a , V , ℓ₁ ⟩ ∷ μ
+
+  nsu-check-assign : ∀ {V W M μ pc a ℓ ℓ₁}
+    → (w : Value W) → unwrap W w ≡ addr a of ℓ {- W might be wrapped in casts -}
+    → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
+    → pc ≼ ℓ₁
+      -------------------------------------- NSUCheckAssign
+    → nsu-assign W M ∣ μ ∣ pc —→ M ∣ μ
+
+  nsu-fail-assign : ∀ {V W M μ pc a ℓ ℓ₁}
+    → (w : Value W) → unwrap W w ≡ addr a of ℓ
+    → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
+    → ¬ pc ≼ ℓ₁
+      -------------------------------------- NSUFailAssign
+    → nsu-assign W M ∣ μ ∣ pc —→ error nsu-error ∣ μ
+
+  cast : ∀ {Σ gc A B V μ pc} {c : Cast A ⇒ B}
+    → (⊢V : [] ; Σ ; gc ⊢ V ⦂ A)
+    → (v : Value V)
+    → (a : Active c)
+      -------------------------------------------------- Cast
+    → V ⟨ c ⟩ ∣ μ ∣ pc —→ apply-cast V ⊢V v c a ∣ μ

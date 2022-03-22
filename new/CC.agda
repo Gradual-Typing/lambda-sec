@@ -25,12 +25,12 @@ data Value : Term → Set where
 canonical⋆ : ∀ {Γ Σ gc V T}
   → Γ ; Σ ; gc ⊢ V ⦂ T of ⋆
   → Value V
-  → ∃[ A ] ∃[ T′ ] Σ[ c ∈ Cast A ⇒ (T′ of ⋆) ] ∃[ W ] (V ≡ W ⟨ c ⟩) × (Inert c) × (T′ <:ᵣ T)
-canonical⋆ (⊢cast ⊢W) (V-cast {V = W} {c} w i) = ⟨ _ , _ , ⟨ c , W , refl , i , <:ᵣ-refl ⟩ ⟩
+  → ∃[ A ] ∃[ B ] Σ[ c ∈ Cast A ⇒ B ] ∃[ W ] (V ≡ W ⟨ c ⟩) × (Inert c) × (B <: T of ⋆)
+canonical⋆ (⊢cast ⊢W) (V-cast {V = W} {c} w i) = ⟨ _ , _ , ⟨ c , W , refl , i , <:-ty <:-⋆ <:ᵣ-refl ⟩ ⟩
 canonical⋆ (⊢sub ⊢V (<:-ty {S = T′} <:-⋆ T′<:T)) v =
   case canonical⋆ ⊢V v of λ where
-    ⟨ A , T″ , ⟨ c , W , refl , i , T″<:T′ ⟩ ⟩ →
-      ⟨ A , T″ , ⟨ c , W , refl , i , <:ᵣ-trans T″<:T′ T′<:T ⟩ ⟩
+    ⟨ A , B , ⟨ c , W , refl , i , B<:T′⋆ ⟩ ⟩ →
+      ⟨ A , B , ⟨ c , W , refl , i , <:-trans B<:T′⋆ (<:-ty <:-⋆ T′<:T) ⟩ ⟩
 
 canonical-pc⋆ : ∀ {Γ Σ gc V A B g}
   → Γ ; Σ ; gc ⊢ V ⦂ [ ⋆ ] A ⇒ B of g
@@ -49,7 +49,7 @@ apply-cast V ⊢V v c (A-base-id .c) = V
 apply-cast V ⊢V v c (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty ⋆~ ~-ι))) =
   case canonical⋆ ⊢V v of λ where
     ⟨ _ , _ , ⟨ cast (` ι of l ℓ′) (` ι of ⋆) q (~-ty ~⋆ ~-ι) ,
-                W , refl , I-base-inj _ , <:-ι ⟩ ⟩ →
+                W , refl , I-base-inj _ , <:-ty <:-⋆ <:-ι ⟩ ⟩ →
       case ℓ′ ≼? ℓ of λ where
         (yes _) → V
         (no _) → error (blame p)
@@ -61,7 +61,7 @@ apply-cast V ⊢V v c (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty �
 apply-cast V ⊢V v c (A-fun (cast ([ gc₁ ] C₁ ⇒ C₂ of ⋆) ([ gc₂ ] D₁ ⇒ D₂ of g) p (~-ty _ C~D)) a) =
   case canonical⋆ ⊢V v of λ where
     ⟨ _ , _ , ⟨ cast ([ gc₁′ ] A₁ ⇒ A₂ of l ℓ′) ([ gc₂′ ] B₁ ⇒ B₂ of ⋆) q (~-ty ~⋆ A~B) ,
-                W , refl , I-fun _ I-label I-label , <:-fun gc₁<:gc₂′ C₁<:B₁ B₂<:C₂ ⟩ ⟩ →
+                W , refl , I-fun _ I-label I-label , <:-ty <:-⋆ (<:-fun gc₁<:gc₂′ C₁<:B₁ B₂<:C₂) ⟩ ⟩ →
       case a of λ where
         -- We don't touch the security effects in this case, only propagate the labels on types
         --      W ⟨ [ gc₁′ ] A₁ → A₂ of ℓ′ ⇒ [ gc₂′ ] B₁ → B₂ of ⋆  ⟩ ⟨ [ gc₁ ] C₁ → C₂ of ⋆  ⇒ [ gc₂ ] D₁ → D₂ of ⋆ ⟩
@@ -109,7 +109,7 @@ apply-cast V ⊢V v c (A-fun-pc (cast ([ ⋆ ] C₁ ⇒ C₂ of g₁) ([ gc ] D�
 apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~RefD)) a) =
   case canonical⋆ ⊢V v of λ where
     ⟨ _ , _ , ⟨ cast (Ref A of l ℓ′) (Ref B of ⋆) q (~-ty ~⋆ RefA~RefB) ,
-                W , refl , I-ref _ I-label , <:-ref B<:C C<:B ⟩ ⟩ →
+                W , refl , I-ref _ I-label , <:-ty <:-⋆ (<:-ref B<:C C<:B) ⟩ ⟩ →
       case a of λ where
         --      W ⟨ Ref A of ℓ′ ⇒ Ref B of ⋆  ⟩ ⟨ Ref C of ⋆  ⇒ Ref D of ⋆ ⟩
         -- —→ W ⟨ Ref A of ℓ′ ⇒ Ref B of ℓ′ ⟩ ⟨ Ref C of ℓ′ ⇒ Ref D of ⋆ ⟩
@@ -127,3 +127,8 @@ apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~Re
                   c~₂ = ~-ty ~ₗ-refl RefC~RefD in
                 W ⟨ cast (Ref A of l ℓ) (Ref B of l ℓ) q c~₁ ⟩ ⟨ cast (Ref C of l ℓ) (Ref D of l ℓ) p c~₂ ⟩
             (no _) → error (blame p)
+
+-- A helper function to unwrap (inert) casts around a value
+unwrap : ∀ V → Value V → Term
+unwrap (V ⟨ c ⟩) (V-cast v i) = V
+unwrap V _ = V
