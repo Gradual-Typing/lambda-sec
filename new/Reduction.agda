@@ -87,14 +87,14 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ----------------------------------------------------------------- Ref
     → ref[ ℓ ] V ∣ μ ∣ pc —→ addr a of low ∣ ⟨ a , V , ℓ ⟩ ∷ μ
 
-  nsu-check-ref : ∀ {M μ pc ℓ}
+  nsu-ref-ok : ∀ {M μ pc ℓ}
     → pc ≼ ℓ
-      -------------------------------------- NSUCheckRef
+      -------------------------------------- NSURefSuccess
     → nsu-ref ℓ M ∣ μ ∣ pc —→ M ∣ μ
 
-  nsu-fail-ref : ∀ {M μ pc ℓ}
+  nsu-ref-fail : ∀ {M μ pc ℓ}
     → ¬ pc ≼ ℓ
-      ------------------------------------------------- NSUFailRef
+      ------------------------------------------------- NSURefFail
     → nsu-ref ℓ M ∣ μ ∣ pc —→ error nsu-error ∣ μ
 
   deref : ∀ {V μ pc a ℓ ℓ₁}
@@ -108,18 +108,18 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       --------------------------------------------------------------------- Assign
     → (addr a of ℓ) := V ∣ μ ∣ pc —→ $ tt of low ∣ ⟨ a , V , ℓ₁ ⟩ ∷ μ
 
-  nsu-check-assign : ∀ {V W M μ pc a ℓ ℓ₁}
+  nsu-assign-ok : ∀ {V W M μ pc a ℓ ℓ₁}
     → (w : Value W) → unwrap W w ≡ addr a of ℓ {- W might be wrapped in casts -}
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
     → pc ≼ ℓ₁
-      -------------------------------------- NSUCheckAssign
+      -------------------------------------- NSUAssignSuccess
     → nsu-assign W M ∣ μ ∣ pc —→ M ∣ μ
 
-  nsu-fail-assign : ∀ {V W M μ pc a ℓ ℓ₁}
+  nsu-assign-fail : ∀ {V W M μ pc a ℓ ℓ₁}
     → (w : Value W) → unwrap W w ≡ addr a of ℓ
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
     → ¬ pc ≼ ℓ₁
-      -------------------------------------- NSUFailAssign
+      --------------------------------------------------- NSUAssignFail
     → nsu-assign W M ∣ μ ∣ pc —→ error nsu-error ∣ μ
 
   cast : ∀ {Σ gc A B V μ pc} {c : Cast A ⇒ B}
