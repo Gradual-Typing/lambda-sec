@@ -190,23 +190,31 @@ _        ⋏̃ ⋆      = ⋆
 -- ⋆        ⋏̃ l low  = l low
 ⋆        ⋏̃ _      = ⋆
 
-consis-join-~ₗ : ∀ {g₁ g₂ g}
-  → g₁ ~ₗ g
-  → g₂ ~ₗ g
-  → g ~ₗ g₁ ⋎̃ g₂
-consis-join-~ₗ ⋆~ ⋆~ = ~⋆
-consis-join-~ₗ ⋆~ ~⋆ = ⋆~
-consis-join-~ₗ ⋆~ l~l = ~⋆
-consis-join-~ₗ ⋆~ h~h = ~⋆
-consis-join-~ₗ ~⋆ _ = ⋆~
-consis-join-~ₗ l~l ⋆~ = ~⋆
+consis-join-~ₗ : ∀ {g₁ g₂ g₃ g₄}
+  → g₁ ~ₗ g₂
+  → g₃ ~ₗ g₄
+  → g₁ ⋎̃ g₃ ~ₗ g₂ ⋎̃ g₄
+consis-join-~ₗ {g₃ = ⋆} ⋆~ _ = ⋆~
+consis-join-~ₗ {g₃ = l _} ⋆~ _ = ⋆~
+consis-join-~ₗ {g₄ = ⋆} ~⋆ _ = ~⋆
+consis-join-~ₗ {g₄ = l _} ~⋆ _ = ~⋆
+consis-join-~ₗ l~l ⋆~ = ⋆~
+consis-join-~ₗ l~l ~⋆ = ~⋆
 consis-join-~ₗ l~l l~l = l~l
-consis-join-~ₗ h~h ⋆~ = ~⋆
+consis-join-~ₗ l~l h~h = h~h
+consis-join-~ₗ h~h ⋆~ = ⋆~
+consis-join-~ₗ h~h ~⋆ = ~⋆
+consis-join-~ₗ h~h l~l = h~h
 consis-join-~ₗ h~h h~h = h~h
 
 {- Stamping label on type -}
 stamp : Type → Label → Type
 stamp (T of g₁) g₂ = T of g₁ ⋎̃ g₂
+
+stamp-~ : ∀ {A B g₁ g₂}
+  → A ~ B → g₁ ~ₗ g₂
+  → stamp A g₁ ~ stamp B g₂
+stamp-~ {S of g₁′} {T of g₂′} (~-ty g₁′~g₂′ S~T) g₁~g₂ = ~-ty (consis-join-~ₗ g₁′~g₂′ g₁~g₂) S~T
 
 {- Precision join -}
 private

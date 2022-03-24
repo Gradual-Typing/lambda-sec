@@ -1,5 +1,6 @@
 open import Data.Nat
 open import Data.Unit using (⊤; tt)
+open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.List hiding ([_])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
@@ -81,6 +82,14 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ------------------------------------------------------------------- β
     → (ƛ[ pc′ ] A ˙ N of ℓ) · V ∣ μ ∣ pc —→ prot[ ℓ ] (N [ V ]) ∣ μ
 
+  β-if-true : ∀ {M N μ pc ℓ}
+      ----------------------------------------------------------------------- IfTrue
+    → if ($ true of ℓ) then M else N endif ∣ μ ∣ pc —→ prot[ ℓ ] M ∣ μ
+
+  β-if-false : ∀ {M N μ pc ℓ}
+      ----------------------------------------------------------------------- IfFalse
+    → if ($ false of ℓ) then M else N endif ∣ μ ∣ pc —→ prot[ ℓ ] N ∣ μ
+
   ref : ∀ {V μ pc a ℓ}
     → Value V
     → a ≡ length μ  {- address a is fresh -}
@@ -128,3 +137,9 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → (a : Active c)
       -------------------------------------------------- Cast
     → V ⟨ c ⟩ ∣ μ ∣ pc —→ apply-cast V ⊢V v c a ∣ μ
+
+  fun-cast : ∀ {V W μ pc A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
+    → Value V → Value W
+    → Inert c
+      ---------------------------------------------------------------- FunCast
+    → (V ⟨ c ⟩) · W ∣ μ ∣ pc —→ (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩ ∣ μ

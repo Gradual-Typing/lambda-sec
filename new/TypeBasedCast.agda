@@ -91,3 +91,15 @@ active-or-inert (cast ([ ⋆ ] A ⇒ B of l ℓ) ([ ⋆   ] C ⇒ D of _  ) p (~
   inj₁ (A-fun-pc _ A-id⋆ I-label)
 active-or-inert (cast ([ ⋆ ] A ⇒ B of l ℓ) ([ l _ ] C ⇒ D of _  ) p (~-ty _ (~-fun _ _ _))) =
   inj₁ (A-fun-pc _ A-proj I-label)
+
+dom : ∀ {A B C D gc₁ gc₂ g₁ g₂}
+  → Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)
+  → Cast C ⇒ A
+dom (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-ty _ (~-fun _ A~C B~D))) =
+  cast C A p (~-sym A~C)
+
+cod : ∀ {A B C D gc₁ gc₂ g₁ g₂}
+  → Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)
+  → Cast (stamp B g₁) ⇒ (stamp D g₂)
+cod (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-ty g₁~g₂ (~-fun _ A~C B~D))) =
+  cast (stamp B g₁) (stamp D g₂) p (stamp-~ B~D g₁~g₂)
