@@ -103,3 +103,15 @@ cod : ∀ {A B C D gc₁ gc₂ g₁ g₂}
   → Cast (stamp B g₁) ⇒ (stamp D g₂)
 cod (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-ty g₁~g₂ (~-fun _ A~C B~D))) =
   cast (stamp B g₁) (stamp D g₂) p (stamp-~ B~D g₁~g₂)
+
+in-c : ∀ {A B g₁ g₂}
+  → Cast (Ref A of g₁) ⇒ (Ref B of g₂)
+  → Cast B ⇒ A
+in-c (cast (Ref A of g₁) (Ref B of g₂) p (~-ty _ (~-ref A~B))) =
+  cast B A p (~-sym A~B)
+
+out-c : ∀ {A B g₁ g₂}
+  → Cast (Ref A of g₁) ⇒ (Ref B of g₂)
+  → Cast (stamp A g₁) ⇒ (stamp B g₂)
+out-c (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ (~-ref A~B))) =
+  cast (stamp A g₁) (stamp B g₂) p (stamp-~ A~B g₁~g₂)

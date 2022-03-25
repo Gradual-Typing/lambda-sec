@@ -49,10 +49,6 @@ plug L (if□ M N)       = if L then M else N endif
 plug M □⟨ c ⟩          = M ⟨ c ⟩
 plug L (nsu-assign□ M) = nsu-assign L M
 
--- FIXME
-postulate
-  stamp-val : ∀ V → Value V → StaticLabel → Term
-
 
 infix 2 _∣_∣_—→_∣_
 
@@ -131,6 +127,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       --------------------------------------------------- NSUAssignFail
     → nsu-assign W M ∣ μ ∣ pc —→ error nsu-error ∣ μ
 
+  {- Reduction rules about casts, active and inert: -}
   cast : ∀ {Σ gc A B V μ pc} {c : Cast A ⇒ B}
     → (⊢V : [] ; Σ ; gc ⊢ V ⦂ A)
     → (v : Value V)
@@ -143,3 +140,15 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → Inert c
       ---------------------------------------------------------------- FunCast
     → (V ⟨ c ⟩) · W ∣ μ ∣ pc —→ (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩ ∣ μ
+
+  deref-cast : ∀ {V μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
+    → Value V
+    → Inert c
+      ------------------------------------------------------ DerefCast
+    → ! (V ⟨ c ⟩) ∣ μ ∣ pc —→ ! V ⟨ out-c c ⟩ ∣ μ
+
+  assign-cast : ∀ {V W μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
+    → Value V → Value W
+    → Inert c
+      ------------------------------------------------------ AssignCast
+    → (V ⟨ c ⟩) := W ∣ μ ∣ pc —→ V := (W ⟨ in-c c ⟩) ∣ μ

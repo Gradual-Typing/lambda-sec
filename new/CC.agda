@@ -132,3 +132,21 @@ apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~Re
 unwrap : ∀ V → Value V → Term
 unwrap (V ⟨ c ⟩) (V-cast v i) = V
 unwrap V _ = V
+
+stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → StaticLabel
+                      → ∃[ C ] ∃[ D ] (Cast C ⇒ D)
+stamp-inert (cast (` ι of l ℓ₁) (` ι of ⋆) p (~-ty ~⋆ ~-ι)) (I-base-inj _) ℓ =
+  ⟨ _ , ⟨ _ , cast (` ι of l (ℓ₁ ⋎ ℓ)) (` ι of ⋆) p (~-ty ~⋆ ~-ι) ⟩ ⟩
+stamp-inert (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-ty g₁~g₂ A→B~C→D))
+            (I-fun _ I-label I-label) ℓ =
+  let c~ = ~-ty (consis-join-~ₗ g₁~g₂ ~ₗ-refl) A→B~C→D in
+    ⟨ _ , ⟨ _ , cast ([ gc₁ ] A ⇒ B of (g₁ ⋎̃ l ℓ)) ([ gc₂ ] C ⇒ D of (g₂ ⋎̃ l ℓ)) p c~ ⟩ ⟩
+stamp-inert (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ RefA~RefB)) (I-ref _ I-label) ℓ =
+  let c~ = ~-ty (consis-join-~ₗ g₁~g₂ ~ₗ-refl) RefA~RefB in
+    ⟨ _ , ⟨ _ , cast (Ref A of (g₁ ⋎̃ l ℓ)) (Ref B of (g₂ ⋎̃ l ℓ)) p c~ ⟩ ⟩
+
+stamp-val : ∀ V → Value V → StaticLabel → Term
+stamp-val (addr a of ℓ₁) V-addr ℓ = addr a of (ℓ₁ ⋎ ℓ)
+stamp-val (ƛ[ pc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ pc ] A ˙ N of (ℓ₁ ⋎ ℓ)
+stamp-val ($ k of ℓ₁) V-const ℓ = $ k of (ℓ₁ ⋎ ℓ)
+stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = let ⟨ C , D , c′ ⟩ = stamp-inert c i ℓ in V ⟨ c′ ⟩
