@@ -59,9 +59,9 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ---------------------------------------- ξ
     → plug M F ∣ μ ∣ pc —→ plug M′ F ∣ μ′
 
-  ξ-error : ∀ {F μ pc e}
+  ξ-err : ∀ {F μ pc e}
       ---------------------------------------------- ξ-error
-    → plug (error e) F ∣ μ ∣ pc —→ error e ∣ μ
+    → plug (err e) F ∣ μ ∣ pc —→ err e ∣ μ
 
   prot-val : ∀ {V μ pc ℓ}
     → (v : Value V)
@@ -72,6 +72,10 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → M           ∣ μ ∣ pc ⋎ ℓ —→ M′           ∣ μ′
       --------------------------------------------------- ProtectContext
     → prot[ ℓ ] M ∣ μ ∣ pc     —→ prot[ ℓ ] M′ ∣ μ′
+
+  prot-err : ∀ {μ pc ℓ e}
+      --------------------------------------------------- ProtectContext
+    → prot[ ℓ ] (err e) ∣ μ ∣ pc —→ err e ∣ μ
 
   β : ∀ {V N μ pc pc′ A ℓ}
     → Value V
@@ -100,7 +104,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
   nsu-ref-fail : ∀ {M μ pc ℓ}
     → ¬ pc ≼ ℓ
       ------------------------------------------------- NSURefFail
-    → nsu-ref ℓ M ∣ μ ∣ pc —→ error nsu-error ∣ μ
+    → nsu-ref ℓ M ∣ μ ∣ pc —→ err nsu-err ∣ μ
 
   deref : ∀ {V μ pc a ℓ ℓ₁}
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
@@ -125,7 +129,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
     → ¬ pc ≼ ℓ₁
       --------------------------------------------------- NSUAssignFail
-    → nsu-assign W M ∣ μ ∣ pc —→ error nsu-error ∣ μ
+    → nsu-assign W M ∣ μ ∣ pc —→ err nsu-err ∣ μ
 
   {- Reduction rules about casts, active and inert: -}
   cast : ∀ {Σ gc A B V μ pc} {c : Cast A ⇒ B}

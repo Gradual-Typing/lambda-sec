@@ -93,9 +93,9 @@ data _;_;_⊢_⦂_ : Context → HeapContext → Label → Term → Type → S
       --------------------------------------- CCProt
     → Γ ; Σ ; gc ⊢ prot[ ℓ ] M ⦂ stamp A (l ℓ)
 
-  ⊢error : ∀ {Γ Σ gc A e}
+  ⊢err : ∀ {Γ Σ gc A e}
       --------------------------- CCError
-    → Γ ; Σ ; gc ⊢ error e ⦂ A
+    → Γ ; Σ ; gc ⊢ err e ⦂ A
 
   ⊢sub : ∀ {Γ Σ gc A B M}
     → Γ ; Σ ; gc ⊢ M ⦂ A
