@@ -45,7 +45,9 @@ progress μ pc (L · M) (⊢app ⊢L ⊢M) =
     (done v) →
       case progress μ pc M ⊢M of λ where
         (step M→M′) → step (ξ {F = (L ·□) v} M→M′)
-        (done w) → {!!}
+        (done w) →
+          case ⟨ v , ⊢L ⟩ of λ where
+            ⟨ V-ƛ , ⊢lam _ ⟩ → {!!}
         (error E-error) → {!!}
     (error (E-error {e})) → step (ξ-err {F = □· M} {e = e})
 progress μ pc (if L then M else N endif) (⊢if ⊢L ⊢M ⊢N) = {!!}

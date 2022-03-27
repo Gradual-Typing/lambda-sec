@@ -32,17 +32,6 @@ canonical⋆ (⊢sub ⊢V (<:-ty {S = T′} <:-⋆ T′<:T)) v =
     ⟨ A , B , ⟨ c , W , refl , i , B<:T′⋆ ⟩ ⟩ →
       ⟨ A , B , ⟨ c , W , refl , i , <:-trans B<:T′⋆ (<:-ty <:-⋆ T′<:T) ⟩ ⟩
 
-canonical-pc⋆ : ∀ {Γ Σ gc V A B g}
-  → Γ ; Σ ; gc ⊢ V ⦂ [ ⋆ ] A ⇒ B of g
-  → Value V
-  → ∃[ C ] ∃[ D ] Σ[ c ∈ Cast C ⇒ D ] ∃[ W ] (V ≡ W ⟨ c ⟩) × (Inert c) × (D <: [ ⋆ ] A ⇒ B of g)
-canonical-pc⋆ (⊢cast ⊢W) (V-cast {V = W} {c} w i) = ⟨ _ , _ , ⟨ c , W , refl , i , <:-refl ⟩ ⟩
-canonical-pc⋆ (⊢sub {A = [ ⋆ ] A′ ⇒ B′ of g′} ⊢V (<:-ty g′<:g (<:-fun <:-⋆ A<:A′ B′<:B))) v =
-  case canonical-pc⋆ ⊢V v of λ where
-    ⟨ C , D , ⟨ c , W , refl , i , D<:A′→B′ ⟩ ⟩ →
-      let D<:A→B = <:-trans D<:A′→B′ (<:-ty g′<:g (<:-fun <:-⋆ A<:A′ B′<:B)) in
-        ⟨ C , D , ⟨ c , W , refl , i , D<:A→B ⟩ ⟩
-
 apply-cast : ∀ {Γ Σ gc A B} → (V : Term) → Γ ; Σ ; gc ⊢ V ⦂ A → Value V → (c : Cast A ⇒ B) → Active c → Term
 -- V ⟨ ` ι of g ⇒ ` ι of g ⟩ —→ V
 apply-cast V ⊢V v c (A-base-id .c) = V
@@ -53,15 +42,10 @@ apply-cast V ⊢V v c (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty �
       case ℓ′ ≼? ℓ of λ where
         (yes _) → V
         (no _) → err (blame p)
-{- Order of reduction:
-        V ⟨ [ pc′ ] A₁ → A₂ of ℓ′ ⇒ [ ⋆ ] B₁ → B₂ of ⋆ ⟩ ⟨ [ ⋆ ] C₁ → C₂ of ⋆ ⇒ [ pc ] D₁ → D₂ of ℓ ⟩
-   —→ V ⟨ [ pc′ ] A₁ → A₂ of ℓ  ⇒ [ ⋆ ] B₁ → B₂ of ℓ ⟩ ⟨ [ ⋆ ] C₁ → C₂ of ℓ ⇒ [ pc ] D₁ → D₂ of ℓ ⟩  , if ℓ′ ≼ ℓ
-   —→ V ⟨ [ pc  ] A₁ → A₂ of ℓ  ⇒ [ pc ] B₁ → B₂ of ℓ ⟩ ⟨ [ pc ] C₁ → C₂ of ℓ ⇒ [ pc ] D₁ → D₂ of ℓ ⟩ , if pc ≼ pc′
-   -}
 apply-cast V ⊢V v c (A-fun (cast ([ gc₁ ] C₁ ⇒ C₂ of ⋆) ([ gc₂ ] D₁ ⇒ D₂ of g) p (~-ty _ C~D)) a) =
   case canonical⋆ ⊢V v of λ where
     ⟨ _ , _ , ⟨ cast ([ gc₁′ ] A₁ ⇒ A₂ of l ℓ′) ([ gc₂′ ] B₁ ⇒ B₂ of ⋆) q (~-ty ~⋆ A~B) ,
-                W , refl , I-fun _ I-label I-label , <:-ty <:-⋆ (<:-fun gc₁<:gc₂′ C₁<:B₁ B₂<:C₂) ⟩ ⟩ →
+                W , refl , I-fun _ I-label , <:-ty <:-⋆ (<:-fun gc₁<:gc₂′ C₁<:B₁ B₂<:C₂) ⟩ ⟩ →
       case a of λ where
         -- We don't touch the security effects in this case, only propagate the labels on types
         --      W ⟨ [ gc₁′ ] A₁ → A₂ of ℓ′ ⇒ [ gc₂′ ] B₁ → B₂ of ⋆  ⟩ ⟨ [ gc₁ ] C₁ → C₂ of ⋆  ⇒ [ gc₂ ] D₁ → D₂ of ⋆ ⟩
@@ -81,30 +65,6 @@ apply-cast V ⊢V v c (A-fun (cast ([ gc₁ ] C₁ ⇒ C₂ of ⋆) ([ gc₂ ] D
                   c~₂ = ~-ty ~ₗ-refl C~D in
                 W ⟨ cast ([ gc₁′ ] A₁ ⇒ A₂ of l ℓ) ([ gc₂′ ] B₁ ⇒ B₂ of l ℓ) q c~₁ ⟩
                   ⟨ cast ([ gc₁  ] C₁ ⇒ C₂ of l ℓ) ([ gc₂  ] D₁ ⇒ D₂ of l ℓ) p c~₂ ⟩
-            (no _) → err (blame p)
-apply-cast V ⊢V v c (A-fun-pc (cast ([ ⋆ ] C₁ ⇒ C₂ of g₁) ([ gc ] D₁ ⇒ D₂ of g₂) p (~-ty g₁~g₂ (~-fun _ C₁~D₁ C₂~D₂))) a I-label) =
-  case canonical-pc⋆ ⊢V v of λ where
-    ⟨ _ , _ , ⟨ cast ([ l pc′ ] A₁ ⇒ A₂ of g₁′) ([ ⋆ ] B₁ ⇒ B₂ of g₂′) q (~-ty g₁′~g₂′ (~-fun ~⋆ A₁~B₁ A₂~B₂)) ,
-                W , refl , I-fun _ I-label I-label , <:-ty _ (<:-fun <:-⋆ _ _) ⟩ ⟩ →
-      case a of λ where
-        -- We don't touch the labels on types, only propagate the security effects
-        --      W ⟨ [ pc′ ] A₁ → A₂ of g₁′ ⇒ [ ⋆   ] B₁ → B₂ of g₂′ ⟩ ⟨ [ ⋆   ] C₁ → C₂ of g₁ ⇒ [ ⋆ ] D₁ → D₂ of g₂ ⟩
-        -- —→ W ⟨ [ pc′ ] A₁ → A₂ of g₁′ ⇒ [ pc′ ] B₁ → B₂ of g₂′ ⟩ ⟨ [ pc′ ] C₁ → C₂ of g₁ ⇒ [ ⋆ ] D₁ → D₂ of g₂ ⟩
-        A-id⋆ →
-          let c~₁ = ~-ty g₁′~g₂′ (~-fun ~ₗ-refl A₁~B₁ A₂~B₂)
-              c~₂ = ~-ty g₁~g₂ (~-fun ~⋆ C₁~D₁ C₂~D₂) in
-            W ⟨ cast ([ l pc′ ] A₁ ⇒ A₂ of g₁′) ([ l pc′ ] B₁ ⇒ B₂ of g₂′) q c~₁ ⟩
-              ⟨ cast ([ l pc′ ] C₁ ⇒ C₂ of g₁) ([ ⋆ ] D₁ ⇒ D₂ of g₂) p c~₂ ⟩
-        --      W ⟨ [ pc′ ] A₁ → A₂ of g₁′ ⇒ [ ⋆  ] B₁ → B₂ of g₂′ ⟩ ⟨ [ ⋆  ] C₁ → C₂ of g₁ ⇒ [ pc ] D₁ → D₂ of g₂ ⟩
-        -- —→ W ⟨ [ pc  ] A₁ → A₂ of g₁′ ⇒ [ pc ] B₁ → B₂ of g₂′ ⟩ ⟨ [ pc ] C₁ → C₂ of g₁ ⇒ [ pc ] D₁ → D₂ of g₂ ⟩  , if pc ≼ pc′
-        --      blame p  , otherwise
-        (A-proj {pc}) →
-          case pc ≼? pc′ of λ where
-            (yes _) →
-              let c~₁ = ~-ty g₁′~g₂′ (~-fun ~ₗ-refl A₁~B₁ A₂~B₂)
-                  c~₂ = ~-ty g₁~g₂ (~-fun ~ₗ-refl C₁~D₁ C₂~D₂) in
-              W ⟨ cast ([ l pc ] A₁ ⇒ A₂ of g₁′) ([ l pc ] B₁ ⇒ B₂ of g₂′) q c~₁ ⟩
-                ⟨ cast ([ l pc ] C₁ ⇒ C₂ of g₁ ) ([ l pc ] D₁ ⇒ D₂ of g₂ ) p c~₂ ⟩
             (no _) → err (blame p)
 apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~RefD)) a) =
   case canonical⋆ ⊢V v of λ where
@@ -138,7 +98,7 @@ stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → StaticLabel
 stamp-inert (cast (` ι of l ℓ₁) (` ι of ⋆) p (~-ty ~⋆ ~-ι)) (I-base-inj _) ℓ =
   ⟨ _ , ⟨ _ , cast (` ι of l (ℓ₁ ⋎ ℓ)) (` ι of ⋆) p (~-ty ~⋆ ~-ι) ⟩ ⟩
 stamp-inert (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-ty g₁~g₂ A→B~C→D))
-            (I-fun _ I-label I-label) ℓ =
+            (I-fun _ I-label) ℓ =
   let c~ = ~-ty (consis-join-~ₗ g₁~g₂ ~ₗ-refl) A→B~C→D in
     ⟨ _ , ⟨ _ , cast ([ gc₁ ] A ⇒ B of (g₁ ⋎̃ l ℓ)) ([ gc₂ ] C ⇒ D of (g₂ ⋎̃ l ℓ)) p c~ ⟩ ⟩
 stamp-inert (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ RefA~RefB)) (I-ref _ I-label) ℓ =

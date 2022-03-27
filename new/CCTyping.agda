@@ -32,10 +32,10 @@ data _;_;_⊢_⦂_ : Context → HeapContext → Label → Term → Type → S
       --------------------------- CCVar
     → Γ ; Σ ; gc ⊢ ` x ⦂ A
 
-  ⊢lam : ∀ {Γ Σ gc pc A B N ℓ}
-    → (A ∷ Γ) ; Σ ; (l pc) ⊢ N ⦂ B
+  ⊢lam : ∀ {Γ Σ gc gc′ A B N ℓ}
+    → (A ∷ Γ) ; Σ ; gc′ ⊢ N ⦂ B
       ------------------------------------------------------------- CCLam
-    → Γ ; Σ ; gc ⊢ ƛ[ pc ] A ˙ N of ℓ ⦂ ([ l pc ] A ⇒ B) of l ℓ
+    → Γ ; Σ ; gc ⊢ ƛ[ gc′ ] A ˙ N of ℓ ⦂ [ gc′ ] A ⇒ B of l ℓ
 
   ⊢app : ∀ {Γ Σ gc A B L M g}
     → Γ ; Σ ; gc ⊢ L ⦂ ([ gc ⋎̃ g ] A ⇒ B) of g
@@ -64,15 +64,15 @@ data _;_;_⊢_⦂_ : Context → HeapContext → Label → Term → Type → S
   ⊢ref : ∀ {Γ Σ M T ℓ}
     → Γ ; Σ ; l ℓ ⊢ M ⦂ T of l ℓ
       ---------------------------------------------------------- CCRef
-    → Γ ; Σ ; l ℓ ⊢ ref[ ℓ ] M ⦂ (Ref (T of l ℓ)) of l low
+    → Γ ; Σ ; l ℓ ⊢ ref[ ℓ ] M ⦂ Ref (T of l ℓ) of l low
 
   ⊢deref : ∀ {Γ Σ gc M A g}
-    → Γ ; Σ ; gc ⊢ M ⦂ (Ref A) of g
+    → Γ ; Σ ; gc ⊢ M ⦂ Ref A of g
       -------------------------------- CCDeref
     → Γ ; Σ ; gc ⊢ ! M ⦂ stamp A g
 
   ⊢assign : ∀ {Γ Σ L M S g}
-    → Γ ; Σ ; g ⊢ L ⦂ (Ref (S of g)) of g
+    → Γ ; Σ ; g ⊢ L ⦂ Ref (S of g) of g
     → Γ ; Σ ; g ⊢ M ⦂ S of g
       --------------------------------------------- CCAssign
     → Γ ; Σ ; g ⊢ L := M ⦂ ` Unit of l low
@@ -83,7 +83,7 @@ data _;_;_⊢_⦂_ : Context → HeapContext → Label → Term → Type → S
     → Γ ; Σ ; gc ⊢ nsu-ref ℓ M ⦂ A
 
   ⊢nsu-assign : ∀ {Γ Σ gc A L M S g g₁}
-    → Γ ; Σ ; gc ⊢ L ⦂ (Ref (S of g₁)) of g
+    → Γ ; Σ ; gc ⊢ L ⦂ Ref (S of g₁) of g
     → Γ ; Σ ; g₁ ⊢ M ⦂ A
       --------------------------------- CCNSUAssign
     → Γ ; Σ ; gc ⊢ nsu-assign L M ⦂ A
