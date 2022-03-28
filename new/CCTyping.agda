@@ -95,7 +95,7 @@ data _;_;_⊢_⦂_ : Context → HeapContext → Label → Term → Type → S
 
   ⊢err : ∀ {Γ Σ gc A e}
       --------------------------- CCError
-    → Γ ; Σ ; gc ⊢ err e ⦂ A
+    → Γ ; Σ ; gc ⊢ error e ⦂ A
 
   ⊢sub : ∀ {Γ Σ gc A B M}
     → Γ ; Σ ; gc ⊢ M ⦂ A

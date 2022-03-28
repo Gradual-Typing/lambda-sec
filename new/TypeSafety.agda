@@ -15,10 +15,8 @@ open import TypeBasedCast
 open import CC
 open import Reduction
 
-module TypeSafety where
 
-data Error : Term → Set where
-  E-error : ∀ {e : Err} → Error (err e)
+module TypeSafety where
 
 data Progress (M : Term) (μ : Heap) (pc : StaticLabel) : Set where
   step : ∀ {N μ′}
@@ -30,7 +28,7 @@ data Progress (M : Term) (μ : Heap) (pc : StaticLabel) : Set where
       ------------- Done
     → Progress M μ pc
 
-  error : Error M
+  err : Err M
       ------------- Error
     → Progress M μ pc
 
@@ -45,11 +43,9 @@ progress μ pc (L · M) (⊢app ⊢L ⊢M) =
     (done v) →
       case progress μ pc M ⊢M of λ where
         (step M→M′) → step (ξ {F = (L ·□) v} M→M′)
-        (done w) →
-          case ⟨ v , ⊢L ⟩ of λ where
-            ⟨ V-ƛ , ⊢lam _ ⟩ → {!!}
-        (error E-error) → {!!}
-    (error (E-error {e})) → step (ξ-err {F = □· M} {e = e})
+        (done w) → {!!}
+        (err E-error) → {!!}
+    (err (E-error {e})) → step (ξ-err {F = □· M} {e = e})
 progress μ pc (if L then M else N endif) (⊢if ⊢L ⊢M ⊢N) = {!!}
 progress μ pc (`let M N) (⊢let ⊢M ⊢N) = {!!}
 progress μ pc (M ⟨ c ⟩) (⊢cast ⊢M) = {!!}
@@ -62,6 +58,6 @@ progress μ pc (prot[ ℓ ] M) (⊢prot ⊢M) =
   case progress μ (pc ⋎ ℓ) M ⊢M of λ where
     (step M→N) → step (prot-ctx M→N)
     (done v) → step (prot-val v)
-    (error E-error) → step prot-err
-progress μ pc (err e) ⊢err = error E-error
+    (err E-error) → step prot-err
+progress μ pc (error e) ⊢err = err E-error
 progress μ pc M (⊢sub ⊢M _) = progress μ pc M ⊢M

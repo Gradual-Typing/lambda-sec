@@ -21,7 +21,16 @@ data Value : Term → Set where
   V-cast : ∀ {A B V} {c : Cast A ⇒ B}
     → Value V → Inert c → Value (V ⟨ c ⟩)
 
--- TODO: change the signature to be more like pc⋆
+data Err : Term → Set where
+  E-error : ∀ {e : Error} → Err (error e)
+
+data Fun : Term → Set where
+  Fun-ƛ : ∀ {gc A N ℓ} → Fun (ƛ[ gc ] A ˙ N of ℓ)
+  Fun-proxy : ∀ {gc₁ gc₂ A B C D g₁ g₂ V}
+                {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
+    → Value V → Inert c
+    → Fun (V ⟨ c ⟩)
+
 canonical⋆ : ∀ {Γ Σ gc V T}
   → Γ ; Σ ; gc ⊢ V ⦂ T of ⋆
   → Value V
@@ -41,7 +50,7 @@ apply-cast V ⊢V v c (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty �
                 W , refl , I-base-inj _ , <:-ty <:-⋆ <:-ι ⟩ ⟩ →
       case ℓ′ ≼? ℓ of λ where
         (yes _) → V
-        (no _) → err (blame p)
+        (no _) → error (blame p)
 apply-cast V ⊢V v c (A-fun (cast ([ gc₁ ] C₁ ⇒ C₂ of ⋆) ([ gc₂ ] D₁ ⇒ D₂ of g) p (~-ty _ C~D)) a) =
   case canonical⋆ ⊢V v of λ where
     ⟨ _ , _ , ⟨ cast ([ gc₁′ ] A₁ ⇒ A₂ of l ℓ′) ([ gc₂′ ] B₁ ⇒ B₂ of ⋆) q (~-ty ~⋆ A~B) ,
@@ -65,7 +74,7 @@ apply-cast V ⊢V v c (A-fun (cast ([ gc₁ ] C₁ ⇒ C₂ of ⋆) ([ gc₂ ] D
                   c~₂ = ~-ty ~ₗ-refl C~D in
                 W ⟨ cast ([ gc₁′ ] A₁ ⇒ A₂ of l ℓ) ([ gc₂′ ] B₁ ⇒ B₂ of l ℓ) q c~₁ ⟩
                   ⟨ cast ([ gc₁  ] C₁ ⇒ C₂ of l ℓ) ([ gc₂  ] D₁ ⇒ D₂ of l ℓ) p c~₂ ⟩
-            (no _) → err (blame p)
+            (no _) → error (blame p)
 apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~RefD)) a) =
   case canonical⋆ ⊢V v of λ where
     ⟨ _ , _ , ⟨ cast (Ref A of l ℓ′) (Ref B of ⋆) q (~-ty ~⋆ RefA~RefB) ,
@@ -86,7 +95,7 @@ apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~Re
               let c~₁ = ~-ty ~ₗ-refl RefA~RefB
                   c~₂ = ~-ty ~ₗ-refl RefC~RefD in
                 W ⟨ cast (Ref A of l ℓ) (Ref B of l ℓ) q c~₁ ⟩ ⟨ cast (Ref C of l ℓ) (Ref D of l ℓ) p c~₂ ⟩
-            (no _) → err (blame p)
+            (no _) → error (blame p)
 
 -- A helper function to unwrap (inert) casts around a value
 unwrap : ∀ V → Value V → Term
