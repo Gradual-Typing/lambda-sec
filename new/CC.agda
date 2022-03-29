@@ -31,6 +31,14 @@ data Fun : Term → Set where
     → Value V → Inert c
     → Fun (V ⟨ c ⟩)
 
+canonical-fun : ∀ {Γ Σ gc gc′ A B g V}
+  → Γ ; Σ ; gc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
+  → Value V
+  → Fun V
+canonical-fun (⊢lam _) V-ƛ = Fun-ƛ
+canonical-fun (⊢cast _) (V-cast v (I-fun c i)) = Fun-proxy v (I-fun c i)
+canonical-fun (⊢sub ⊢V (<:-ty _ (<:-fun _ _ _))) v = canonical-fun ⊢V v
+
 canonical⋆ : ∀ {Γ Σ gc V T}
   → Γ ; Σ ; gc ⊢ V ⦂ T of ⋆
   → Value V

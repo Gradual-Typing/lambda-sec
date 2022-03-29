@@ -43,8 +43,11 @@ progress μ pc (L · M) (⊢app ⊢L ⊢M) =
     (done v) →
       case progress μ pc M ⊢M of λ where
         (step M→M′) → step (ξ {F = (L ·□) v} M→M′)
-        (done w) → {!!}
-        (err E-error) → {!!}
+        (done w) →
+          case canonical-fun ⊢L v of λ where
+            (Fun-ƛ) → step (β w)
+            (Fun-proxy v₁ i) → step (fun-cast v₁ w i)
+        (err (E-error {e})) → step (ξ-err {F = (L ·□) v} {e = e})
     (err (E-error {e})) → step (ξ-err {F = □· M} {e = e})
 progress μ pc (if L then M else N endif) (⊢if ⊢L ⊢M ⊢N) = {!!}
 progress μ pc (`let M N) (⊢let ⊢M ⊢N) = {!!}
