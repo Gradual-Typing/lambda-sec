@@ -45,7 +45,7 @@ progress μ pc (L · M) (⊢app ⊢L ⊢M) =
         (step M→M′) → step (ξ {F = (L ·□) v} M→M′)
         (done w) →
           case canonical-fun ⊢L v of λ where
-            (Fun-ƛ) → step (β w)
+            Fun-ƛ → step (β w)
             (Fun-proxy v₁ i) → step (fun-cast v₁ w i)
         (err (E-error {e})) → step (ξ-err {F = (L ·□) v} {e = e})
     (err (E-error {e})) → step (ξ-err {F = □· M} {e = e})
@@ -53,7 +53,14 @@ progress μ pc (if L then M else N endif) (⊢if ⊢L ⊢M ⊢N) = {!!}
 progress μ pc (`let M N) (⊢let ⊢M ⊢N) = {!!}
 progress μ pc (M ⟨ c ⟩) (⊢cast ⊢M) = {!!}
 progress μ pc (ref[ ℓ ] M) (⊢ref ⊢M) = {!!}
-progress μ pc (! M) (⊢deref ⊢M) = {!!}
+progress μ pc (! M) (⊢deref ⊢M) =
+  case progress μ pc M ⊢M of λ where
+    (step M→M′) → {!!}
+    (done v) →
+      case canonical-ref ⊢M v of λ where
+        Ref-addr → step (deref {!!})
+        (Ref-proxy v₁ i) → {!!}
+    (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
 progress μ pc (L := M) (⊢assign ⊢L ⊢M) = {!!}
 progress μ pc (nsu-ref ℓ M) (⊢nsu-ref ⊢M) = {!!}
 progress μ pc (nsu-assign L M) (⊢nsu-assign ⊢L ⊢M) = {!!}

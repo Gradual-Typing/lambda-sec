@@ -31,6 +31,12 @@ data Fun : Term → Set where
     → Value V → Inert c
     → Fun (V ⟨ c ⟩)
 
+data Refer : Term → Set where
+  Ref-addr : ∀ {a ℓ} → Refer (addr a of ℓ)
+  Ref-proxy : ∀ {A B g₁ g₂ V} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
+    → Value V → Inert c
+    → Refer (V ⟨ c ⟩)
+
 canonical-fun : ∀ {Γ Σ gc gc′ A B g V}
   → Γ ; Σ ; gc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
   → Value V
@@ -38,6 +44,14 @@ canonical-fun : ∀ {Γ Σ gc gc′ A B g V}
 canonical-fun (⊢lam _) V-ƛ = Fun-ƛ
 canonical-fun (⊢cast _) (V-cast v (I-fun c i)) = Fun-proxy v (I-fun c i)
 canonical-fun (⊢sub ⊢V (<:-ty _ (<:-fun _ _ _))) v = canonical-fun ⊢V v
+
+canonical-ref : ∀ {Γ Σ gc A g V}
+  → Γ ; Σ ; gc ⊢ V ⦂ Ref A of g
+  → Value V
+  → Refer V
+canonical-ref (⊢addr _) V-addr = Ref-addr
+canonical-ref (⊢cast _) (V-cast v (I-ref c i)) = Ref-proxy v (I-ref c i)
+canonical-ref (⊢sub ⊢V (<:-ty _ (<:-ref _ _))) v = canonical-ref ⊢V v
 
 canonical⋆ : ∀ {Γ Σ gc V T}
   → Γ ; Σ ; gc ⊢ V ⦂ T of ⋆
@@ -127,3 +141,13 @@ stamp-val (addr a of ℓ₁) V-addr ℓ = addr a of (ℓ₁ ⋎ ℓ)
 stamp-val (ƛ[ pc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ pc ] A ˙ N of (ℓ₁ ⋎ ℓ)
 stamp-val ($ k of ℓ₁) V-const ℓ = $ k of (ℓ₁ ⋎ ℓ)
 stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = let ⟨ C , D , c′ ⟩ = stamp-inert c i ℓ in V ⟨ c′ ⟩
+
+⊢value-weakening-gc : ∀ {Σ gc V A}
+  → [] ; Σ ; gc ⊢ V ⦂ A
+  → Value V
+  → [] ; Σ ; l low ⊢ V ⦂ A
+⊢value-weakening-gc (⊢addr eq) V-addr = ⊢addr eq
+⊢value-weakening-gc (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
+⊢value-weakening-gc ⊢const V-const = ⊢const
+⊢value-weakening-gc (⊢cast ⊢V) (V-cast v i) = ⊢cast (⊢value-weakening-gc ⊢V v)
+⊢value-weakening-gc (⊢sub ⊢V A<:B) v = ⊢sub (⊢value-weakening-gc ⊢V v) A<:B
