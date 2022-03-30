@@ -142,12 +142,13 @@ stamp-val (ƛ[ pc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ pc ] A ˙ N of (ℓ₁ ⋎ 
 stamp-val ($ k of ℓ₁) V-const ℓ = $ k of (ℓ₁ ⋎ ℓ)
 stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = let ⟨ C , D , c′ ⟩ = stamp-inert c i ℓ in V ⟨ c′ ⟩
 
-⊢value-weakening-gc : ∀ {Σ gc V A}
-  → [] ; Σ ; gc ⊢ V ⦂ A
+-- Instantiation of gc to be low
+⊢value-inst-gc : ∀ {Σ V A}
+  → ∃[ gc ] [] ; Σ ; gc ⊢ V ⦂ A
   → Value V
   → [] ; Σ ; l low ⊢ V ⦂ A
-⊢value-weakening-gc (⊢addr eq) V-addr = ⊢addr eq
-⊢value-weakening-gc (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
-⊢value-weakening-gc ⊢const V-const = ⊢const
-⊢value-weakening-gc (⊢cast ⊢V) (V-cast v i) = ⊢cast (⊢value-weakening-gc ⊢V v)
-⊢value-weakening-gc (⊢sub ⊢V A<:B) v = ⊢sub (⊢value-weakening-gc ⊢V v) A<:B
+⊢value-inst-gc ⟨ gc , ⊢addr eq ⟩ V-addr = ⊢addr eq
+⊢value-inst-gc ⟨ gc , ⊢lam ⊢N ⟩ V-ƛ = ⊢lam ⊢N
+⊢value-inst-gc ⟨ gc , ⊢const ⟩ V-const = ⊢const
+⊢value-inst-gc ⟨ gc , ⊢cast ⊢V ⟩ (V-cast v i) = ⊢cast (⊢value-inst-gc ⟨ gc , ⊢V ⟩ v)
+⊢value-inst-gc ⟨ gc , ⊢sub ⊢V A<:B ⟩ v = ⊢sub (⊢value-inst-gc ⟨ gc , ⊢V ⟩ v) A<:B
