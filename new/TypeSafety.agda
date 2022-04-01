@@ -33,16 +33,16 @@ data Progress (M : Term) (μ : Heap) (pc : StaticLabel) : Set where
       ------------- Error
     → Progress M μ pc
 
-progress : ∀ {Σ gc A} → ∀ μ pc M → [] ; Σ ; gc ⊢ M ⦂ A → Σ ⊢ μ → Progress M μ pc
-progress μ pc ($ k of ℓ) ⊢const ⊢μ = done V-const
-progress μ pc (addr a of ℓ) (⊢addr _) ⊢μ = done V-addr
-progress μ pc (` x) (⊢var ())
-progress μ pc (ƛ[ _ ] A ˙ N of ℓ) (⊢lam ⊢M) ⊢μ = done V-ƛ
-progress μ pc (L · M) (⊢app ⊢L ⊢M) ⊢μ =
-  case progress μ pc L ⊢L ⊢μ of λ where
+progress : ∀ {Σ gc A} M → [] ; Σ ; gc ⊢ M ⦂ A → ∀ μ → Σ ⊢ μ → ∀ pc → Progress M μ pc
+progress ($ k of ℓ) ⊢const μ ⊢μ pc = done V-const
+progress (addr a of ℓ) (⊢addr _) μ ⊢μ pc = done V-addr
+progress (` x) (⊢var ())
+progress (ƛ[ _ ] A ˙ N of ℓ) (⊢lam ⊢M) μ ⊢μ pc = done V-ƛ
+progress (L · M) (⊢app ⊢L ⊢M) μ ⊢μ pc =
+  case progress L ⊢L μ ⊢μ pc of λ where
     (step L→L′) → step (ξ {F = □· M} L→L′)
     (done v) →
-      case progress μ pc M ⊢M ⊢μ of λ where
+      case progress M ⊢M μ ⊢μ pc of λ where
         (step M→M′) → step (ξ {F = (L ·□) v} M→M′)
         (done w) →
           case canonical-fun ⊢L v of λ where
@@ -50,12 +50,16 @@ progress μ pc (L · M) (⊢app ⊢L ⊢M) ⊢μ =
             (Fun-proxy v₁ i) → step (fun-cast v₁ w i)
         (err (E-error {e})) → step (ξ-err {F = (L ·□) v} {e = e})
     (err (E-error {e})) → step (ξ-err {F = □· M} {e = e})
-progress μ pc (if L then M else N endif) (⊢if ⊢L ⊢M ⊢N) ⊢μ = {!!}
-progress μ pc (`let M N) (⊢let ⊢M ⊢N) ⊢μ = {!!}
-progress μ pc (M ⟨ c ⟩) (⊢cast ⊢M) ⊢μ = {!!}
-progress μ pc (ref[ ℓ ] M) (⊢ref ⊢M) ⊢μ = {!!}
-progress μ pc (! M) (⊢deref ⊢M) ⊢μ =
-  case progress μ pc M ⊢M ⊢μ of λ where
+progress (if L then M else N endif) (⊢if ⊢L ⊢M ⊢N) μ ⊢μ pc = {!!}
+progress (`let M N) (⊢let ⊢M ⊢N) μ ⊢μ pc = {!!}
+progress (M ⟨ c ⟩) (⊢cast ⊢M) μ ⊢μ pc = {!!}
+progress (ref[ ℓ ] M) (⊢ref ⊢M) μ ⊢μ pc =
+  case progress M ⊢M μ ⊢μ pc of λ where
+    (step M→M′) → step (ξ {F = ref[ ℓ ]□} M→M′)
+    (done v) → step (ref v refl)
+    (err (E-error {e})) → step (ξ-err {F = ref[ ℓ ]□} {e = e})
+progress (! M) (⊢deref ⊢M) μ ⊢μ pc =
+  case progress M ⊢M μ ⊢μ pc of λ where
     (step M→M′) → step (ξ {F = !□} M→M′)
     (done v) →
       case canonical-ref ⊢M v of λ where
@@ -64,13 +68,13 @@ progress μ pc (! M) (⊢deref ⊢M) ⊢μ =
             ⟨ T , ℓ , refl , V₁ , eq , ⊢V₁ ⟩ → step (deref eq)
         (Ref-proxy v₁ i) → step (deref-cast v₁ i)
     (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
-progress μ pc (L := M) (⊢assign ⊢L ⊢M) ⊢μ = {!!}
-progress μ pc (nsu-ref ℓ M) (⊢nsu-ref ⊢M) ⊢μ = {!!}
-progress μ pc (nsu-assign L M) (⊢nsu-assign ⊢L ⊢M) ⊢μ = {!!}
-progress μ pc (prot[ ℓ ] M) (⊢prot ⊢M) ⊢μ =
-  case progress μ (pc ⋎ ℓ) M ⊢M ⊢μ of λ where
+progress (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ pc = {!!}
+progress (nsu-ref ℓ M) (⊢nsu-ref ⊢M) μ ⊢μ pc = {!!}
+progress (nsu-assign L M) (⊢nsu-assign ⊢L ⊢M) μ ⊢μ pc = {!!}
+progress (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ pc =
+  case progress M ⊢M μ ⊢μ (pc ⋎ ℓ) of λ where
     (step M→N) → step (prot-ctx M→N)
     (done v) → step (prot-val v)
     (err E-error) → step prot-err
-progress μ pc (error e) ⊢err ⊢μ = err E-error
-progress μ pc M (⊢sub ⊢M _) ⊢μ = progress μ pc M ⊢M ⊢μ
+progress (error e) ⊢err μ ⊢μ pc = err E-error
+progress M (⊢sub ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
