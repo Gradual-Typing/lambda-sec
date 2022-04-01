@@ -704,6 +704,11 @@ consis-join-<:ₗ (<:-l ℓ₁≼ℓ₁′) (<:-l ℓ₂≼ℓ₂′) = <:-l (jo
 <:-antisym {S of g₁} {T of g₂} (<:-ty g₁<:g₂ S<:T) (<:-ty g₂<:g₁ T<:S) =
   cong₂ (λ □₁ □₂ → □₁ of □₂) (<:ᵣ-antisym S<:T T<:S) (<:ₗ-antisym g₁<:g₂ g₂<:g₁)
 
+stamp-<: : ∀ {A B g₁ g₂}
+  → A <: B → g₁ <:ₗ g₂
+  → stamp A g₁ <: stamp B g₂
+stamp-<: (<:-ty g₁′<:g₂′ S<:T) g₁<:g₂ = <:-ty (consis-join-<:ₗ g₁′<:g₂′ g₁<:g₂) S<:T
+
 ≼-trans : ∀ {ℓ₁ ℓ₂ ℓ₃}
   → ℓ₁ ≼ ℓ₂ → ℓ₂ ≼ ℓ₃ → ℓ₁ ≼ ℓ₃
 ≼-trans l⊑l l⊑l = l⊑l

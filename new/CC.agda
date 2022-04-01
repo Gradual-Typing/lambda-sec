@@ -136,23 +136,36 @@ unwrap-ref (⊢cast ⊢V) (V-cast {c = cast A B _ (~-ty _ (~-ref _))} v i) =
 unwrap-ref (⊢sub ⊢V (<:-ty _ (<:-ref A<:B B<:A))) v
   rewrite <:-antisym A<:B B<:A = unwrap-ref ⊢V v
 
-stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → StaticLabel
-                      → ∃[ C ] ∃[ D ] (Cast C ⇒ D)
-stamp-inert (cast (` ι of l ℓ₁) (` ι of ⋆) p (~-ty ~⋆ ~-ι)) (I-base-inj _) ℓ =
-  ⟨ _ , ⟨ _ , cast (` ι of l (ℓ₁ ⋎ ℓ)) (` ι of ⋆) p (~-ty ~⋆ ~-ι) ⟩ ⟩
+stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → ∀ ℓ
+                      → (Cast (stamp A (l ℓ)) ⇒ (stamp B (l ℓ)))
+stamp-inert (cast (` ι of l ℓ₁) (` ι of ⋆) p (~-ty ~⋆ ~-ι))
+            (I-base-inj _) ℓ =
+  cast (` ι of l (ℓ₁ ⋎ ℓ)) (` ι of ⋆) p (~-ty ~⋆ ~-ι)
 stamp-inert (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-ty g₁~g₂ A→B~C→D))
             (I-fun _ I-label) ℓ =
   let c~ = ~-ty (consis-join-~ₗ g₁~g₂ ~ₗ-refl) A→B~C→D in
-    ⟨ _ , ⟨ _ , cast ([ gc₁ ] A ⇒ B of (g₁ ⋎̃ l ℓ)) ([ gc₂ ] C ⇒ D of (g₂ ⋎̃ l ℓ)) p c~ ⟩ ⟩
-stamp-inert (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ RefA~RefB)) (I-ref _ I-label) ℓ =
+    cast ([ gc₁ ] A ⇒ B of (g₁ ⋎̃ l ℓ)) ([ gc₂ ] C ⇒ D of (g₂ ⋎̃ l ℓ)) p c~
+stamp-inert (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ RefA~RefB))
+            (I-ref _ I-label) ℓ =
   let c~ = ~-ty (consis-join-~ₗ g₁~g₂ ~ₗ-refl) RefA~RefB in
-    ⟨ _ , ⟨ _ , cast (Ref A of (g₁ ⋎̃ l ℓ)) (Ref B of (g₂ ⋎̃ l ℓ)) p c~ ⟩ ⟩
+    cast (Ref A of (g₁ ⋎̃ l ℓ)) (Ref B of (g₂ ⋎̃ l ℓ)) p c~
 
 stamp-val : ∀ V → Value V → StaticLabel → Term
 stamp-val (addr a of ℓ₁) V-addr ℓ = addr a of (ℓ₁ ⋎ ℓ)
 stamp-val (ƛ[ pc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ pc ] A ˙ N of (ℓ₁ ⋎ ℓ)
 stamp-val ($ k of ℓ₁) V-const ℓ = $ k of (ℓ₁ ⋎ ℓ)
-stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = let ⟨ C , D , c′ ⟩ = stamp-inert c i ℓ in V ⟨ c′ ⟩
+stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = stamp-val V v ℓ ⟨ stamp-inert c i ℓ ⟩
+
+-- Value stamping is well-typed
+stamp-val-wt : ∀ {Γ Σ gc V A ℓ}
+  → Γ ; Σ ; gc ⊢ V ⦂ A
+  → (v : Value V)
+  → Γ ; Σ ; gc ⊢ stamp-val V v ℓ ⦂ stamp A (l ℓ)
+stamp-val-wt (⊢addr eq) V-addr = ⊢addr eq
+stamp-val-wt (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
+stamp-val-wt ⊢const V-const = ⊢const
+stamp-val-wt (⊢cast ⊢V) (V-cast v i) = ⊢cast (stamp-val-wt ⊢V v)
+stamp-val-wt (⊢sub ⊢V A<:B) v = ⊢sub (stamp-val-wt ⊢V v) (stamp-<: A<:B <:ₗ-refl)
 
 -- Instantiation of gc to be low
 ⊢value-inst-gc : ∀ {Σ V A}
