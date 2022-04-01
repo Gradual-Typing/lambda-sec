@@ -86,7 +86,16 @@ progress (nsu-ref ℓ M) (⊢nsu-ref ⊢M) μ ⊢μ pc =
   case pc ≼? ℓ of λ where
     (yes pc≼ℓ) → step (nsu-ref-ok pc≼ℓ)
     (no  pc⋠ℓ) → step (nsu-ref-fail pc⋠ℓ)
-progress (nsu-assign L M) (⊢nsu-assign ⊢L ⊢M) μ ⊢μ pc = {!!}
+progress (nsu-assign L M) (⊢nsu-assign ⊢L ⊢M) μ ⊢μ pc =
+  case progress L ⊢L μ ⊢μ pc of λ where
+    (step L→L′) → step (ξ {F = nsu-assign□ M} L→L′)
+    (done v) →
+      let ⟨ a , ℓ , eq₁ , A′ , ⊢a ⟩ = unwrap-ref ⊢L v in
+      let ⟨ T , ℓ₁ , _ , V₁ , eq₂ , ⊢V₁ ⟩ = ⊢μ (⊢addr-lookup ⊢a) in
+        case pc ≼? ℓ₁ of λ where
+          (yes pc≼ℓ₁) → step (nsu-assign-ok v eq₁ eq₂ pc≼ℓ₁)
+          (no  pc⋠ℓ₁) → step (nsu-assign-fail v eq₁ eq₂ pc⋠ℓ₁)
+    (err (E-error {e})) → step (ξ-err {F = nsu-assign□ M} {e = e})
 progress (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ pc =
   case progress M ⊢M μ ⊢μ (pc ⋎ ℓ) of λ where
     (step M→N) → step (prot-ctx M→N)
