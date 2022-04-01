@@ -123,8 +123,18 @@ apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~Re
 
 -- A helper function to unwrap (inert) casts around a value
 unwrap : ∀ V → Value V → Term
-unwrap (V ⟨ c ⟩) (V-cast v i) = V
+unwrap (V ⟨ c ⟩) (V-cast v i) = unwrap V v
 unwrap V _ = V
+
+unwrap-ref : ∀ {Γ Σ gc V A g}
+  → Γ ; Σ ; gc ⊢ V ⦂ Ref A of g
+  → (v : Value V)
+  → ∃[ a ] ∃[ ℓ ] (unwrap V v ≡ addr a of ℓ) × (∃[ A′ ] Γ ; Σ ; gc ⊢ addr a of ℓ ⦂ Ref A′ of l ℓ)
+unwrap-ref (⊢addr eq) V-addr = ⟨ _ , _ , refl , _ , ⊢addr eq ⟩
+unwrap-ref (⊢cast ⊢V) (V-cast {c = cast A B _ (~-ty _ (~-ref _))} v i) =
+  unwrap-ref ⊢V v
+unwrap-ref (⊢sub ⊢V (<:-ty _ (<:-ref A<:B B<:A))) v
+  rewrite <:-antisym A<:B B<:A = unwrap-ref ⊢V v
 
 stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → StaticLabel
                       → ∃[ C ] ∃[ D ] (Cast C ⇒ D)
