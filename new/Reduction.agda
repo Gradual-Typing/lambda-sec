@@ -90,6 +90,11 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ----------------------------------------------------------------------- IfFalse
     → if ($ false of ℓ) then M else N endif ∣ μ ∣ pc —→ prot[ ℓ ] N ∣ μ
 
+  β-let : ∀ {V N μ pc}
+    → Value V
+      -------------------------------------- Let
+    → `let V N ∣ μ ∣ pc —→ N [ V ] ∣ μ
+
   ref : ∀ {V μ pc a ℓ}
     → Value V
     → a ≡ length μ  {- address a is fresh -}

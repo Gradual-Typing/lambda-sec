@@ -3,6 +3,7 @@ open import Data.Unit using (⊤; tt)
 open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.List hiding ([_])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
@@ -51,8 +52,19 @@ progress (L · M) (⊢app ⊢L ⊢M) μ ⊢μ pc =
         (err (E-error {e})) → step (ξ-err {F = (L ·□) v} {e = e})
     (err (E-error {e})) → step (ξ-err {F = □· M} {e = e})
 progress (if L then M else N endif) (⊢if ⊢L ⊢M ⊢N) μ ⊢μ pc = {!!}
-progress (`let M N) (⊢let ⊢M ⊢N) μ ⊢μ pc = {!!}
-progress (M ⟨ c ⟩) (⊢cast ⊢M) μ ⊢μ pc = {!!}
+progress (`let M N) (⊢let ⊢M ⊢N) μ ⊢μ pc =
+  case progress M ⊢M μ ⊢μ pc of λ where
+    (step M→M′) → step (ξ {F = let□ N} M→M′)
+    (done v) → step (β-let v)
+    (err (E-error {e})) → step (ξ-err {F = let□ N} {e = e})
+progress (M ⟨ c ⟩) (⊢cast ⊢M) μ ⊢μ pc =
+  case progress M ⊢M μ ⊢μ pc of λ where
+    (step M→M′) → step (ξ {F = □⟨ c ⟩} M→M′)
+    (done v) →
+      case active-or-inert c of λ where
+        (inj₁ a) → step (cast ⊢M v a)
+        (inj₂ i) → done (V-cast v i)
+    (err (E-error {e})) → step (ξ-err {F = □⟨ c ⟩} {e = e})
 progress (ref[ ℓ ] M) (⊢ref ⊢M) μ ⊢μ pc =
   case progress M ⊢M μ ⊢μ pc of λ where
     (step M→M′) → step (ξ {F = ref[ ℓ ]□} M→M′)
@@ -64,8 +76,8 @@ progress (! M) (⊢deref ⊢M) μ ⊢μ pc =
     (done v) →
       case canonical-ref ⊢M v of λ where
         Ref-addr →
-          case (⊢μ (⊢addr-lookup ⊢M)) of λ where
-            ⟨ T , ℓ , refl , V₁ , eq , ⊢V₁ ⟩ → step (deref eq)
+          let ⟨ T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ (⊢addr-lookup ⊢M) in
+            step (deref eq)
         (Ref-proxy v₁ i) → step (deref-cast v₁ i)
     (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
 progress (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ pc =
@@ -77,8 +89,8 @@ progress (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ pc =
         (done w) →
           case canonical-ref ⊢L v of λ where
             Ref-addr →
-              case (⊢μ (⊢addr-lookup ⊢L)) of λ where
-                ⟨ T , ℓ , refl , V₁ , eq , ⊢V₁ ⟩ → step (assign w eq)
+              let ⟨ T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ (⊢addr-lookup ⊢L) in
+                step (assign w eq)
             (Ref-proxy v₁ i) → step (assign-cast v₁ w i)
         (err (E-error {e})) → step (ξ-err {F = (L :=□) v} {e = e})
     (err (E-error {e})) → step (ξ-err {F = □:= M} {e = e})
