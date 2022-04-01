@@ -17,6 +17,7 @@ open import CC
 infix 4 _⊢_
 
 _⊢_ : HeapContext → Heap → Set
-Σ ⊢ μ = ∀ {a T ℓ}
-  → key _≟_ Σ a ≡ just (T of l ℓ)
-  → ∃[ V ] (key _≟_ μ a ≡ just ⟨ V , ℓ ⟩) × ([] ; Σ ; l low ⊢ V ⦂ T of l ℓ)
+Σ ⊢ μ = ∀ {a A}
+  → key _≟_ Σ a ≡ just A
+  → ∃[ T ] ∃[ ℓ ] (A ≡ T of l ℓ) ×
+                   (∃[ V ] (key _≟_ μ a ≡ just ⟨ V , ℓ ⟩) × ([] ; Σ ; l low ⊢ V ⦂ A))

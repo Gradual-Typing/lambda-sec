@@ -1,6 +1,8 @@
 module CC where
 
+open import Data.Nat
 open import Data.List
+open import Data.Maybe
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Relation.Nullary using (¬_; Dec; yes; no)
@@ -152,3 +154,11 @@ stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = let ⟨ C , D , c′ ⟩ = stamp-iner
 ⊢value-inst-gc ⟨ gc , ⊢const ⟩ V-const = ⊢const
 ⊢value-inst-gc ⟨ gc , ⊢cast ⊢V ⟩ (V-cast v i) = ⊢cast (⊢value-inst-gc ⟨ gc , ⊢V ⟩ v)
 ⊢value-inst-gc ⟨ gc , ⊢sub ⊢V A<:B ⟩ v = ⊢sub (⊢value-inst-gc ⟨ gc , ⊢V ⟩ v) A<:B
+
+-- If an address is well-typed, the heap context lookup is successful.
+⊢addr-lookup : ∀ {Γ Σ gc a ℓ A g}
+  → Γ ; Σ ; gc ⊢ addr a of ℓ ⦂ Ref A of g
+  → key _≟_ Σ a ≡ just A
+⊢addr-lookup (⊢addr eq) = eq
+⊢addr-lookup (⊢sub ⊢a (<:-ty _ (<:-ref A<:B B<:A)))
+  rewrite <:-antisym A<:B B<:A = ⊢addr-lookup ⊢a
