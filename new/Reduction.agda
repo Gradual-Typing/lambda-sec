@@ -144,6 +144,16 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       -------------------------------------------------- Cast
     → V ⟨ c ⟩ ∣ μ ∣ pc —→ apply-cast V ⊢V v c a ∣ μ
 
+  if-cast-true : ∀ {M N μ pc g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
+    → Inert c
+      ----------------------------------------------------------------------- IfCastTrue
+    → if ($ true of ℓ ⟨ c ⟩) then M else N endif ∣ μ ∣ pc —→ prot[ ℓ ] M ∣ μ
+
+  if-cast-false : ∀ {M N μ pc g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
+    → Inert c
+      ----------------------------------------------------------------------- IfCastFalse
+    → if ($ false of ℓ ⟨ c ⟩) then M else N endif ∣ μ ∣ pc —→ prot[ ℓ ] N ∣ μ
+
   fun-cast : ∀ {V W μ pc A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
     → Value V → Value W
     → Inert c
