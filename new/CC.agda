@@ -1,6 +1,7 @@
 module CC where
 
 open import Data.Nat
+open import Data.Bool renaming (Bool to 𝔹; _≟_ to _≟ᵇ_)
 open import Data.List
 open import Data.Maybe
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -39,6 +40,13 @@ data Refer : Term → Set where
     → Value V → Inert c
     → Refer (V ⟨ c ⟩)
 
+data Boolean : Term → Set where
+  Bool-true  : ∀ {ℓ} → Boolean ($ true of ℓ)
+  Bool-false : ∀ {ℓ} → Boolean ($ false of ℓ)
+  Bool-cast : ∀ {b : 𝔹} {g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
+    → Inert c
+    → Boolean ($ b of ℓ ⟨ c ⟩)
+
 canonical-fun : ∀ {Γ Σ gc gc′ A B g V}
   → Γ ; Σ ; gc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
   → Value V
@@ -64,6 +72,33 @@ canonical⋆ (⊢sub ⊢V (<:-ty {S = T′} <:-⋆ T′<:T)) v =
   case canonical⋆ ⊢V v of λ where
     ⟨ A , B , ⟨ c , W , refl , i , B<:T′⋆ ⟩ ⟩ →
       ⟨ A , B , ⟨ c , W , refl , i , <:-trans B<:T′⋆ (<:-ty <:-⋆ T′<:T) ⟩ ⟩
+
+private
+  canonical-const-const : ∀ {Γ Σ gc ι ℓ V}
+    → Γ ; Σ ; gc ⊢ V ⦂ ` ι of l ℓ
+    → Value V
+    → Σ[ k ∈ rep ι ] ∃[ ℓ′ ] V ≡ $ k of ℓ′
+  canonical-const-const ⊢const V-const = ⟨ _ , _ , refl ⟩
+  canonical-const-const (⊢sub ⊢V (<:-ty (<:-l _) <:-ι)) v = canonical-const-const ⊢V v
+  canonical-const-cast : ∀ {Γ Σ gc ι V}
+    → Γ ; Σ ; gc ⊢ V ⦂ ` ι of ⋆
+    → Value V
+    → Σ[ k ∈ rep ι ] ∃[ ℓ ] ∃[ ℓ′ ] Σ[ c ∈ Cast (` ι of l ℓ) ⇒ (` ι of ⋆) ] V ≡ $ k of ℓ′ ⟨ c ⟩
+  canonical-const-cast (⊢cast ⊢V) (V-cast v (I-base-inj _)) =
+    case canonical-const-const ⊢V v of λ where
+      ⟨ k , ℓ′ , refl ⟩ → ⟨ k , ⟨ _ , ⟨ ℓ′ , ⟨ _ , refl ⟩ ⟩ ⟩ ⟩
+  canonical-const-cast (⊢sub ⊢V (<:-ty <:-⋆ <:-ι)) v = canonical-const-cast ⊢V v
+canonical-bool : ∀ {Γ Σ gc g V}
+  → Γ ; Σ ; gc ⊢ V ⦂ ` Bool of g
+  → Value V
+  → Boolean V
+canonical-bool {g = ⋆} ⊢V v =
+  case canonical-const-cast ⊢V v of λ where
+    ⟨ k  , ℓ , ℓ′ , c , refl ⟩ → Bool-cast (I-base-inj c)
+canonical-bool {g = l ℓ} ⊢V v =
+  case canonical-const-const ⊢V v of λ where
+    ⟨ true  , ℓ′ , refl ⟩ → Bool-true
+    ⟨ false , ℓ′ , refl ⟩ → Bool-false
 
 apply-cast : ∀ {Γ Σ gc A B} → (V : Term) → Γ ; Σ ; gc ⊢ V ⦂ A → Value V → (c : Cast A ⇒ B) → Active c → Term
 -- V ⟨ ` ι of g ⇒ ` ι of g ⟩ —→ V

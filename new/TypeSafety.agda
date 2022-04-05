@@ -51,7 +51,16 @@ progress (L · M) (⊢app ⊢L ⊢M) μ ⊢μ pc =
             (Fun-proxy v₁ i) → step (fun-cast v₁ w i)
         (err (E-error {e})) → step (ξ-err {F = (L ·□) v} {e = e})
     (err (E-error {e})) → step (ξ-err {F = □· M} {e = e})
-progress (if L then M else N endif) (⊢if ⊢L ⊢M ⊢N) μ ⊢μ pc = {!!}
+progress (if L then M else N endif) (⊢if {g = g} ⊢L ⊢M ⊢N) μ ⊢μ pc =
+  case progress L ⊢L μ ⊢μ pc of λ where
+    (step L→L′) → step (ξ {F = if□ M N} L→L′)
+    (done v) →
+      case canonical-bool ⊢L v of λ where
+        Bool-true → step β-if-true
+        Bool-false → step β-if-false
+        (Bool-cast {true} i) → step (if-cast-true i)
+        (Bool-cast {false} i) → step (if-cast-false i)
+    (err (E-error {e})) → step (ξ-err {F = if□ M N} {e = e})
 progress (`let M N) (⊢let ⊢M ⊢N) μ ⊢μ pc =
   case progress M ⊢M μ ⊢μ pc of λ where
     (step M→M′) → step (ξ {F = let□ N} M→M′)

@@ -29,3 +29,5 @@ pattern ⟨_,_,_⟩ x y z = ⟨ x , ⟨ y , z ⟩ ⟩
 pattern ⟨_,_,_,_⟩ x y z w = ⟨ x , ⟨ y , ⟨ z , w ⟩ ⟩ ⟩
 pattern ⟨_,_,_,_,_⟩ x y z w u = ⟨ x , ⟨ y , ⟨ z , ⟨ w , u ⟩ ⟩ ⟩ ⟩
 pattern ⟨_,_,_,_,_,_⟩ x y z w u v = ⟨ x , ⟨ y , ⟨ z , ⟨ w , ⟨ u , v ⟩ ⟩ ⟩ ⟩ ⟩
+pattern ⟨_,_,_,_,_,_,_⟩ x y z w u v p = ⟨ x , ⟨ y , ⟨ z , ⟨ w , ⟨ u , ⟨ v , p ⟩ ⟩ ⟩ ⟩ ⟩ ⟩
+pattern ⟨_,_,_,_,_,_,_,_⟩ x y z w u v p q = ⟨ x , ⟨ y , ⟨ z , ⟨ w , ⟨ u , ⟨ v , ⟨ p , q ⟩ ⟩ ⟩ ⟩ ⟩ ⟩ ⟩
