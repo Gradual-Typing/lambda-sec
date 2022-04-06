@@ -124,3 +124,12 @@ progress (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ pc =
     (err E-error) → step prot-err
 progress (error e) ⊢err μ ⊢μ pc = err E-error
 progress M (⊢sub ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
+
+
+preserve : ∀ {Σ gc M M′ A μ μ′ pc}
+  → [] ; Σ ; gc ⊢ M ⦂ A
+  → Σ ⊢ μ
+  → M ∣ μ ∣ pc —→ M′ ∣ μ′
+    ----------------------------------------------------------
+  → ∃[ Σ′ ] (Σ′ ⊇ Σ) × ([] ; Σ′ ; gc ⊢ M′ ⦂ A) × (Σ′ ⊢ μ′)
+preserve ⊢M ⊢μ R = {!!}
