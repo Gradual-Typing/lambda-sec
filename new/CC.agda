@@ -202,16 +202,31 @@ stamp-val-wt ⊢const V-const = ⊢const
 stamp-val-wt (⊢cast ⊢V) (V-cast v i) = ⊢cast (stamp-val-wt ⊢V v)
 stamp-val-wt (⊢sub ⊢V A<:B) v = ⊢sub (stamp-val-wt ⊢V v) (stamp-<: A<:B <:ₗ-refl)
 
--- Instantiation of gc to be low
-⊢value-inst-gc : ∀ {Σ V A}
-  → ∃[ gc ] [] ; Σ ; gc ⊢ V ⦂ A
+-- A stamped value is value
+stamp-inert-inert : ∀ {A B} {c : Cast A ⇒ B} {ℓ}
+  → (i : Inert c)
+  → Inert (stamp-inert c i ℓ)
+stamp-inert-inert (I-base-inj c) = I-base-inj _
+stamp-inert-inert (I-fun c I-label) = I-fun (stamp-inert c _ _) I-label
+stamp-inert-inert (I-ref c I-label) = I-ref (stamp-inert c _ _) I-label
+
+stamp-val-value : ∀ {V ℓ}
+  → (v : Value V)
+  → Value (stamp-val V v ℓ)
+stamp-val-value V-addr = V-addr
+stamp-val-value V-ƛ = V-ƛ
+stamp-val-value V-const = V-const
+stamp-val-value (V-cast v i) = V-cast (stamp-val-value v) (stamp-inert-inert i)
+
+⊢value-gc : ∀ {Σ gc gc′ V A}
+  → [] ; Σ ; gc ⊢ V ⦂ A
   → Value V
-  → [] ; Σ ; l low ⊢ V ⦂ A
-⊢value-inst-gc ⟨ gc , ⊢addr eq ⟩ V-addr = ⊢addr eq
-⊢value-inst-gc ⟨ gc , ⊢lam ⊢N ⟩ V-ƛ = ⊢lam ⊢N
-⊢value-inst-gc ⟨ gc , ⊢const ⟩ V-const = ⊢const
-⊢value-inst-gc ⟨ gc , ⊢cast ⊢V ⟩ (V-cast v i) = ⊢cast (⊢value-inst-gc ⟨ gc , ⊢V ⟩ v)
-⊢value-inst-gc ⟨ gc , ⊢sub ⊢V A<:B ⟩ v = ⊢sub (⊢value-inst-gc ⟨ gc , ⊢V ⟩ v) A<:B
+  → [] ; Σ ; gc′ ⊢ V ⦂ A
+⊢value-gc (⊢addr eq) V-addr = ⊢addr eq
+⊢value-gc (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
+⊢value-gc ⊢const V-const = ⊢const
+⊢value-gc (⊢cast ⊢V) (V-cast v i) = ⊢cast (⊢value-gc ⊢V v)
+⊢value-gc (⊢sub ⊢V A<:B) v = ⊢sub (⊢value-gc ⊢V v) A<:B
 
 -- If an address is well-typed, the heap context lookup is successful.
 ⊢addr-lookup : ∀ {Γ Σ gc a ℓ A g}

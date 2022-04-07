@@ -24,3 +24,6 @@ _⊢_ : HeapContext → Heap → Set
 
 _⊇_ : HeapContext → HeapContext → Set
 Σ′ ⊇ Σ = ∀ a {A} → key _≟_ Σ a ≡ just A → key _≟_ Σ′ a ≡ just A
+
+⊇-refl : ∀ {Σ} → Σ ⊇ Σ
+⊇-refl {Σ} a eq = eq

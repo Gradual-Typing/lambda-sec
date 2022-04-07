@@ -132,4 +132,31 @@ preserve : ∀ {Σ gc M M′ A μ μ′ pc}
   → M ∣ μ ∣ pc —→ M′ ∣ μ′
     ----------------------------------------------------------
   → ∃[ Σ′ ] (Σ′ ⊇ Σ) × ([] ; Σ′ ; gc ⊢ M′ ⦂ A) × (Σ′ ⊢ μ′)
-preserve ⊢M ⊢μ R = {!!}
+preserve ⊢M ⊢μ (ξ {F = F} R) = {!!}
+preserve ⊢M ⊢μ ξ-err = {!!}
+preserve {Σ} (⊢prot ⊢V) ⊢μ (prot-val v) =
+  ⟨ Σ , ⊇-refl {Σ} , ⊢value-gc (stamp-val-wt ⊢V v) (stamp-val-value v) , ⊢μ ⟩
+preserve (⊢prot ⊢M) ⊢μ (prot-ctx M→M′) =
+  let ⟨ Σ′ , Σ′⊆Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ M→M′ in
+    ⟨ Σ′ , Σ′⊆Σ , ⊢prot ⊢M′ , ⊢μ′ ⟩
+preserve {Σ} ⊢M ⊢μ prot-err = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
+preserve ⊢M ⊢μ (β x) = {!!}
+preserve ⊢M ⊢μ β-if-true = {!!}
+preserve ⊢M ⊢μ β-if-false = {!!}
+preserve ⊢M ⊢μ (β-let x) = {!!}
+preserve ⊢M ⊢μ (ref x x₁) = {!!}
+preserve ⊢M ⊢μ (nsu-ref-ok x) = {!!}
+preserve ⊢M ⊢μ (nsu-ref-fail x) = {!!}
+preserve ⊢M ⊢μ (deref x) = {!!}
+preserve ⊢M ⊢μ (assign x x₁) = {!!}
+preserve ⊢M ⊢μ (nsu-assign-ok w x x₁ x₂) = {!!}
+preserve ⊢M ⊢μ (nsu-assign-fail w x x₁ x₂) = {!!}
+preserve ⊢M ⊢μ (cast ⊢V v a) = {!!}
+preserve ⊢M ⊢μ (if-cast-true x) = {!!}
+preserve ⊢M ⊢μ (if-cast-false x) = {!!}
+preserve ⊢M ⊢μ (fun-cast x x₁ x₂) = {!!}
+preserve ⊢M ⊢μ (deref-cast x x₁) = {!!}
+preserve ⊢M ⊢μ (assign-cast x x₁ x₂) = {!!}
+preserve (⊢sub ⊢M A<:B) ⊢μ R =
+  let ⟨ Σ′ , Σ′⊆Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ R in
+    ⟨ Σ′ , Σ′⊆Σ , ⊢sub ⊢M′ A<:B , ⊢μ′ ⟩
