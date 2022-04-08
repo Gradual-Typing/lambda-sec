@@ -19,7 +19,7 @@ open import Utils
 
 data Value : Term → Set where
   V-addr : ∀ {a ℓ} → Value (addr a of ℓ)
-  V-ƛ : ∀ {pc A N ℓ} → Value (ƛ[ pc ] A ˙ N of ℓ)
+  V-ƛ : ∀ {gc A N ℓ} → Value (ƛ[ gc ] A ˙ N of ℓ)
   V-const : ∀ {ι} {k : rep ι} {ℓ} → Value ($ k of ℓ)
   V-cast : ∀ {A B V} {c : Cast A ⇒ B}
     → Value V → Inert c → Value (V ⟨ c ⟩)
@@ -187,7 +187,7 @@ stamp-inert (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ RefA~RefB))
 
 stamp-val : ∀ V → Value V → StaticLabel → Term
 stamp-val (addr a of ℓ₁) V-addr ℓ = addr a of (ℓ₁ ⋎ ℓ)
-stamp-val (ƛ[ pc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ pc ] A ˙ N of (ℓ₁ ⋎ ℓ)
+stamp-val (ƛ[ gc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ gc ] A ˙ N of (ℓ₁ ⋎ ℓ)
 stamp-val ($ k of ℓ₁) V-const ℓ = $ k of (ℓ₁ ⋎ ℓ)
 stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = stamp-val V v ℓ ⟨ stamp-inert c i ℓ ⟩
 
@@ -235,3 +235,13 @@ stamp-val-value (V-cast v i) = V-cast (stamp-val-value v) (stamp-inert-inert i)
 ⊢addr-lookup (⊢addr eq) = eq
 ⊢addr-lookup (⊢sub ⊢a (<:-ty _ (<:-ref A<:B B<:A)))
   rewrite <:-antisym A<:B B<:A = ⊢addr-lookup ⊢a
+
+-- The labels on a constant and its type are related by subtyping.
+const-label : ∀ {Γ Σ gc ι} {k : rep ι} {ℓ g}
+  → Γ ; Σ ; gc ⊢ $ k of ℓ ⦂ ` ι of g
+  → ∃[ ℓ′ ] (g ≡ l ℓ′) × (ℓ ≼ ℓ′)
+const-label {ℓ = ℓ} ⊢const = ⟨ ℓ , refl , ≼-refl ⟩
+const-label (⊢sub ⊢M (<:-ty ℓ′<:g <:-ι)) =
+  case ⟨ const-label ⊢M , ℓ′<:g ⟩ of λ where
+    ⟨ ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ , <:-l ℓ′≼ℓ″ ⟩ →
+      ⟨ _ , refl , ≼-trans ℓ≼ℓ′ ℓ′≼ℓ″ ⟩
