@@ -100,5 +100,11 @@ data _;_;_⊢_⦂_ : Context → HeapContext → Label → Term → Type → S
   ⊢sub : ∀ {Γ Σ gc A B M}
     → Γ ; Σ ; gc ⊢ M ⦂ A
     → A <: B
-      -------------------- CCSub
+      -------------------------- CCSub
     → Γ ; Σ ; gc ⊢ M ⦂ B
+
+  ⊢sub-gc : ∀ {Γ Σ gc gc′ A M}
+    → Γ ; Σ ; gc′ ⊢ M ⦂ A
+    → gc <:ₗ gc′
+      -------------------------- CCSubPC
+    → Γ ; Σ ; gc ⊢ M ⦂ A

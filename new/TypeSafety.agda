@@ -85,7 +85,7 @@ progress (! M) (⊢deref ⊢M) μ ⊢μ pc =
     (done v) →
       case canonical-ref ⊢M v of λ where
         Ref-addr →
-          let ⟨ T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ (⊢addr-lookup ⊢M) in
+          let ⟨ T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ _ (⊢addr-lookup ⊢M) in
             step (deref eq)
         (Ref-proxy v₁ i) → step (deref-cast v₁ i)
     (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
@@ -98,7 +98,7 @@ progress (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ pc =
         (done w) →
           case canonical-ref ⊢L v of λ where
             Ref-addr →
-              let ⟨ T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ (⊢addr-lookup ⊢L) in
+              let ⟨ T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ _ (⊢addr-lookup ⊢L) in
                 step (assign w eq)
             (Ref-proxy v₁ i) → step (assign-cast v₁ w i)
         (err (E-error {e})) → step (ξ-err {F = (L :=□) v} {e = e})
@@ -112,7 +112,7 @@ progress (nsu-assign L M) (⊢nsu-assign ⊢L ⊢M) μ ⊢μ pc =
     (step L→L′) → step (ξ {F = nsu-assign□ M} L→L′)
     (done v) →
       let ⟨ a , ℓ , eq₁ , A′ , ⊢a ⟩ = unwrap-ref ⊢L v in
-      let ⟨ T , ℓ₁ , _ , V₁ , eq₂ , ⊢V₁ ⟩ = ⊢μ (⊢addr-lookup ⊢a) in
+      let ⟨ T , ℓ₁ , _ , V₁ , eq₂ , ⊢V₁ ⟩ = ⊢μ _ (⊢addr-lookup ⊢a) in
         case pc ≼? ℓ₁ of λ where
           (yes pc≼ℓ₁) → step (nsu-assign-ok v eq₁ eq₂ pc≼ℓ₁)
           (no  pc⋠ℓ₁) → step (nsu-assign-fail v eq₁ eq₂ pc⋠ℓ₁)
@@ -124,7 +124,7 @@ progress (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ pc =
     (err E-error) → step prot-err
 progress (error e) ⊢err μ ⊢μ pc = err E-error
 progress M (⊢sub ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
-
+progress M (⊢sub-gc ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
 
 
 relax-Σ : ∀ {Γ Σ Σ′ gc M A}
@@ -148,32 +148,40 @@ relax-Σ (⊢nsu-assign ⊢L ⊢M) Σ′⊇Σ = ⊢nsu-assign (relax-Σ ⊢L Σ�
 relax-Σ (⊢prot ⊢M) Σ′⊇Σ = ⊢prot (relax-Σ ⊢M Σ′⊇Σ)
 relax-Σ ⊢err Σ′⊇Σ = ⊢err
 relax-Σ (⊢sub ⊢M A<:B) Σ′⊇Σ = ⊢sub (relax-Σ ⊢M Σ′⊇Σ) A<:B
+relax-Σ (⊢sub-gc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-gc (relax-Σ ⊢M Σ′⊇Σ) gc<:gc′
 
 plug-inversion : ∀ {Σ gc M A} {F : Frame}
   → [] ; Σ ; gc ⊢ plug M F ⦂ A
     -------------------------------------------------------------
-  → ∃[ B ] ([] ; Σ ; gc ⊢ M ⦂ B) ×
-            (∀ {Σ′ M′} → [] ; Σ′ ; gc ⊢ M′ ⦂ B → Σ′ ⊇ Σ → [] ; Σ′ ; gc ⊢ plug M′ F ⦂ A)
+  → ∃[ gc′ ] ∃[ B ]
+       (gc <:ₗ gc′) × ([] ; Σ ; gc′ ⊢ M ⦂ B) ×
+       (∀ {Σ′ M′} → [] ; Σ′ ; gc′ ⊢ M′ ⦂ B → Σ′ ⊇ Σ → [] ; Σ′ ; gc′ ⊢ plug M′ F ⦂ A)
 plug-inversion {F = □· M} (⊢app ⊢L ⊢M) =
-  ⟨ _ , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢app ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
+  ⟨ _ , _ , <:ₗ-refl , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢app ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
 plug-inversion {F = (V ·□) v} (⊢app ⊢V ⊢M) =
-  ⟨ _ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢app (relax-Σ ⊢V Σ′⊇Σ) ⊢M′) ⟩
-plug-inversion {F = ref[ ℓ ]□} (⊢ref ⊢M) = ⟨ _ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢ref ⊢M′) ⟩
-plug-inversion {F = !□} (⊢deref ⊢M) = ⟨ _ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢deref ⊢M′) ⟩
+  ⟨ _ , _ , <:ₗ-refl , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢app (relax-Σ ⊢V Σ′⊇Σ) ⊢M′) ⟩
+plug-inversion {F = ref[ ℓ ]□} (⊢ref ⊢M) =
+  ⟨ _ , _ , <:ₗ-refl , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢ref ⊢M′) ⟩
+plug-inversion {F = !□} (⊢deref ⊢M) =
+  ⟨ _ , _ , <:ₗ-refl , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢deref ⊢M′) ⟩
 plug-inversion {F = □:= M} (⊢assign ⊢L ⊢M) =
-  ⟨ _ , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
+  ⟨ _ , _ , <:ₗ-refl , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
 plug-inversion {F = (V :=□) v} (⊢assign ⊢V ⊢M) =
-  ⟨ _ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢assign (relax-Σ ⊢V Σ′⊇Σ) ⊢M′) ⟩
+  ⟨ _ , _ , <:ₗ-refl , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢assign (relax-Σ ⊢V Σ′⊇Σ) ⊢M′) ⟩
 plug-inversion {F = let□ N} (⊢let ⊢M ⊢N) =
-  ⟨ _ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢let ⊢M′ (relax-Σ ⊢N Σ′⊇Σ)) ⟩
+  ⟨ _ , _ , <:ₗ-refl , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢let ⊢M′ (relax-Σ ⊢N Σ′⊇Σ)) ⟩
 plug-inversion {F = if□ M N} (⊢if ⊢L ⊢M ⊢N) =
-  ⟨ _ , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢if ⊢L′ (relax-Σ ⊢M Σ′⊇Σ) (relax-Σ ⊢N Σ′⊇Σ)) ⟩
-plug-inversion {F = □⟨ c ⟩} (⊢cast ⊢M) = ⟨ _ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast ⊢M′) ⟩
+  ⟨ _ , _ , <:ₗ-refl , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢if ⊢L′ (relax-Σ ⊢M Σ′⊇Σ) (relax-Σ ⊢N Σ′⊇Σ)) ⟩
+plug-inversion {F = □⟨ c ⟩} (⊢cast ⊢M) =
+  ⟨ _ , _ , <:ₗ-refl , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast ⊢M′) ⟩
 plug-inversion {F = nsu-assign□ M} (⊢nsu-assign ⊢L ⊢M) =
-  ⟨ _ , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢nsu-assign ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
+  ⟨ _ , _ , <:ₗ-refl , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢nsu-assign ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
 plug-inversion (⊢sub ⊢M A<:B) =
-  let ⟨ B , ⊢M , wt-plug ⟩ = plug-inversion ⊢M in
-    ⟨ B , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢sub (wt-plug ⊢M′ Σ′⊇Σ) A<:B) ⟩
+  let ⟨ gc′ , B , gc<:gc′ , ⊢M , wt-plug ⟩ = plug-inversion ⊢M in
+    ⟨ gc′ , B , gc<:gc′ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢sub (wt-plug ⊢M′ Σ′⊇Σ) A<:B) ⟩
+plug-inversion (⊢sub-gc ⊢plug gc<:gc′) =
+  let ⟨ gc″ , B , gc′<:gc″ , ⊢M , wt-plug ⟩ = plug-inversion ⊢plug in
+    ⟨ gc″ , B , <:ₗ-trans gc<:gc′ gc′<:gc″ , ⊢M , (λ ⊢M′ Σ′⊇Σ → wt-plug ⊢M′ Σ′⊇Σ) ⟩
 
 preserve : ∀ {Σ gc M M′ A μ μ′ pc}
   → [] ; Σ ; gc ⊢ M ⦂ A
@@ -182,9 +190,9 @@ preserve : ∀ {Σ gc M M′ A μ μ′ pc}
     ----------------------------------------------------------
   → ∃[ Σ′ ] (Σ′ ⊇ Σ) × ([] ; Σ′ ; gc ⊢ M′ ⦂ A) × (Σ′ ⊢ μ′)
 preserve ⊢plug ⊢μ (ξ {F = F} M→M′) =
-  let ⟨ B , ⊢M , wt-plug ⟩      = plug-inversion ⊢plug
-      ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ M→M′ in
-    ⟨ Σ′ , Σ′⊇Σ , wt-plug ⊢M′ Σ′⊇Σ , ⊢μ′ ⟩
+  let ⟨ gc′ , B , gc<:gc′ , ⊢M , wt-plug ⟩ = plug-inversion ⊢plug
+      ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩            = preserve ⊢M ⊢μ M→M′ in
+    ⟨ Σ′ , Σ′⊇Σ , ⊢sub-gc (wt-plug ⊢M′ Σ′⊇Σ) gc<:gc′ , ⊢μ′ ⟩
 preserve {Σ} ⊢M ⊢μ ξ-err = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve {Σ} (⊢prot ⊢V) ⊢μ (prot-val v) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢value-gc (stamp-val-wt ⊢V v) (stamp-val-value v) , ⊢μ ⟩
@@ -192,8 +200,13 @@ preserve (⊢prot ⊢M) ⊢μ (prot-ctx M→M′) =
   let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ M→M′ in
     ⟨ Σ′ , Σ′⊇Σ , ⊢prot ⊢M′ , ⊢μ′ ⟩
 preserve {Σ} ⊢M ⊢μ prot-err = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
-preserve ⊢M ⊢μ (β x) = {!!}
-preserve ⊢M ⊢μ β-if-true = {!!}
+preserve (⊢app ⊢V ⊢M) ⊢μ (β v) = {!!}
+preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ (β-if-true {ℓ = ℓ}) =
+  case const-label ⊢L of λ where
+    ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ →
+      let gc⋎ℓ<:gc⋎ℓ′ = consis-join-<:ₗ <:ₗ-refl (<:-l ℓ≼ℓ′)
+          A⋎ℓ<:A⋎ℓ′   = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
+        ⟨ Σ , ⊇-refl {Σ} , ⊢sub (⊢prot (⊢sub-gc ⊢M gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
 preserve ⊢M ⊢μ β-if-false = {!!}
 preserve ⊢M ⊢μ (β-let x) = {!!}
 preserve ⊢M ⊢μ (ref x x₁) = {!!}
@@ -212,3 +225,6 @@ preserve ⊢M ⊢μ (assign-cast x x₁ x₂) = {!!}
 preserve (⊢sub ⊢M A<:B) ⊢μ R =
   let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ R in
     ⟨ Σ′ , Σ′⊇Σ , ⊢sub ⊢M′ A<:B , ⊢μ′ ⟩
+preserve (⊢sub-gc ⊢M gc<:gc′) ⊢μ M→M′ =
+  let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ M→M′ in
+    ⟨ Σ′ , Σ′⊇Σ , ⊢sub-gc ⊢M′ gc<:gc′ , ⊢μ′ ⟩

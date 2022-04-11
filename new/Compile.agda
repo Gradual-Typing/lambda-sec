@@ -4,7 +4,7 @@ open import Data.Nat
 open import Data.List
 open import Data.Product using (_×_) renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
-open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst)
 open import Function using (case_of_)
 
 open import Syntax
@@ -30,8 +30,9 @@ compile (L · M at p) (⊢app {gc = gc} {gc′} {A} {A′} {B} {g = g} ⊢L ⊢M
     ⟨ C , ⟨ A′~C , C<:A ⟩ ⟩ →
       case ⟨ ≾-prop′ gc≾gc′ , ≾-prop′ g≾gc′ ⟩ of λ where
         ⟨ ⟨ g₁ , ⟨ gc<:g₁ , g₁~gc′ ⟩ ⟩ , ⟨ g₂ , ⟨ g<:g₂ , g₂~gc′ ⟩ ⟩ ⟩ →
-          let c = cast (([ gc′ ] A ⇒ B) of g) (([ g₁ ⋎̃ g₂ ] A ⇒ B) of g) p
-                       (~-ty ~ₗ-refl (~-fun (consis-join-~ₗ g₁~gc′ g₂~gc′) ~-refl ~-refl)) in
+          let gc′~g₁⋎g₂ = subst (λ □ → □ ~ₗ g₁ ⋎̃ g₂) g⋎̃g≡g (consis-join-~ₗ (~ₗ-sym g₁~gc′) (~ₗ-sym g₂~gc′))
+              c~ = ~-ty ~ₗ-refl (~-fun gc′~g₁⋎g₂ ~-refl ~-refl)
+              c = cast (([ gc′ ] A ⇒ B) of g) (([ g₁ ⋎̃ g₂ ] A ⇒ B) of g) p c~ in
           (compile L ⊢L ⟨ c ⟩) · (compile M ⊢M ⟨ cast A′ C p A′~C ⟩)
 compile (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B≡C) =
   case consis-join-≲ {A} {B} A∨̃B≡C of λ where
