@@ -207,7 +207,12 @@ preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ (β-if-true {ℓ = ℓ}) =
       let gc⋎ℓ<:gc⋎ℓ′ = consis-join-<:ₗ <:ₗ-refl (<:-l ℓ≼ℓ′)
           A⋎ℓ<:A⋎ℓ′   = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
         ⟨ Σ , ⊇-refl {Σ} , ⊢sub (⊢prot (⊢sub-gc ⊢M gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
-preserve ⊢M ⊢μ β-if-false = {!!}
+preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ (β-if-false {ℓ = ℓ}) =
+  case const-label ⊢L of λ where
+    ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ →
+      let gc⋎ℓ<:gc⋎ℓ′ = consis-join-<:ₗ <:ₗ-refl (<:-l ℓ≼ℓ′)
+          A⋎ℓ<:A⋎ℓ′   = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
+        ⟨ Σ , ⊇-refl {Σ} , ⊢sub (⊢prot (⊢sub-gc ⊢N gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
 preserve ⊢M ⊢μ (β-let x) = {!!}
 preserve ⊢M ⊢μ (ref x x₁) = {!!}
 preserve ⊢M ⊢μ (nsu-ref-ok x) = {!!}
