@@ -54,7 +54,7 @@ canonical-fun : ∀ {Γ Σ gc gc′ A B g V}
 canonical-fun (⊢lam _) V-ƛ = Fun-ƛ
 canonical-fun (⊢cast _) (V-cast v (I-fun c i)) = Fun-proxy v (I-fun c i)
 canonical-fun (⊢sub ⊢V (<:-ty _ (<:-fun _ _ _))) v = canonical-fun ⊢V v
-canonical-fun (⊢sub-gc ⊢V gc<:gc′) v = canonical-fun ⊢V v
+canonical-fun (⊢sub-pc ⊢V gc<:gc′) v = canonical-fun ⊢V v
 
 canonical-ref : ∀ {Γ Σ gc A g V}
   → Γ ; Σ ; gc ⊢ V ⦂ Ref A of g
@@ -63,7 +63,7 @@ canonical-ref : ∀ {Γ Σ gc A g V}
 canonical-ref (⊢addr _) V-addr = Ref-addr
 canonical-ref (⊢cast _) (V-cast v (I-ref c i)) = Ref-proxy v (I-ref c i)
 canonical-ref (⊢sub ⊢V (<:-ty _ (<:-ref _ _))) v = canonical-ref ⊢V v
-canonical-ref (⊢sub-gc ⊢V gc<:gc′) v = canonical-ref ⊢V v
+canonical-ref (⊢sub-pc ⊢V gc<:gc′) v = canonical-ref ⊢V v
 
 canonical⋆ : ∀ {Γ Σ gc V T}
   → Γ ; Σ ; gc ⊢ V ⦂ T of ⋆
@@ -74,7 +74,7 @@ canonical⋆ (⊢sub ⊢V (<:-ty {S = T′} <:-⋆ T′<:T)) v =
   case canonical⋆ ⊢V v of λ where
     ⟨ A , B , ⟨ c , W , refl , i , B<:T′⋆ ⟩ ⟩ →
       ⟨ A , B , ⟨ c , W , refl , i , <:-trans B<:T′⋆ (<:-ty <:-⋆ T′<:T) ⟩ ⟩
-canonical⋆ (⊢sub-gc ⊢V gc<:gc′) v = canonical⋆ ⊢V v
+canonical⋆ (⊢sub-pc ⊢V gc<:gc′) v = canonical⋆ ⊢V v
 
 private
   canonical-const-const : ∀ {Γ Σ gc ι ℓ V}
@@ -83,7 +83,7 @@ private
     → Σ[ k ∈ rep ι ] ∃[ ℓ′ ] V ≡ $ k of ℓ′
   canonical-const-const ⊢const V-const = ⟨ _ , _ , refl ⟩
   canonical-const-const (⊢sub ⊢V (<:-ty (<:-l _) <:-ι)) v = canonical-const-const ⊢V v
-  canonical-const-const (⊢sub-gc ⊢V gc<:gc′) v = canonical-const-const ⊢V v
+  canonical-const-const (⊢sub-pc ⊢V gc<:gc′) v = canonical-const-const ⊢V v
   canonical-const-cast : ∀ {Γ Σ gc ι V}
     → Γ ; Σ ; gc ⊢ V ⦂ ` ι of ⋆
     → Value V
@@ -92,7 +92,7 @@ private
     case canonical-const-const ⊢V v of λ where
       ⟨ k , ℓ′ , refl ⟩ → ⟨ k , ⟨ _ , ⟨ ℓ′ , ⟨ _ , refl ⟩ ⟩ ⟩ ⟩
   canonical-const-cast (⊢sub ⊢V (<:-ty <:-⋆ <:-ι)) v = canonical-const-cast ⊢V v
-  canonical-const-cast (⊢sub-gc ⊢V gc<:gc′) v = canonical-const-cast ⊢V v
+  canonical-const-cast (⊢sub-pc ⊢V gc<:gc′) v = canonical-const-cast ⊢V v
 canonical-bool : ∀ {Γ Σ gc g V}
   → Γ ; Σ ; gc ⊢ V ⦂ ` Bool of g
   → Value V
@@ -175,9 +175,9 @@ unwrap-ref (⊢cast ⊢V) (V-cast {c = cast A B _ (~-ty _ (~-ref _))} v i) =
   unwrap-ref ⊢V v
 unwrap-ref (⊢sub ⊢V (<:-ty _ (<:-ref A<:B B<:A))) v
   rewrite <:-antisym A<:B B<:A = unwrap-ref ⊢V v
-unwrap-ref (⊢sub-gc ⊢V gc<:gc′) v =
+unwrap-ref (⊢sub-pc ⊢V gc<:gc′) v =
   let ⟨ a , ℓ , eq , A′ , ⊢a ⟩ = unwrap-ref ⊢V v in
-    ⟨ a , ℓ , eq , A′ , ⊢sub-gc ⊢a gc<:gc′ ⟩
+    ⟨ a , ℓ , eq , A′ , ⊢sub-pc ⊢a gc<:gc′ ⟩
 
 stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → ∀ ℓ
                       → (Cast (stamp A (l ℓ)) ⇒ (stamp B (l ℓ)))
@@ -209,7 +209,7 @@ stamp-val-wt (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
 stamp-val-wt ⊢const V-const = ⊢const
 stamp-val-wt (⊢cast ⊢V) (V-cast v i) = ⊢cast (stamp-val-wt ⊢V v)
 stamp-val-wt (⊢sub ⊢V A<:B) v = ⊢sub (stamp-val-wt ⊢V v) (stamp-<: A<:B <:ₗ-refl)
-stamp-val-wt (⊢sub-gc ⊢V gc<:gc′) v = ⊢sub-gc (stamp-val-wt ⊢V v) gc<:gc′
+stamp-val-wt (⊢sub-pc ⊢V gc<:gc′) v = ⊢sub-pc (stamp-val-wt ⊢V v) gc<:gc′
 
 -- A stamped value is value
 stamp-inert-inert : ∀ {A B} {c : Cast A ⇒ B} {ℓ}
@@ -236,7 +236,7 @@ stamp-val-value (V-cast v i) = V-cast (stamp-val-value v) (stamp-inert-inert i)
 ⊢value-gc ⊢const V-const = ⊢const
 ⊢value-gc (⊢cast ⊢V) (V-cast v i) = ⊢cast (⊢value-gc ⊢V v)
 ⊢value-gc (⊢sub ⊢V A<:B) v = ⊢sub (⊢value-gc ⊢V v) A<:B
-⊢value-gc (⊢sub-gc ⊢V gc<:gc′) v = ⊢value-gc ⊢V v
+⊢value-gc (⊢sub-pc ⊢V gc<:gc′) v = ⊢value-gc ⊢V v
 
 -- If an address is well-typed, the heap context lookup is successful.
 ⊢addr-lookup : ∀ {Γ Σ gc a ℓ A g}
@@ -245,7 +245,7 @@ stamp-val-value (V-cast v i) = V-cast (stamp-val-value v) (stamp-inert-inert i)
 ⊢addr-lookup (⊢addr eq) = eq
 ⊢addr-lookup (⊢sub ⊢a (<:-ty _ (<:-ref A<:B B<:A)))
   rewrite <:-antisym A<:B B<:A = ⊢addr-lookup ⊢a
-⊢addr-lookup (⊢sub-gc ⊢a gc<:gc′) = ⊢addr-lookup ⊢a
+⊢addr-lookup (⊢sub-pc ⊢a gc<:gc′) = ⊢addr-lookup ⊢a
 
 -- The labels on a constant and its type are related by subtyping.
 const-label : ∀ {Γ Σ gc ι} {k : rep ι} {ℓ g}
@@ -256,4 +256,4 @@ const-label (⊢sub ⊢M (<:-ty ℓ′<:g <:-ι)) =
   case ⟨ const-label ⊢M , ℓ′<:g ⟩ of λ where
     ⟨ ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ , <:-l ℓ′≼ℓ″ ⟩ →
       ⟨ _ , refl , ≼-trans ℓ≼ℓ′ ℓ′≼ℓ″ ⟩
-const-label (⊢sub-gc ⊢M gc<:gc′) = const-label ⊢M
+const-label (⊢sub-pc ⊢M gc<:gc′) = const-label ⊢M
