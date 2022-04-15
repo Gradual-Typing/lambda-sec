@@ -103,7 +103,7 @@ progress (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ pc =
             (Ref-proxy v₁ i) → step (assign-cast v₁ w i)
         (err (E-error {e})) → step (ξ-err {F = (L :=□) v} {e = e})
     (err (E-error {e})) → step (ξ-err {F = □:= M} {e = e})
-progress (nsu-ref ℓ M) (⊢nsu-ref ⊢M) μ ⊢μ pc =
+progress (nsu-ref ℓ M) (⊢nsu-ref ⊢M _) μ ⊢μ pc =
   case pc ≼? ℓ of λ where
     (yes pc≼ℓ) → step (nsu-ref-ok pc≼ℓ)
     (no  pc⋠ℓ) → step (nsu-ref-fail pc⋠ℓ)
@@ -143,7 +143,7 @@ relax-Σ (⊢cast ⊢M) Σ′⊇Σ = ⊢cast (relax-Σ ⊢M Σ′⊇Σ)
 relax-Σ (⊢ref ⊢M) Σ′⊇Σ = ⊢ref (relax-Σ ⊢M Σ′⊇Σ)
 relax-Σ (⊢deref ⊢M) Σ′⊇Σ = ⊢deref (relax-Σ ⊢M Σ′⊇Σ)
 relax-Σ (⊢assign ⊢L ⊢M) Σ′⊇Σ = ⊢assign (relax-Σ ⊢L Σ′⊇Σ) (relax-Σ ⊢M Σ′⊇Σ)
-relax-Σ (⊢nsu-ref ⊢M) Σ′⊇Σ = ⊢nsu-ref (relax-Σ ⊢M Σ′⊇Σ)
+relax-Σ (⊢nsu-ref ⊢M gc~ℓ) Σ′⊇Σ = ⊢nsu-ref (relax-Σ ⊢M Σ′⊇Σ) gc~ℓ
 relax-Σ (⊢nsu-assign ⊢L ⊢M) Σ′⊇Σ = ⊢nsu-assign (relax-Σ ⊢L Σ′⊇Σ) (relax-Σ ⊢M Σ′⊇Σ)
 relax-Σ (⊢prot ⊢M) Σ′⊇Σ = ⊢prot (relax-Σ ⊢M Σ′⊇Σ)
 relax-Σ ⊢err Σ′⊇Σ = ⊢err
@@ -215,16 +215,19 @@ preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ (β-if-false {ℓ = ℓ}) =
         ⟨ Σ , ⊇-refl {Σ} , ⊢sub (⊢prot (⊢sub-gc ⊢N gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
 preserve ⊢M ⊢μ (β-let x) = {!!}
 preserve ⊢M ⊢μ (ref x x₁) = {!!}
-preserve ⊢M ⊢μ (nsu-ref-ok x) = {!!}
+preserve {Σ} (⊢nsu-ref ⊢M gc~ℓ) ⊢μ (nsu-ref-ok pc≼ℓ) =
+  ⟨ Σ , ⊇-refl {Σ} , {!!} , ⊢μ ⟩
 preserve ⊢M ⊢μ (nsu-ref-fail x) = {!!}
 preserve ⊢M ⊢μ (deref x) = {!!}
 preserve ⊢M ⊢μ (assign x x₁) = {!!}
-preserve ⊢M ⊢μ (nsu-assign-ok w x x₁ x₂) = {!!}
+preserve {Σ} (⊢nsu-assign ⊢L ⊢M) ⊢μ (nsu-assign-ok w eq1 eq2 pc≼ℓ₁) =
+  ⟨ Σ , ⊇-refl {Σ} , {!!} , ⊢μ ⟩
 preserve ⊢M ⊢μ (nsu-assign-fail w x x₁ x₂) = {!!}
 preserve ⊢M ⊢μ (cast ⊢V v a) = {!!}
-preserve ⊢M ⊢μ (if-cast-true x) = {!!}
+preserve (⊢if ⊢L ⊢M ⊢N) ⊢μ (if-cast-true i) = {!!}
 preserve ⊢M ⊢μ (if-cast-false x) = {!!}
-preserve ⊢M ⊢μ (fun-cast x x₁ x₂) = {!!}
+preserve {Σ} (⊢app ⊢V ⊢W) ⊢μ (fun-cast v w i) =
+  ⟨ Σ , ⊇-refl {Σ} , {!!} , ⊢μ ⟩
 preserve ⊢M ⊢μ (deref-cast x x₁) = {!!}
 preserve ⊢M ⊢μ (assign-cast x x₁ x₂) = {!!}
 preserve (⊢sub ⊢M A<:B) ⊢μ R =
