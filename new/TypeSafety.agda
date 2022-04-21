@@ -224,8 +224,9 @@ preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ (β-if-false {ℓ = ℓ}) =
 preserve ⊢M ⊢μ (β-let x) = {!!}
 preserve ⊢M ⊢μ (ref x x₁) = {!!}
 preserve {Σ} (⊢nsu-ref ⊢M gc~ℓ) ⊢μ (nsu-ref-ok pc≼ℓ) =
-  ⟨ Σ , ⊇-refl {Σ} , {!!} , ⊢μ ⟩
-preserve ⊢M ⊢μ (nsu-ref-fail x) = {!!}
+  ⟨ Σ , ⊇-refl {Σ} , ⊢cast-pc ⊢M gc~ℓ , ⊢μ ⟩
+preserve {Σ} (⊢nsu-ref ⊢M gc~ℓ) ⊢μ (nsu-ref-fail pc⋠ℓ) =
+  ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve ⊢M ⊢μ (deref x) = {!!}
 preserve ⊢M ⊢μ (assign x x₁) = {!!}
 preserve {Σ} (⊢nsu-assign ⊢L ⊢M) ⊢μ (nsu-assign-ok w eq1 eq2 pc≼ℓ₁) =
