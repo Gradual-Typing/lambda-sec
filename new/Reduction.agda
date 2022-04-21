@@ -36,6 +36,8 @@ data Frame : Set where
 
   nsu-assign□ : Term → Frame
 
+  cast-pc□ : Frame
+
 
 plug : Term → Frame → Term
 plug L (□· M)          = L · M
@@ -48,6 +50,7 @@ plug M (let□ N)        = `let M N
 plug L (if□ M N)       = if L then M else N endif
 plug M □⟨ c ⟩          = M ⟨ c ⟩
 plug L (nsu-assign□ M) = nsu-assign L M
+plug M cast-pc□        = cast-pc M
 
 
 infix 2 _∣_∣_—→_∣_
@@ -104,7 +107,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
   nsu-ref-ok : ∀ {M μ pc ℓ}
     → pc ≼ ℓ
       -------------------------------------- NSURefSuccess
-    → nsu-ref ℓ M ∣ μ ∣ pc —→ M ∣ μ
+    → nsu-ref ℓ M ∣ μ ∣ pc —→ cast-pc M ∣ μ
 
   nsu-ref-fail : ∀ {M μ pc ℓ}
     → ¬ pc ≼ ℓ
@@ -171,3 +174,8 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → Inert c
       ------------------------------------------------------ AssignCast
     → (V ⟨ c ⟩) := W ∣ μ ∣ pc —→ V := (W ⟨ in-c c ⟩) ∣ μ
+
+  β-cast-pc : ∀ {V μ pc}
+    → Value V
+      -------------------- CastPC
+    → cast-pc V ∣ μ ∣ pc —→ V ∣ μ
