@@ -46,39 +46,39 @@ cast-<: (⊢cast ⊢Mc) = <:-refl
 cast-<: (⊢sub ⊢Mc B″<:B′) = let B<:B″ = cast-<: ⊢Mc in <:-trans B<:B″ B″<:B′
 cast-<: (⊢sub-pc ⊢Mc gc<:gc″) = cast-<: ⊢Mc
 
-data Fun : Term → Type → Set where
+data Fun : Term → HeapContext → Type → Set where
   Fun-ƛ : ∀ {Σ gc gc′ A A′ B B′ g N ℓ}
     → (A′ ∷ []) ; Σ ; gc′ ⊢ N ⦂ B′
     → [ gc′ ] A′ ⇒ B′ of (l ℓ) <: [ gc ] A ⇒ B of g
       ----------------------------------------------------- Lambda
-    → Fun (ƛ[ gc′ ] A′ ˙ N of ℓ) ([ gc ] A ⇒ B of g)
+    → Fun (ƛ[ gc′ ] A′ ˙ N of ℓ) Σ ([ gc ] A ⇒ B of g)
 
-  Fun-proxy : ∀ {gc gc₁ gc₂ A A₁ A₂ B B₁ B₂ g g₁ g₂ V}
+  Fun-proxy : ∀ {Σ gc gc₁ gc₂ A A₁ A₂ B B₁ B₂ g g₁ g₂ V}
                 {c : Cast ([ gc₁ ] A₁ ⇒ B₁ of g₁) ⇒ ([ gc₂ ] A₂ ⇒ B₂ of g₂)}
-    → Fun V ([ gc₁ ] A₁ ⇒ B₁ of g₁)
+    → Fun V Σ ([ gc₁ ] A₁ ⇒ B₁ of g₁)
     → Inert c
     → [ gc₂ ] A₂ ⇒ B₂ of g₂ <: [ gc ] A ⇒ B of g
       ----------------------------------------------------- Function Proxy
-    → Fun (V ⟨ c ⟩) ([ gc ] A ⇒ B of g)
+    → Fun (V ⟨ c ⟩) Σ ([ gc ] A ⇒ B of g)
 
 -- Sanity checks
-fun-is-value : ∀ {V gc A B g}
-  → Fun V ([ gc ] A ⇒ B of g)
+fun-is-value : ∀ {Σ V gc A B g}
+  → Fun V Σ ([ gc ] A ⇒ B of g)
   → Value V
 fun-is-value (Fun-ƛ _ sub) = V-ƛ
 fun-is-value (Fun-proxy fun i _) = V-cast (fun-is-value fun) i
 
-fun-wt : ∀ {V gc A B g}
-  → Fun V ([ gc ] A ⇒ B of g)
-  → ∃[ Σ ] [] ; Σ ; l low ⊢ V ⦂ [ gc ] A ⇒ B of g
-fun-wt (Fun-ƛ {Σ} ⊢N sub) = ⟨ Σ , ⊢sub (⊢lam ⊢N) sub ⟩
-fun-wt (Fun-proxy fun i sub) = let ⟨ Σ , ⊢V ⟩ = fun-wt fun in ⟨ Σ , ⊢sub (⊢cast ⊢V) sub ⟩
+fun-wt : ∀ {Σ V gc gc′ A B g}
+  → Fun V Σ ([ gc′ ] A ⇒ B of g)
+  → [] ; Σ ; gc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
+fun-wt (Fun-ƛ {Σ} ⊢N sub) = ⊢sub (⊢lam ⊢N) sub
+fun-wt (Fun-proxy fun i sub) = ⊢sub (⊢cast (fun-wt fun)) sub
 
 -- Canonical form of value of function type
 canonical-fun : ∀ {Σ gc gc′ A B g V}
   → [] ; Σ ; gc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
   → Value V
-  → Fun V ([ gc′ ] A ⇒ B of g)
+  → Fun V Σ ([ gc′ ] A ⇒ B of g)
 canonical-fun (⊢lam ⊢N) V-ƛ = Fun-ƛ ⊢N <:-refl
 canonical-fun (⊢cast ⊢V) (V-cast v (I-fun c i)) = Fun-proxy (canonical-fun ⊢V v) (I-fun c i) <:-refl
 canonical-fun (⊢sub ⊢V sub) v =

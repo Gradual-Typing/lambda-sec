@@ -235,8 +235,12 @@ preserve ⊢M ⊢μ (nsu-assign-fail w x x₁ x₂) = {!!}
 preserve ⊢M ⊢μ (cast ⊢V v a) = {!!}
 preserve (⊢if ⊢L ⊢M ⊢N) ⊢μ (if-cast-true i) = {!!}
 preserve ⊢M ⊢μ (if-cast-false x) = {!!}
-preserve {Σ} (⊢app ⊢V ⊢W) ⊢μ (fun-cast v w i) =
-  ⟨ Σ , ⊇-refl {Σ} , {!!} , ⊢μ ⟩
+preserve {Σ} {gc} (⊢app ⊢Vc ⊢W) ⊢μ (fun-cast {V} {W} {A = A} {B} {C} {D} v w i) =
+  case canonical-fun ⊢Vc (V-cast v i) of λ where
+    (Fun-proxy f _ (<:-ty g₂<:g (<:-fun _ A₁<:C D<:B₁))) →
+      let ⊢V = fun-wt {gc = gc} f in
+      ⟨ Σ , ⊇-refl {Σ} ,
+        ⊢sub (⊢cast (⊢app {!!} (⊢cast (⊢sub (⊢value-gc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
 preserve ⊢M ⊢μ (deref-cast x x₁) = {!!}
 preserve ⊢M ⊢μ (assign-cast x x₁ x₂) = {!!}
 preserve {Σ} (⊢cast-pc ⊢M gc~gc′) ⊢μ (β-cast-pc v) =
