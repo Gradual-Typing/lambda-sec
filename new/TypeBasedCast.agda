@@ -31,7 +31,8 @@ data Inert : ∀ {A B} → Cast A ⇒ B → Set where
 
   I-fun : ∀ {A B C D gc₁ gc₂ g₁ g₂}
     → (c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂))
-    → Inert g₁ ⇒ g₂
+    {- NOTE: We require that the casts between raw types, PCs, and labels all be inert. -}
+    → Inert gc₁ ⇒ gc₂ → Inert g₁ ⇒ g₂
       -------------------------------------
     → Inert c
 
@@ -56,6 +57,12 @@ data Active : ∀ {A B} → Cast A ⇒ B → Set where
       --------------------------------------
     → Active c
 
+  A-fun-pc : ∀ {A B C D gc₁ gc₂ g₁ g₂}
+    → (c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂))
+    → Active gc₁ ⇒ gc₂ → Inert g₁ ⇒ g₂
+      --------------------------------------
+    → Active c
+
   A-ref : ∀ {A B g₁ g₂}
     → (c : Cast (Ref A of g₁) ⇒ (Ref B of g₂))
     → Active g₁ ⇒ g₂
@@ -74,12 +81,16 @@ active-or-inert (cast (Ref A of ⋆) (Ref B of ⋆) p (~-ty _ (~-ref _))) = inj�
 active-or-inert (cast (Ref A of ⋆) (Ref B of l ℓ₂) p (~-ty _ (~-ref _))) = inj₁ (A-ref _ A-proj)
 active-or-inert (cast (Ref A of l ℓ₁) (Ref B of g₂) p (~-ty _ (~-ref _))) = inj₂ (I-ref _ I-label)
 {- Fun -}
-active-or-inert (cast ([ gc₁ ] A ⇒ B of l _) ([ gc₂ ] C ⇒ D of g₂) p (~-ty _ (~-fun _ _ _))) =
-  inj₂ (I-fun _ I-label)
-active-or-inert (cast ([ gc₁ ] A ⇒ B of ⋆  ) ([ gc₂ ] C ⇒ D of ⋆  ) p (~-ty _ (~-fun _ _ _))) =
+active-or-inert (cast ([ l pc ] A ⇒ B of l _) C→D p (~-ty _ (~-fun _ _ _))) =
+  inj₂ (I-fun _ I-label I-label)
+active-or-inert (cast ([ _ ] A ⇒ B of ⋆) ([ _ ] C ⇒ D of ⋆) p (~-ty _ (~-fun _ _ _))) =
   inj₁ (A-fun _ A-id⋆)
-active-or-inert (cast ([ gc₁ ] A ⇒ B of ⋆  ) ([ gc₂ ] C ⇒ D of l _) p (~-ty _ (~-fun _ _ _))) =
+active-or-inert (cast ([ _ ] A ⇒ B of ⋆) ([ _ ] C ⇒ D of l _) p (~-ty _ (~-fun _ _ _))) =
   inj₁ (A-fun _ A-proj)
+active-or-inert (cast ([ ⋆ ] A ⇒ B of l ℓ) ([ ⋆ ] C ⇒ D of _) p (~-ty _ (~-fun _ _ _))) =
+  inj₁ (A-fun-pc _ A-id⋆ I-label)
+active-or-inert (cast ([ ⋆ ] A ⇒ B of l ℓ) ([ l _ ] C ⇒ D of _) p (~-ty _ (~-fun _ _ _))) =
+  inj₁ (A-fun-pc _ A-proj I-label)
 
 dom : ∀ {A B C D gc₁ gc₂ g₁ g₂}
   → Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)

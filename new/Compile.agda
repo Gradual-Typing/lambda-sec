@@ -25,7 +25,7 @@ open import Utils
 compile : ∀ {Γ Σ gc A} (M : Term) → Γ ; Σ ; gc ⊢ᴳ M ⦂ A → CCTerm
 compile ($ᴳ k of ℓ) ⊢const = $ k of ℓ
 compile (`ᴳ x) (⊢var x∈Γ) = ` x
-compile (ƛᴳ[ gc ] A ˙ N of ℓ) (⊢lam ⊢N) = ƛ[ gc ] A ˙ compile N ⊢N of ℓ
+compile (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ƛ[ pc ] A ˙ compile N ⊢N of ℓ
 compile (L · M at p) (⊢app {gc = gc} {gc′} {A} {A′} {B} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′) =
   case ≲-prop A′≲A of λ where
     ⟨ C , A′~C , C<:A ⟩ →
@@ -70,7 +70,7 @@ compile-preserve : ∀ {Γ Σ gc A} (M : Term)
   → Γ ; Σ ; gc ⊢ compile M ⊢M ⦂ A
 compile-preserve ($ᴳ k of ℓ) ⊢const = ⊢const
 compile-preserve (`ᴳ x) (⊢var Γ∋x) = ⊢var Γ∋x
-compile-preserve (ƛᴳ[ gc ] A ˙ N of ℓ) (⊢lam ⊢N) = ⊢lam (compile-preserve N ⊢N)
+compile-preserve (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ⊢lam (compile-preserve N ⊢N)
 compile-preserve (L · M at p) (⊢app {gc = gc} {gc′} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′)
   with ≲-prop A′≲A
 ... | ⟨ B , A′~B , B<:A ⟩

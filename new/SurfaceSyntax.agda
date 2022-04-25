@@ -9,7 +9,7 @@ open import Types
 
 
 data Op : Set where
-  op-lam    : (gc : Label) → Type → (ℓ : StaticLabel) → Op
+  op-lam    : (pc : StaticLabel) → Type → (ℓ : StaticLabel) → Op
   op-app    : BlameLabel → Op
   op-const  : ∀ {ι} → rep ι → StaticLabel → Op
   op-if     : BlameLabel → Op
@@ -20,7 +20,7 @@ data Op : Set where
   -- op-input  : StaticLabel → Op
 
 sig : Op → List Sig
-sig (op-lam gc A ℓ)    = (ν ■) ∷ []
+sig (op-lam pc A ℓ)    = (ν ■) ∷ []
 sig (op-app p)         = ■ ∷ ■ ∷ []
 sig (op-const k ℓ)     = []
 sig (op-if p)          = ■ ∷ ■ ∷ ■ ∷ []
@@ -34,7 +34,7 @@ open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug; rename) public
 
 infixl 7  _·_at_
 
-pattern ƛ[_]_˙_of_ gc A N ℓ      = (op-lam gc A ℓ) ⦅ cons (bind (ast N)) nil ⦆
+pattern ƛ[_]_˙_of_ pc A N ℓ      = (op-lam pc A ℓ) ⦅ cons (bind (ast N)) nil ⦆
 pattern _·_at_ L M p             = (op-app p) ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern $_of_ k ℓ                = (op-const k ℓ) ⦅ nil ⦆
 pattern if_then_else_at_ L M N p = (op-if p) ⦅ cons (ast L) (cons (ast M) (cons (ast N) nil)) ⦆
@@ -45,4 +45,4 @@ pattern _:=_at_ L M p            = (op-assign p) ⦅ cons (ast L) (cons (ast M) 
 -- pattern input-of_ ℓ           = (op-input ℓ) ⦅ nil ⦆
 
 _ : Term
-_ = ((ƛ[ l low ] (` Bool of ⋆ ) ˙ (` 0) of high) · (` 0) at pos 0)
+_ = (ƛ[ low ] (` Bool of ⋆ ) ˙ (` 0) of high) · (` 0) at pos 0

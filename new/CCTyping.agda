@@ -32,10 +32,10 @@ data _;_;_⊢_⦂_ : Context → HeapContext → Label → Term → Type → S
       --------------------------- CCVar
     → Γ ; Σ ; gc ⊢ ` x ⦂ A
 
-  ⊢lam : ∀ {Γ Σ gc gc′ A B N ℓ}
-    → (A ∷ Γ) ; Σ ; gc′ ⊢ N ⦂ B
+  ⊢lam : ∀ {Γ Σ gc pc A B N ℓ}
+    → (A ∷ Γ) ; Σ ; l pc ⊢ N ⦂ B
       ------------------------------------------------------------- CCLam
-    → Γ ; Σ ; gc ⊢ ƛ[ gc′ ] A ˙ N of ℓ ⦂ [ gc′ ] A ⇒ B of l ℓ
+    → Γ ; Σ ; gc ⊢ ƛ[ pc ] A ˙ N of ℓ ⦂ [ l pc ] A ⇒ B of l ℓ
 
   ⊢app : ∀ {Γ Σ gc A B L M g}
     → Γ ; Σ ; gc ⊢ L ⦂ ([ gc ⋎̃ g ] A ⇒ B) of g

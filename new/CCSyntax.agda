@@ -16,7 +16,7 @@ data Error : Set where
 
 data Op : Set where
   op-addr   : (a : Addr) → (ℓ : StaticLabel) → Op
-  op-lam    : (gc : Label) → Type → (ℓ : StaticLabel) → Op
+  op-lam    : (pc : StaticLabel) → Type → (ℓ : StaticLabel) → Op
   op-app    : Op
   op-const  : ∀ {ι} → rep ι → StaticLabel → Op
   op-if     : Op
@@ -33,7 +33,7 @@ data Op : Set where
 
 sig : Op → List Sig
 sig (op-addr a ℓ)      = []
-sig (op-lam gc A ℓ)    = (ν ■) ∷ []
+sig (op-lam pc A ℓ)    = (ν ■) ∷ []
 sig op-app             = ■ ∷ ■ ∷ []
 sig (op-const k ℓ)     = []
 sig op-if              = ■ ∷ ■ ∷ ■ ∷ []
@@ -54,7 +54,7 @@ infixl 7  _·_
 infix 8 _⟨_⟩
 
 pattern addr_of_ a ℓ             = (op-addr a ℓ) ⦅ nil ⦆
-pattern ƛ[_]_˙_of_ gc A N ℓ      = (op-lam gc A ℓ) ⦅ cons (bind (ast N)) nil ⦆
+pattern ƛ[_]_˙_of_ pc A N ℓ      = (op-lam pc A ℓ) ⦅ cons (bind (ast N)) nil ⦆
 pattern _·_ L M                  = op-app ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern $_of_ k ℓ                = (op-const k ℓ) ⦅ nil ⦆
 pattern if_then_else_endif L M N = op-if ⦅ cons (ast L) (cons (ast M) (cons (ast N) nil)) ⦆
