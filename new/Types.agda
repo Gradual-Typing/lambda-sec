@@ -11,7 +11,7 @@ open import Relation.Binary.PropositionalEquality
   using (_≡_; _≢_; refl; trans; sym; subst; cong; cong₂)
 
 open import Addr
-
+open import Utils
 
 data StaticLabel : Set where
   high : StaticLabel
@@ -424,18 +424,18 @@ S of g₁ ∧̃ T of g₂ =
 ≾-prop : ∀ {g₁ g₂ : Label}
   → g₁ ≾ g₂
   → ∃[ g ] (g₁ ~ₗ g) × (g <:ₗ g₂)
-≾-prop {g} {⋆} ≾-⋆r = ⟨ ⋆ , ⟨ ~⋆ , <:-⋆ ⟩ ⟩
-≾-prop {⋆} {g} ≾-⋆l = ⟨ g , ⟨ ⋆~ , <:ₗ-refl ⟩ ⟩
+≾-prop {g} {⋆} ≾-⋆r = ⟨ ⋆ , ~⋆ , <:-⋆ ⟩
+≾-prop {⋆} {g} ≾-⋆l = ⟨ g , ⋆~ , <:ₗ-refl ⟩
 ≾-prop {l ℓ₁} {l ℓ₂} (≾-l ℓ₁≼ℓ₂) =
-  ⟨ l ℓ₁ , ⟨ ~ₗ-refl , <:-l ℓ₁≼ℓ₂ ⟩ ⟩
+  ⟨ l ℓ₁ , ~ₗ-refl , <:-l ℓ₁≼ℓ₂ ⟩
 
 ≾-prop′ : ∀ {g₁ g₂ : Label}
   → g₁ ≾ g₂
   → ∃[ g ] (g₁ <:ₗ g) × (g ~ₗ g₂)
-≾-prop′ {g} {⋆} ≾-⋆r = ⟨ g , ⟨ <:ₗ-refl , ~⋆ ⟩ ⟩
-≾-prop′ {⋆} {g} ≾-⋆l = ⟨ ⋆ , ⟨ <:-⋆ , ⋆~ ⟩ ⟩
+≾-prop′ {g} {⋆} ≾-⋆r = ⟨ g , <:ₗ-refl , ~⋆ ⟩
+≾-prop′ {⋆} {g} ≾-⋆l = ⟨ ⋆ , <:-⋆ , ⋆~ ⟩
 ≾-prop′ {l ℓ₁} {l ℓ₂} (≾-l ℓ₁≼ℓ₂) =
-  ⟨ l ℓ₂ , ⟨ <:-l ℓ₁≼ℓ₂ , ~ₗ-refl ⟩ ⟩
+  ⟨ l ℓ₂ , <:-l ℓ₁≼ℓ₂ , ~ₗ-refl ⟩
 
 ≲ᵣ-prop : ∀ {S T : RawType}
   → S ≲ᵣ T
@@ -451,40 +451,40 @@ S of g₁ ∧̃ T of g₂ =
   → A ≲ B
   → ∃[ C ] (A <: C) × (C ~ B)
 
-≲ᵣ-prop′ {` ι} {` ι} ≲-ι = ⟨ ` ι , ⟨ <:-ι , ~-ι ⟩ ⟩
+≲ᵣ-prop′ {` ι} {` ι} ≲-ι = ⟨ ` ι , <:-ι , ~-ι ⟩
 ≲ᵣ-prop′ {Ref A} {Ref B} (≲-ref A≲B B≲A) =
-  ⟨ Ref A , ⟨ <:ᵣ-refl , ~-ref (≲-antisym A≲B B≲A) ⟩ ⟩
+  ⟨ Ref A , <:ᵣ-refl , ~-ref (≲-antisym A≲B B≲A) ⟩
 ≲ᵣ-prop′ {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} (≲-fun gc₂≾gc₁ C≲A B≲D) =
   case ≾-prop gc₂≾gc₁ of λ where
-    ⟨ gc , ⟨ gc₂~gc , gc<:gc₁ ⟩ ⟩ →
+    ⟨ gc , gc₂~gc , gc<:gc₁ ⟩ →
       case ⟨ ≲-prop C≲A , ≲-prop′ B≲D ⟩ of λ where
-        ⟨ ⟨ A′ , ⟨ C~A′ , A′<:A ⟩ ⟩ , ⟨ B′ , ⟨ B<:B′ , B′~D ⟩ ⟩ ⟩ →
-          ⟨ [ gc ] A′ ⇒ B′ , ⟨ <:-fun gc<:gc₁ A′<:A B<:B′ , ~-fun (~ₗ-sym gc₂~gc) (~-sym C~A′) B′~D ⟩ ⟩
+        ⟨ ⟨ A′ , C~A′ , A′<:A ⟩ , ⟨ B′ , B<:B′ , B′~D ⟩ ⟩ →
+          ⟨ [ gc ] A′ ⇒ B′ , <:-fun gc<:gc₁ A′<:A B<:B′ , ~-fun (~ₗ-sym gc₂~gc) (~-sym C~A′) B′~D ⟩
 
 ≲-prop′ {S of g₁} {T of g₂} (≲-ty g₁≾g₂ S≲T) =
   case ≾-prop′ g₁≾g₂ of λ where
-    ⟨ g , ⟨ g₁<:g , g~g₂ ⟩ ⟩ →
+    ⟨ g , g₁<:g , g~g₂ ⟩ →
       case ≲ᵣ-prop′ S≲T of λ where
-        ⟨ U , ⟨ S<:U , U~T ⟩ ⟩ →
-          ⟨ U of g , ⟨ <:-ty g₁<:g S<:U , ~-ty g~g₂ U~T ⟩ ⟩
+        ⟨ U , S<:U , U~T ⟩ →
+          ⟨ U of g , <:-ty g₁<:g S<:U , ~-ty g~g₂ U~T ⟩
 
-≲ᵣ-prop {` ι} {` ι} ≲-ι = ⟨ ` ι , ⟨ ~-ι , <:-ι ⟩ ⟩
+≲ᵣ-prop {` ι} {` ι} ≲-ι = ⟨ ` ι , ~-ι , <:-ι ⟩
 ≲ᵣ-prop {Ref A} {Ref B} (≲-ref A≲B B≲A) =
-  ⟨ Ref B , ⟨ ~-ref (≲-antisym A≲B B≲A) , <:ᵣ-refl ⟩ ⟩
+  ⟨ Ref B , ~-ref (≲-antisym A≲B B≲A) , <:ᵣ-refl ⟩
 ≲ᵣ-prop {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} (≲-fun gc₂≾gc₁ C≲A B≲D) =
   case ≾-prop′ gc₂≾gc₁ of λ where
-    ⟨ gc , ⟨ gc₂<:gc , gc~gc₁ ⟩ ⟩ →
+    ⟨ gc , gc₂<:gc , gc~gc₁ ⟩ →
       case ⟨ ≲-prop′ C≲A , ≲-prop B≲D ⟩ of λ where
-        ⟨ ⟨ A′ , ⟨ C<:A′ , A′~A ⟩ ⟩ , ⟨ B′ , ⟨ B~B′ , B′<:D ⟩ ⟩ ⟩ →
+        ⟨ ⟨ A′ , C<:A′ , A′~A ⟩ , ⟨ B′ , B~B′ , B′<:D ⟩ ⟩ →
           ⟨ [ gc ] A′ ⇒ B′ ,
-            ⟨ ~-fun (~ₗ-sym gc~gc₁) (~-sym A′~A) B~B′ , <:-fun gc₂<:gc C<:A′ B′<:D ⟩ ⟩
+            ~-fun (~ₗ-sym gc~gc₁) (~-sym A′~A) B~B′ , <:-fun gc₂<:gc C<:A′ B′<:D ⟩
 
 ≲-prop {S of g₁} {T of g₂} (≲-ty g₁≾g₂ S≲T) =
   case ≾-prop g₁≾g₂ of λ where
-    ⟨ g , ⟨ g₁~g , g<:g₂ ⟩ ⟩ →
+    ⟨ g , g₁~g , g<:g₂ ⟩ →
       case ≲ᵣ-prop S≲T of λ where
-        ⟨ U , ⟨ S~U , U<:T ⟩ ⟩ →
-          ⟨ U of g , ⟨ ~-ty g₁~g S~U , <:-ty g<:g₂ U<:T ⟩ ⟩
+        ⟨ U , S~U , U<:T ⟩ →
+          ⟨ U of g , ~-ty g₁~g S~U , <:-ty g<:g₂ U<:T ⟩
 
 join-≼ : ∀ {ℓ₁ ℓ₂ ℓ}
   → ℓ₁ ⋎ ℓ₂ ≡ ℓ
