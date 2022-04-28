@@ -98,10 +98,9 @@ infix 5 _~ᵣ_
 infix 5 _~_
 
 data _~ₗ_ : Label → Label → Set where
-  ⋆~  : ∀ {g} → ⋆ ~ₗ g
-  ~⋆  : ∀ {g} → g ~ₗ ⋆
-  l~l : l low ~ₗ l low
-  h~h : l high ~ₗ l high
+  ⋆~ : ∀ {g} → ⋆ ~ₗ g
+  ~⋆ : ∀ {g} → g ~ₗ ⋆
+  l~ : ∀ {ℓ} → l ℓ ~ₗ l ℓ
 
 data _~ᵣ_ : RawType → RawType → Set
 data _~_  : Type → Type → Set
@@ -203,14 +202,9 @@ consis-join-~ₗ {g₃ = ⋆} ⋆~ _ = ⋆~
 consis-join-~ₗ {g₃ = l _} ⋆~ _ = ⋆~
 consis-join-~ₗ {g₄ = ⋆} ~⋆ _ = ~⋆
 consis-join-~ₗ {g₄ = l _} ~⋆ _ = ~⋆
-consis-join-~ₗ l~l ⋆~ = ⋆~
-consis-join-~ₗ l~l ~⋆ = ~⋆
-consis-join-~ₗ l~l l~l = l~l
-consis-join-~ₗ l~l h~h = h~h
-consis-join-~ₗ h~h ⋆~ = ⋆~
-consis-join-~ₗ h~h ~⋆ = ~⋆
-consis-join-~ₗ h~h l~l = h~h
-consis-join-~ₗ h~h h~h = h~h
+consis-join-~ₗ l~ ⋆~ = ⋆~
+consis-join-~ₗ l~ ~⋆ = ~⋆
+consis-join-~ₗ l~ l~ = l~
 
 {- Stamping label on type -}
 stamp : Type → Label → Type
@@ -228,10 +222,9 @@ private
 
 ⨆ : ∀ {A B} → A ~ B → Type          -- of types
 
-⨆ₗ {⋆} {g}         ⋆~  = g
-⨆ₗ {g} {⋆}         ~⋆  = g
-⨆ₗ {- both low  -} l~l = l low
-⨆ₗ {- both high -} h~h = l high
+⨆ₗ {⋆} {g}     ⋆~ = g
+⨆ₗ {g} {⋆}     ~⋆ = g
+⨆ₗ {l ℓ} {l ℓ} l~ = l ℓ
 
 ⨆ᵣ {` ι} {` ι} ~-ι = ` ι
 ⨆ᵣ (~-ref A~B) = Ref (⨆ A~B)
@@ -332,8 +325,7 @@ S of g₁ ∧̃ T of g₂ =
 
 ~ₗ-refl : ∀ {g} → g ~ₗ g
 ~ₗ-refl {⋆}      = ⋆~
-~ₗ-refl {l high} = h~h
-~ₗ-refl {l low}  = l~l
+~ₗ-refl {l _} = l~
 
 ~ᵣ-refl : ∀ {T} → T ~ᵣ T
 ~-refl : ∀ {A} → A ~ A
@@ -397,8 +389,7 @@ S of g₁ ∧̃ T of g₂ =
 ~ₗ-sym : ∀ {g₁ g₂} → g₁ ~ₗ g₂ → g₂ ~ₗ g₁
 ~ₗ-sym ⋆~ = ~⋆
 ~ₗ-sym ~⋆ = ⋆~
-~ₗ-sym l~l = l~l
-~ₗ-sym h~h = h~h
+~ₗ-sym l~ = l~
 
 ~ᵣ-sym : ∀ {S T} → S ~ᵣ T → T ~ᵣ S
 ~-sym  : ∀ {A B} → A ~ B → B ~ A
@@ -506,8 +497,8 @@ meet-≼ {low} {low} {low} refl = ⟨ l⊑l , l⊑l ⟩
 ~ₗ→≾ : ∀ {g₁ g₂} → g₁ ~ₗ g₂ → g₁ ≾ g₂ × g₂ ≾ g₁
 ~ₗ→≾ ⋆~ = ⟨ ≾-⋆l , ≾-⋆r ⟩
 ~ₗ→≾ ~⋆ = ⟨ ≾-⋆r , ≾-⋆l ⟩
-~ₗ→≾ l~l = ⟨ ≾-l l⊑l , ≾-l l⊑l ⟩
-~ₗ→≾ h~h = ⟨ ≾-l h⊑h , ≾-l h⊑h ⟩
+~ₗ→≾ (l~ {low}) = ⟨ ≾-l l⊑l , ≾-l l⊑l ⟩
+~ₗ→≾ (l~ {high}) = ⟨ ≾-l h⊑h , ≾-l h⊑h ⟩
 
 ~ᵣ→≲ᵣ : ∀ {S T} → S ~ᵣ T → S ≲ᵣ T × T ≲ᵣ S
 ~→≲ : ∀ {A B} → A ~ B → A ≲ B × B ≲ A
@@ -531,12 +522,12 @@ grad-meet-~ₗ : ∀ {g₁ g₂ g}
   → g₁ ⊓ₗ g₂ ≡ just g
   → g₁ ~ₗ g × g₂ ~ₗ g
 grad-meet-~ₗ {⋆} {⋆} {⋆} refl = ⟨ ⋆~ , ⋆~ ⟩
-grad-meet-~ₗ {⋆} {l low} {l low} refl = ⟨ ⋆~ , l~l ⟩
-grad-meet-~ₗ {⋆} {l high} {l high} refl = ⟨ ⋆~ , h~h ⟩
-grad-meet-~ₗ {l high} {⋆} {l high} refl = ⟨ h~h , ⋆~ ⟩
-grad-meet-~ₗ {l high} {l high} {l high} refl = ⟨ h~h , h~h ⟩
-grad-meet-~ₗ {l low} {⋆} {l low} refl = ⟨ l~l , ⋆~ ⟩
-grad-meet-~ₗ {l low} {l low} {l low} refl = ⟨ l~l , l~l ⟩
+grad-meet-~ₗ {⋆} {l low} {l low} refl = ⟨ ⋆~ , l~ ⟩
+grad-meet-~ₗ {⋆} {l high} {l high} refl = ⟨ ⋆~ , l~ ⟩
+grad-meet-~ₗ {l high} {⋆} {l high} refl = ⟨ l~ , ⋆~ ⟩
+grad-meet-~ₗ {l high} {l high} {l high} refl = ⟨ l~ , l~ ⟩
+grad-meet-~ₗ {l low} {⋆} {l low} refl = ⟨ l~ , ⋆~ ⟩
+grad-meet-~ₗ {l low} {l low} {l low} refl = ⟨ l~ , l~ ⟩
 
 grad-meet-~ᵣ : ∀ {S T U}
   → S ⊓ᵣ T ≡ just U
