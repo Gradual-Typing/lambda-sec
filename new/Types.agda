@@ -189,10 +189,13 @@ _        ⋏̃ ⋆      = ⋆
 -- ⋆        ⋏̃ l low  = l low
 ⋆        ⋏̃ _      = ⋆
 
+ℓ⋎ℓ≡ℓ : ∀ {ℓ} → ℓ ⋎ ℓ ≡ ℓ
+ℓ⋎ℓ≡ℓ {high} = refl
+ℓ⋎ℓ≡ℓ {low} = refl
+
 g⋎̃g≡g : ∀ {g} → g ⋎̃ g ≡ g
 g⋎̃g≡g {⋆} = refl
-g⋎̃g≡g {l low} = refl
-g⋎̃g≡g {l high} = refl
+g⋎̃g≡g {l ℓ} = cong l ℓ⋎ℓ≡ℓ
 
 consis-join-~ₗ : ∀ {g₁ g₂ g₃ g₄}
   → g₁ ~ₗ g₂
@@ -478,20 +481,22 @@ S of g₁ ∧̃ T of g₂ =
           ⟨ U of g , ~-ty g₁~g S~U , <:-ty g<:g₂ U<:T ⟩
 
 join-≼ : ∀ {ℓ₁ ℓ₂ ℓ}
-  → ℓ₁ ⋎ ℓ₂ ≡ ℓ
+  → ℓ₁ ⋎ ℓ₂ ≼ ℓ
   → ℓ₁ ≼ ℓ × ℓ₂ ≼ ℓ
-join-≼ {high} {high} {high} refl = ⟨ h⊑h , h⊑h ⟩
-join-≼ {high} {low} {high} refl = ⟨ h⊑h , l⊑h ⟩
-join-≼ {low} {high} {high} refl = ⟨ l⊑h , h⊑h ⟩
-join-≼ {low} {low} {low} refl = ⟨ l⊑l , l⊑l ⟩
+join-≼ {high} {high} {high} _ = ⟨ h⊑h , h⊑h ⟩
+join-≼ {high} {low} {high} _ = ⟨ h⊑h , l⊑h ⟩
+join-≼ {low} {high} {high} _ = ⟨ l⊑h , h⊑h ⟩
+join-≼ {low} {low} {high} _ = ⟨ l⊑h , l⊑h ⟩
+join-≼ {low} {low} {low} _ = ⟨ l⊑l , l⊑l ⟩
 
 meet-≼ : ∀ {ℓ₁ ℓ₂ ℓ}
-  → ℓ₁ ⋏ ℓ₂ ≡ ℓ
+  → ℓ ≼ ℓ₁ ⋏ ℓ₂
   → ℓ ≼ ℓ₁ × ℓ ≼ ℓ₂
-meet-≼ {high} {high} {high} refl = ⟨ h⊑h , h⊑h ⟩
-meet-≼ {high} {low} {low} refl = ⟨ l⊑h , l⊑l ⟩
-meet-≼ {low} {high} {low} refl = ⟨ l⊑l , l⊑h ⟩
-meet-≼ {low} {low} {low} refl = ⟨ l⊑l , l⊑l ⟩
+meet-≼ {high} {high} {high} _ = ⟨ h⊑h , h⊑h ⟩
+meet-≼ {high} {high} {low} _ = ⟨ l⊑h , l⊑h ⟩
+meet-≼ {high} {low} {low} _ = ⟨ l⊑h , l⊑l ⟩
+meet-≼ {low} {high} {low} _ = ⟨ l⊑l , l⊑h ⟩
+meet-≼ {low} {low} {low} _ = ⟨ l⊑l , l⊑l ⟩
 
 {- Consistency implies consistent subtyping (both directions) -}
 ~ₗ→≾ : ∀ {g₁ g₂} → g₁ ~ₗ g₂ → g₁ ≾ g₂ × g₂ ≾ g₁
@@ -569,7 +574,7 @@ consis-meet-≾ {⋆} {l high} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆l ⟩
 consis-meet-≾ {l low} {⋆} {⋆} refl = ⟨ ≾-⋆l , ≾-⋆r ⟩
 consis-meet-≾ {l high} {⋆} {⋆} refl = ⟨ ≾-⋆l , ≾-⋆r ⟩
 consis-meet-≾ {l ℓ₁} {l ℓ₂} {l ℓ} refl =
-  case meet-≼ {ℓ₁} {ℓ₂} {ℓ} refl of λ where
+  case meet-≼ {ℓ₁} {ℓ₂} {ℓ} ≼-refl of λ where
     ⟨ ℓ₁⋏ℓ₂≼ℓ₁ , ℓ₁⋏ℓ₂≼ℓ₂ ⟩ → ⟨ ≾-l ℓ₁⋏ℓ₂≼ℓ₁ , ≾-l ℓ₁⋏ℓ₂≼ℓ₂ ⟩
 
 consis-join-≾ : ∀ {g₁ g₂ g}
@@ -581,7 +586,7 @@ consis-join-≾ {⋆} {l high} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
 consis-join-≾ {l high} {⋆} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
 consis-join-≾ {l low} {⋆} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
 consis-join-≾ {l ℓ₁} {l ℓ₂} {l ℓ} refl =
-  case join-≼ {ℓ₁} {ℓ₂} {ℓ} refl of λ where
+  case join-≼ {ℓ₁} {ℓ₂} {ℓ} ≼-refl of λ where
     ⟨ ℓ₁≼ℓ₁⋎ℓ₂ , ℓ₂≼ℓ₁⋎ℓ₂ ⟩ → ⟨ ≾-l ℓ₁≼ℓ₁⋎ℓ₂ , ≾-l ℓ₂≼ℓ₁⋎ℓ₂ ⟩
 
 
@@ -676,6 +681,13 @@ consis-join-<:ₗ <:-⋆ <:-⋆ = <:-⋆
 consis-join-<:ₗ <:-⋆ (<:-l x) = <:-⋆
 consis-join-<:ₗ (<:-l x) <:-⋆ = <:-⋆
 consis-join-<:ₗ (<:-l ℓ₁≼ℓ₁′) (<:-l ℓ₂≼ℓ₂′) = <:-l (join-≼′ ℓ₁≼ℓ₁′ ℓ₂≼ℓ₂′)
+
+consis-join-<:ₗ-inv : ∀ {g₁ g₂ ℓ}
+  → g₁ ⋎̃ g₂ <:ₗ l ℓ
+  → (g₁ <:ₗ l ℓ) × (g₂ <:ₗ l ℓ)
+consis-join-<:ₗ-inv {⋆} {⋆} ()
+consis-join-<:ₗ-inv {l ℓ₁} {l ℓ₂} (<:-l ℓ₁⋎ℓ₂≼ℓ) =
+  let ⟨ ℓ₁≼ℓ , ℓ₂≼ℓ ⟩ = join-≼ ℓ₁⋎ℓ₂≼ℓ in ⟨ <:-l ℓ₁≼ℓ , <:-l ℓ₂≼ℓ ⟩
 
 <:ₗ-antisym : ∀ {g₁ g₂}
   → g₁ <:ₗ g₂ → g₂ <:ₗ g₁
