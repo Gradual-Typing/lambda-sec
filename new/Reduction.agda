@@ -157,10 +157,25 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ----------------------------------------------------------------------- IfCastFalse
     → if ($ false of ℓ ⟨ c ⟩) then M else N endif ∣ μ ∣ pc —→ prot[ ℓ ] N ∣ μ
 
-  fun-cast : ∀ {V W μ pc A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
-    → Value V → Value W
-    → Inert c
-      ---------------------------------------------------------------- FunCast
+  -- fun-cast : ∀ {V W μ pc A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
+  --   → Value V → Value W
+  --   → Inert c
+  --     ---------------------------------------------------------------- FunCast
+  --   → (V ⟨ c ⟩) · W ∣ μ ∣ pc —→ (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩ ∣ μ
+
+  {- NOTE:
+     Categorizing by PC, there are two types of inert function casts:
+     1) [ pc ] A → B of ℓ₁ ⇒ [ pc ] C → D of g₂
+     2) [ pc ] A → B of ℓ₁ ⇒ [ ⋆  ] C → D of g₂
+  -}
+  fun-pc-id : ∀ {V W μ pc A B C D gc₁ pc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ l pc₂ ] C ⇒ D of g₂)}
+    → Value V → Value W → Inert c
+      ------------------------------------------------------------------ FunCastPCId
+    → (V ⟨ c ⟩) · W ∣ μ ∣ pc —→ (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩ ∣ μ
+
+  fun-pc-inj : ∀ {V W μ pc A B C D gc₁ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ ⋆ ] C ⇒ D of g₂)}
+    → Value V → Value W → Inert c
+      ------------------------------------------------------------------ FunCastPCInj
     → (V ⟨ c ⟩) · W ∣ μ ∣ pc —→ (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩ ∣ μ
 
   deref-cast : ∀ {V μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}

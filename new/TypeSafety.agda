@@ -6,7 +6,7 @@ open import Data.Product using (_×_; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst)
 open import Function using (case_of_)
 
 open import Utils
@@ -48,7 +48,10 @@ progress (L · M) (⊢app ⊢L ⊢M) μ ⊢μ pc =
         (done w) →
           case canonical-fun ⊢L v of λ where
             (Fun-ƛ _ _) → step (β w)
-            (Fun-proxy f i _) → step (fun-cast (fun-is-value f) w i)
+            (Fun-proxy f i _) →
+              case i of λ where
+                (I-fun (cast _ ([ ⋆ ] C ⇒ D of g₂) _ _) _ _) → step (fun-pc-inj (fun-is-value f) w i)
+                (I-fun (cast _ ([ l _ ] C ⇒ D of g₂) _ _) _ _) → step (fun-pc-id (fun-is-value f) w i)
         (err (E-error {e})) → step (ξ-err {F = (L ·□) v} {e = e})
     (err (E-error {e})) → step (ξ-err {F = □· M} {e = e})
 progress (if L then M else N endif) (⊢if {g = g} ⊢L ⊢M ⊢N) μ ⊢μ pc =
@@ -235,12 +238,20 @@ preserve ⊢M ⊢μ (nsu-assign-fail w x x₁ x₂) = {!!}
 preserve ⊢M ⊢μ (cast ⊢V v a) = {!!}
 preserve (⊢if ⊢L ⊢M ⊢N) ⊢μ (if-cast-true i) = {!!}
 preserve ⊢M ⊢μ (if-cast-false x) = {!!}
-preserve {Σ} {gc} (⊢app ⊢Vc ⊢W) ⊢μ (fun-cast {V} {W} {A = A} {B} {C} {D} v w i) =
+preserve {Σ} {gc} (⊢app ⊢Vc ⊢W) ⊢μ (fun-pc-id {V} {W} v w i) =
   case canonical-fun ⊢Vc (V-cast v i) of λ where
-    (Fun-proxy f _ (<:-ty g₂<:g (<:-fun _ A₁<:C D<:B₁))) →
-      let ⊢V = fun-wt {gc = gc} f in
-      ⟨ Σ , ⊇-refl {Σ} ,
-        ⊢sub (⊢cast (⊢app {!!} (⊢cast (⊢sub (⊢value-gc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
+    (Fun-proxy f (I-fun (cast _ _ _ (~-ty g₁~g₂ (~-fun l~ _ _))) I-label I-label)
+      (<:-ty g₂<:g (<:-fun gc⋎g<:pc₂ A₁<:C D<:B₁))) →
+        -- doing some label arithmetic ...
+        case ⟨ g₁~g₂ , g₂<:g , consis-join-<:ₗ-inv gc⋎g<:pc₂ ⟩ of λ where
+          ⟨ l~ , <:-l g₂≼g , <:-l gc≼pc₂ , <:-l g≼pc₂ ⟩ →
+            let ⊢V = fun-wt {gc = gc} f
+                g₂≼pc₂ = ≼-trans g₂≼g g≼pc₂
+                gc⋎g₂≼pc₂ = subst (λ □ → _ ⋎ _ ≼ □) ℓ⋎ℓ≡ℓ (join-≼′ gc≼pc₂ g₂≼pc₂)
+                ⊢V† = ⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l gc⋎g₂≼pc₂) <:-refl <:-refl)) in
+            ⟨ Σ , ⊇-refl {Σ} ,
+              ⊢sub (⊢cast (⊢app ⊢V† (⊢cast (⊢sub (⊢value-gc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
+preserve {Σ} {gc} (⊢app ⊢Vc ⊢W) ⊢μ (fun-pc-inj v w i) = {!!}
 preserve ⊢M ⊢μ (deref-cast x x₁) = {!!}
 preserve ⊢M ⊢μ (assign-cast x x₁ x₂) = {!!}
 preserve {Σ} (⊢cast-pc ⊢M gc~gc′) ⊢μ (β-cast-pc v) =
