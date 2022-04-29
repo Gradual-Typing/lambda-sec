@@ -498,6 +498,16 @@ meet-≼ {high} {low} {low} _ = ⟨ l⊑h , l⊑l ⟩
 meet-≼ {low} {high} {low} _ = ⟨ l⊑l , l⊑h ⟩
 meet-≼ {low} {low} {low} _ = ⟨ l⊑l , l⊑l ⟩
 
+join-≼′ : ∀ {ℓ₁ ℓ₁′ ℓ₂ ℓ₂′}
+  → ℓ₁ ≼ ℓ₁′ → ℓ₂ ≼ ℓ₂′ → (ℓ₁ ⋎ ℓ₂) ≼ (ℓ₁′ ⋎ ℓ₂′)
+join-≼′ l⊑l l⊑l = l⊑l
+join-≼′ l⊑l l⊑h = l⊑h
+join-≼′ l⊑l h⊑h = h⊑h
+join-≼′ l⊑h l⊑l = l⊑h
+join-≼′ l⊑h l⊑h = l⊑h
+join-≼′ l⊑h h⊑h = h⊑h
+join-≼′ h⊑h _ = h⊑h
+
 {- Consistency implies consistent subtyping (both directions) -}
 ~ₗ→≾ : ∀ {g₁ g₂} → g₁ ~ₗ g₂ → g₁ ≾ g₂ × g₂ ≾ g₁
 ~ₗ→≾ ⋆~ = ⟨ ≾-⋆l , ≾-⋆r ⟩
@@ -565,80 +575,48 @@ grad-meet-~ {S of g₁} {T of g₂} {C}
       λ { refl → ⟨ ~-ty g₁~g S~U , ~-ty g₂~g T~U ⟩ }
 
 {- Operator ∨̃ goes up in the ≲ lattice while ∧̃ goes down -}
-consis-meet-≾ : ∀ {g₁ g₂ g}
-  → g₁ ⋏̃ g₂ ≡ g
-  → g ≾ g₁ × g ≾ g₂
-consis-meet-≾ {⋆} {⋆} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
-consis-meet-≾ {⋆} {l low} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆l ⟩
-consis-meet-≾ {⋆} {l high} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆l ⟩
-consis-meet-≾ {l low} {⋆} {⋆} refl = ⟨ ≾-⋆l , ≾-⋆r ⟩
-consis-meet-≾ {l high} {⋆} {⋆} refl = ⟨ ≾-⋆l , ≾-⋆r ⟩
-consis-meet-≾ {l ℓ₁} {l ℓ₂} {l ℓ} refl =
-  case meet-≼ {ℓ₁} {ℓ₂} {ℓ} ≼-refl of λ where
-    ⟨ ℓ₁⋏ℓ₂≼ℓ₁ , ℓ₁⋏ℓ₂≼ℓ₂ ⟩ → ⟨ ≾-l ℓ₁⋏ℓ₂≼ℓ₁ , ≾-l ℓ₁⋏ℓ₂≼ℓ₂ ⟩
-
-consis-join-≾ : ∀ {g₁ g₂ g}
-  → g₁ ⋎̃ g₂ ≡ g
-  → g₁ ≾ g × g₂ ≾ g
-consis-join-≾ {⋆} {⋆} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
-consis-join-≾ {⋆} {l low} {⋆} refl = ⟨ ≾-⋆l , ≾-⋆r ⟩
-consis-join-≾ {⋆} {l high} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
-consis-join-≾ {l high} {⋆} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
-consis-join-≾ {l low} {⋆} {⋆} refl = ⟨ ≾-⋆r , ≾-⋆r ⟩
-consis-join-≾ {l ℓ₁} {l ℓ₂} {l ℓ} refl =
+consis-join-≾-inv : ∀ {g₁ g₂ g}
+  → g₁ ⋎̃ g₂ ≡ g → g₁ ≾ g × g₂ ≾ g
+consis-join-≾-inv {g = ⋆} eq = ⟨ ≾-⋆r , ≾-⋆r ⟩
+consis-join-≾-inv {l ℓ₁} {l ℓ₂} {l ℓ} refl =
   case join-≼ {ℓ₁} {ℓ₂} {ℓ} ≼-refl of λ where
     ⟨ ℓ₁≼ℓ₁⋎ℓ₂ , ℓ₂≼ℓ₁⋎ℓ₂ ⟩ → ⟨ ≾-l ℓ₁≼ℓ₁⋎ℓ₂ , ≾-l ℓ₂≼ℓ₁⋎ℓ₂ ⟩
+consis-join-≾-inv {⋆} {l ℓ₂} {l ℓ} ()
 
+consis-meet-≾-inv : ∀ {g₁ g₂ g}
+  → g ≡ g₁ ⋏̃ g₂ → g ≾ g₁ × g ≾ g₂
+consis-meet-≾-inv {g = ⋆} eq = ⟨ ≾-⋆l , ≾-⋆l ⟩
+consis-meet-≾-inv {l ℓ₁} {l ℓ₂} {l ℓ} refl =
+  case meet-≼ {ℓ₁} {ℓ₂} {ℓ} ≼-refl of λ where
+    ⟨ ℓ₁⋏ℓ₂≼ℓ₁ , ℓ₁⋏ℓ₂≼ℓ₂ ⟩ → ⟨ ≾-l ℓ₁⋏ℓ₂≼ℓ₁ , ≾-l ℓ₁⋏ℓ₂≼ℓ₂ ⟩
+consis-meet-≾-inv {l ℓ₁} {⋆} {l ℓ} ()
 
-consis-meet-≲ᵣ : ∀ {S T U}
-  → S ∧̃ᵣ T ≡ just U
-  → U ≲ᵣ S × U ≲ᵣ T
-consis-meet-≲ : ∀ {A B C}
-  → A ∧̃ B ≡ just C
-  → C ≲ A × C ≲ B
-consis-join-≲ᵣ : ∀ {S T U}
-  → S ∨̃ᵣ T ≡ just U
-  → S ≲ᵣ U × T ≲ᵣ U
-consis-join-≲ : ∀ {A B C}
-  → A ∨̃ B ≡ just C
-  → A ≲ C × B ≲ C
+consis-join-≾ : ∀ {g₁ g₂ g₃ g₄}
+  → g₁ ≾ g₃ → g₂ ≾ g₄ → (g₁ ⋎̃ g₂) ≾ (g₃ ⋎̃ g₄)
+consis-join-≾ {g₄ = ⋆} ≾-⋆r y = ≾-⋆r
+consis-join-≾ {g₄ = l _} ≾-⋆r y = ≾-⋆r
+consis-join-≾ {g₂ = ⋆} ≾-⋆l y = ≾-⋆l
+consis-join-≾ {g₂ = l _} ≾-⋆l y = ≾-⋆l
+consis-join-≾ (≾-l _) ≾-⋆r = ≾-⋆r
+consis-join-≾ (≾-l _) ≾-⋆l = ≾-⋆l
+consis-join-≾ (≾-l ℓ₁≼ℓ₃) (≾-l ℓ₂≼ℓ₄) = ≾-l (join-≼′ ℓ₁≼ℓ₃ ℓ₂≼ℓ₄)
 
-consis-meet-≲ᵣ {` Bool} {` Bool} {` Bool} refl = ⟨ ≲-ι , ≲-ι ⟩
-consis-meet-≲ᵣ {` Unit} {` Unit} {` Unit} refl = ⟨ ≲-ι , ≲-ι ⟩
-consis-meet-≲ᵣ {` Bool} {Ref _} {_} ()
-consis-meet-≲ᵣ {` Unit} {Ref _} {_} ()
-consis-meet-≲ᵣ {` Bool} {[ _ ] _ ⇒ _} {_} ()
-consis-meet-≲ᵣ {` Unit} {[ _ ] _ ⇒ _} {_} ()
-consis-meet-≲ᵣ {Ref A} {Ref B} {U}
-  with A ⊓ B in A⊓B≡C
-... | just C =
-  case grad-meet-~ {A} {B} A⊓B≡C of λ where
-    ⟨ A~C , B~C ⟩ →
-      case ⟨ ~→≲ A~C , ~→≲ B~C ⟩ of λ where
-        ⟨ ⟨ A≲C , C≲A ⟩ , ⟨ B≲C , C≲B ⟩ ⟩ →
-          λ { refl → ⟨ ≲-ref C≲A A≲C , ≲-ref C≲B B≲C ⟩ }
-consis-meet-≲ᵣ {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} {U}
-  with A ∨̃ C in A∨̃C≡A′ | B ∧̃ D in B∧̃D≡B′
-... | just A′ | just B′ =
-  case consis-join-≾ {gc₁} {gc₂} refl of λ where
-    ⟨ gc₁≾gc₁⋎̃gc₂ , gc₂≾gc₁⋎̃gc₂ ⟩ →
-      case ⟨ consis-join-≲ {A} {C} A∨̃C≡A′ , consis-meet-≲ {B} {D} B∧̃D≡B′ ⟩ of λ where
-        ⟨ ⟨ A≲A′ , C≲A′ ⟩ , ⟨ B′≲B , B′≲D ⟩ ⟩ →
-          λ { refl → ⟨ ≲-fun gc₁≾gc₁⋎̃gc₂ A≲A′ B′≲B , ≲-fun gc₂≾gc₁⋎̃gc₂ C≲A′ B′≲D ⟩ }
-consis-meet-≲ {S of g₁} {T of g₂} {C}
-  with S ∧̃ᵣ T in S∧̃T≡U
-... | just U =
-  case ⟨ consis-meet-≲ᵣ {S} {T} S∧̃T≡U , consis-meet-≾ {g₁} {g₂} refl ⟩ of λ where
-    ⟨ ⟨ U≲S , U≲T ⟩ , ⟨ g₁⋏̃g₂≾g₁ , g₁⋏̃g₂≾g₂ ⟩ ⟩ →
-      λ { refl → ⟨ ≲-ty g₁⋏̃g₂≾g₁ U≲S , ≲-ty g₁⋏̃g₂≾g₂ U≲T ⟩ }
+consis-join-≲ᵣ-inv : ∀ {S T U}
+  → S ∨̃ᵣ T ≡ just U → S ≲ᵣ U × T ≲ᵣ U
+consis-meet-≲ᵣ-inv : ∀ {S T U}
+  → S ∧̃ᵣ T ≡ just U → U ≲ᵣ S × U ≲ᵣ T
+consis-join-≲-inv : ∀ {A B C}
+  → A ∨̃ B ≡ just C → A ≲ C × B ≲ C
+consis-meet-≲-inv : ∀ {A B C}
+  → A ∧̃ B ≡ just C → C ≲ A × C ≲ B
 
-consis-join-≲ᵣ {` Bool} {` Bool} {` Bool} refl = ⟨ ≲-ι , ≲-ι ⟩
-consis-join-≲ᵣ {` Unit} {` Unit} {` Unit} refl = ⟨ ≲-ι , ≲-ι ⟩
-consis-join-≲ᵣ {` Bool} {Ref _} {_} ()
-consis-join-≲ᵣ {` Unit} {Ref _} {_} ()
-consis-join-≲ᵣ {` Bool} {[ _ ] _ ⇒ _} {_} ()
-consis-join-≲ᵣ {` Unit} {[ _ ] _ ⇒ _} {_} ()
-consis-join-≲ᵣ {Ref A} {Ref B} {U}
+consis-join-≲ᵣ-inv {` Bool} {` Bool} {` Bool} refl = ⟨ ≲-ι , ≲-ι ⟩
+consis-join-≲ᵣ-inv {` Unit} {` Unit} {` Unit} refl = ⟨ ≲-ι , ≲-ι ⟩
+consis-join-≲ᵣ-inv {` Bool} {Ref _} {_} ()
+consis-join-≲ᵣ-inv {` Unit} {Ref _} {_} ()
+consis-join-≲ᵣ-inv {` Bool} {[ _ ] _ ⇒ _} {_} ()
+consis-join-≲ᵣ-inv {` Unit} {[ _ ] _ ⇒ _} {_} ()
+consis-join-≲ᵣ-inv {Ref A} {Ref B} {U}
   with A ⊓ B in A⊓B≡C
 ... | just C =
   case grad-meet-~ {A} {B} A⊓B≡C of λ where
@@ -646,32 +624,49 @@ consis-join-≲ᵣ {Ref A} {Ref B} {U}
       case ⟨ ~→≲ A~C , ~→≲ B~C ⟩ of λ where
         ⟨ ⟨ A≲C , C≲A ⟩ , ⟨ B≲C , C≲B ⟩ ⟩ →
           λ { refl → ⟨ ≲-ref A≲C C≲A , ≲-ref B≲C C≲B ⟩ }
-consis-join-≲ᵣ {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} {U}
+consis-join-≲ᵣ-inv {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} {U}
   with A ∧̃ C in A∧̃C≡A′ | B ∨̃ D in B∨̃D≡B′
 ... | just A′ | just B′ =
-  case consis-meet-≾ {gc₁} {gc₂} refl of λ where
+  case consis-meet-≾-inv {gc₁} {gc₂} refl of λ where
     ⟨ gc₁⋏̃gc₂≾gc₁ , gc₁⋏̃gc₂≾gc₂ ⟩ →
-      case ⟨ consis-meet-≲ {A} {C} A∧̃C≡A′ , consis-join-≲ {B} {D} B∨̃D≡B′ ⟩ of λ where
+      case ⟨ consis-meet-≲-inv {A} {C} A∧̃C≡A′ , consis-join-≲-inv {B} {D} B∨̃D≡B′ ⟩ of λ where
         ⟨ ⟨ A′≲A , A′≲C ⟩ , ⟨ B≲B′ , D≲B′ ⟩ ⟩ →
           λ { refl → ⟨ ≲-fun gc₁⋏̃gc₂≾gc₁ A′≲A B≲B′ , ≲-fun gc₁⋏̃gc₂≾gc₂ A′≲C D≲B′ ⟩ }
-consis-join-≲ {S of g₁} {T of g₂} {C}
+consis-join-≲-inv {S of g₁} {T of g₂} {C}
   with S ∨̃ᵣ T in S∨̃T≡U
 ... | just U =
-  case ⟨ consis-join-≲ᵣ {S} {T} S∨̃T≡U , consis-join-≾ {g₁} {g₂} refl ⟩ of λ where
+  case ⟨ consis-join-≲ᵣ-inv {S} {T} S∨̃T≡U , consis-join-≾-inv {g₁} {g₂} refl ⟩ of λ where
     ⟨ ⟨ S≲U , T≲U ⟩ , ⟨ g₁≾g₁⋎̃g₂ , g₂≾g₁⋎̃g₂ ⟩ ⟩ →
       λ { refl → ⟨ ≲-ty g₁≾g₁⋎̃g₂ S≲U , ≲-ty g₂≾g₁⋎̃g₂ T≲U ⟩ }
 
-join-≼′ : ∀ {ℓ₁ ℓ₁′ ℓ₂ ℓ₂′}
-  → ℓ₁ ≼ ℓ₁′
-  → ℓ₂ ≼ ℓ₂′
-  → (ℓ₁ ⋎ ℓ₂) ≼ (ℓ₁′ ⋎ ℓ₂′)
-join-≼′ l⊑l l⊑l = l⊑l
-join-≼′ l⊑l l⊑h = l⊑h
-join-≼′ l⊑l h⊑h = h⊑h
-join-≼′ l⊑h l⊑l = l⊑h
-join-≼′ l⊑h l⊑h = l⊑h
-join-≼′ l⊑h h⊑h = h⊑h
-join-≼′ h⊑h _ = h⊑h
+consis-meet-≲ᵣ-inv {` Bool} {` Bool} {` Bool} refl = ⟨ ≲-ι , ≲-ι ⟩
+consis-meet-≲ᵣ-inv {` Unit} {` Unit} {` Unit} refl = ⟨ ≲-ι , ≲-ι ⟩
+consis-meet-≲ᵣ-inv {` Bool} {Ref _} {_} ()
+consis-meet-≲ᵣ-inv {` Unit} {Ref _} {_} ()
+consis-meet-≲ᵣ-inv {` Bool} {[ _ ] _ ⇒ _} {_} ()
+consis-meet-≲ᵣ-inv {` Unit} {[ _ ] _ ⇒ _} {_} ()
+consis-meet-≲ᵣ-inv {Ref A} {Ref B} {U}
+  with A ⊓ B in A⊓B≡C
+... | just C =
+  case grad-meet-~ {A} {B} A⊓B≡C of λ where
+    ⟨ A~C , B~C ⟩ →
+      case ⟨ ~→≲ A~C , ~→≲ B~C ⟩ of λ where
+        ⟨ ⟨ A≲C , C≲A ⟩ , ⟨ B≲C , C≲B ⟩ ⟩ →
+          λ { refl → ⟨ ≲-ref C≲A A≲C , ≲-ref C≲B B≲C ⟩ }
+consis-meet-≲ᵣ-inv {[ gc₁ ] A ⇒ B} {[ gc₂ ] C ⇒ D} {U}
+  with A ∨̃ C in A∨̃C≡A′ | B ∧̃ D in B∧̃D≡B′
+... | just A′ | just B′ =
+  case consis-join-≾-inv {gc₁} {gc₂} refl of λ where
+    ⟨ gc₁≾gc₁⋎̃gc₂ , gc₂≾gc₁⋎̃gc₂ ⟩ →
+      case ⟨ consis-join-≲-inv {A} {C} A∨̃C≡A′ , consis-meet-≲-inv {B} {D} B∧̃D≡B′ ⟩ of λ where
+        ⟨ ⟨ A≲A′ , C≲A′ ⟩ , ⟨ B′≲B , B′≲D ⟩ ⟩ →
+          λ { refl → ⟨ ≲-fun gc₁≾gc₁⋎̃gc₂ A≲A′ B′≲B , ≲-fun gc₂≾gc₁⋎̃gc₂ C≲A′ B′≲D ⟩ }
+consis-meet-≲-inv {S of g₁} {T of g₂} {C}
+  with S ∧̃ᵣ T in S∧̃T≡U
+... | just U =
+  case ⟨ consis-meet-≲ᵣ-inv {S} {T} S∧̃T≡U , consis-meet-≾-inv {g₁} {g₂} refl ⟩ of λ where
+    ⟨ ⟨ U≲S , U≲T ⟩ , ⟨ g₁⋏̃g₂≾g₁ , g₁⋏̃g₂≾g₂ ⟩ ⟩ →
+      λ { refl → ⟨ ≲-ty g₁⋏̃g₂≾g₁ U≲S , ≲-ty g₁⋏̃g₂≾g₂ U≲T ⟩ }
 
 consis-join-<:ₗ : ∀ {g₁ g₁′ g₂ g₂′}
   → g₁ <:ₗ g₁′

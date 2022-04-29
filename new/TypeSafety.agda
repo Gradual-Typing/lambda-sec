@@ -206,7 +206,7 @@ preserve {Σ} ⊢M ⊢μ pc≾gc ξ-err = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢�
 preserve {Σ} (⊢prot ⊢V) ⊢μ pc≾gc (prot-val v) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢value-gc (stamp-val-wt ⊢V v) (stamp-val-value v) , ⊢μ ⟩
 preserve (⊢prot ⊢M) ⊢μ pc≾gc (prot-ctx M→M′) =
-  let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ {!!} M→M′ in
+  let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ (consis-join-≾ pc≾gc ≾-refl) M→M′ in
     ⟨ Σ′ , Σ′⊇Σ , ⊢prot ⊢M′ , ⊢μ′ ⟩
 preserve {Σ} ⊢M ⊢μ pc≾gc prot-err = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve (⊢app ⊢V ⊢M) ⊢μ pc≾gc (β v) = {!!}
