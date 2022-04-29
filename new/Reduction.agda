@@ -36,7 +36,7 @@ data Frame : Set where
 
   nsu-assign□ : Term → Frame
 
-  cast-pc□ : Frame
+  cast-pc_□ : StaticLabel → Frame
 
 
 plug : Term → Frame → Term
@@ -50,7 +50,7 @@ plug M (let□ N)        = `let M N
 plug L (if□ M N)       = if L then M else N endif
 plug M □⟨ c ⟩          = M ⟨ c ⟩
 plug L (nsu-assign□ M) = nsu-assign L M
-plug M cast-pc□        = cast-pc M
+plug M (cast-pc pc □)  = cast-pc pc M
 
 
 infix 2 _∣_∣_—→_∣_
@@ -107,7 +107,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
   nsu-ref-ok : ∀ {M μ pc ℓ}
     → pc ≼ ℓ
       -------------------------------------- NSURefSuccess
-    → nsu-ref ℓ M ∣ μ ∣ pc —→ cast-pc M ∣ μ
+    → nsu-ref ℓ M ∣ μ ∣ pc —→ cast-pc ℓ M ∣ μ
 
   nsu-ref-fail : ∀ {M μ pc ℓ}
     → ¬ pc ≼ ℓ
@@ -176,7 +176,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
   fun-pc-inj : ∀ {V W μ pc A B C D gc₁ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ ⋆ ] C ⇒ D of g₂)}
     → Value V → Value W → Inert c
       ------------------------------------------------------------------ FunCastPCInj
-    → (V ⟨ c ⟩) · W ∣ μ ∣ pc —→ (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩ ∣ μ
+    → (V ⟨ c ⟩) · W ∣ μ ∣ pc —→ cast-pc pc (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩ ∣ μ
 
   deref-cast : ∀ {V μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → Value V
@@ -190,7 +190,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ------------------------------------------------------ AssignCast
     → (V ⟨ c ⟩) := W ∣ μ ∣ pc —→ V := (W ⟨ in-c c ⟩) ∣ μ
 
-  β-cast-pc : ∀ {V μ pc}
+  β-cast-pc : ∀ {V μ pc ℓ}
     → Value V
       -------------------- CastPC
-    → cast-pc V ∣ μ ∣ pc —→ V ∣ μ
+    → cast-pc ℓ V ∣ μ ∣ pc —→ V ∣ μ

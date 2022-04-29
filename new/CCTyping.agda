@@ -94,11 +94,11 @@ data _;_;_⊢_⦂_ : Context → HeapContext → Label → Term → Type → S
       --------------------------------------- CCProt
     → Γ ; Σ ; gc ⊢ prot[ ℓ ] M ⦂ stamp A (l ℓ)
 
-  ⊢cast-pc : ∀ {Γ Σ gc gc′ A M}
-    → Γ ; Σ ; gc′ ⊢ M ⦂ A
-    → gc ~ₗ gc′
-      -------------------------- CCCastPC
-    → Γ ; Σ ; gc  ⊢ cast-pc M ⦂ A
+  ⊢cast-pc : ∀ {Γ Σ gc A M ℓ}
+    → Γ ; Σ ; l ℓ ⊢ M ⦂ A
+    → gc ~ₗ l ℓ
+      ------------------------------ CCCastPC
+    → Γ ; Σ ; gc ⊢ cast-pc ℓ M ⦂ A
 
   ⊢err : ∀ {Γ Σ gc A e}
       --------------------------- CCError

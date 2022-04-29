@@ -125,11 +125,11 @@ progress (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ pc =
     (step M→N) → step (prot-ctx M→N)
     (done v) → step (prot-val v)
     (err E-error) → step prot-err
-progress (cast-pc M) (⊢cast-pc ⊢M gc~gc′) μ ⊢μ pc =
+progress (cast-pc ℓ M) (⊢cast-pc ⊢M gc~gc′) μ ⊢μ pc =
   case progress M ⊢M μ ⊢μ pc of λ where
-    (step M→N) → step (ξ {F = cast-pc□} M→N)
+    (step M→N) → step (ξ {F = cast-pc ℓ □} M→N)
     (done v) → step (β-cast-pc v)
-    (err E-error) → step (ξ-err {F = cast-pc□})
+    (err E-error) → step (ξ-err {F = cast-pc ℓ □})
 progress (error e) ⊢err μ ⊢μ pc = err E-error
 progress M (⊢sub ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
 progress M (⊢sub-pc ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
@@ -185,7 +185,7 @@ plug-inversion {F = □⟨ c ⟩} (⊢cast ⊢M) =
   ⟨ _ , _ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast ⊢M′) ⟩
 plug-inversion {F = nsu-assign□ M} (⊢nsu-assign ⊢L ⊢M) =
   ⟨ _ , _ , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢nsu-assign ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
-plug-inversion {F = cast-pc□} (⊢cast-pc ⊢M gc~gc′) =
+plug-inversion {F = cast-pc ℓ □} (⊢cast-pc ⊢M gc~gc′) =
   ⟨ _ , _ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast-pc ⊢M′ gc~gc′) ⟩
 plug-inversion (⊢sub ⊢M A<:B) =
   let ⟨ gc′ , B , ⊢M , wt-plug ⟩ = plug-inversion ⊢M in
@@ -251,7 +251,13 @@ preserve {Σ} {gc} (⊢app ⊢Vc ⊢W) ⊢μ (fun-pc-id {V} {W} v w i) =
                 ⊢V† = ⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l gc⋎g₂≼pc₂) <:-refl <:-refl)) in
             ⟨ Σ , ⊇-refl {Σ} ,
               ⊢sub (⊢cast (⊢app ⊢V† (⊢cast (⊢sub (⊢value-gc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
-preserve {Σ} {gc} (⊢app ⊢Vc ⊢W) ⊢μ (fun-pc-inj v w i) = {!!}
+preserve {Σ} {gc} (⊢app ⊢Vc ⊢W) ⊢μ (fun-pc-inj {V} {W} v w i) =
+  case canonical-fun ⊢Vc (V-cast v i) of λ where
+    (Fun-proxy f (I-fun (cast _ _ _ (~-ty g₁~g₂ (~-fun ~⋆ _ _))) I-label I-label)
+      (<:-ty g₂<:g (<:-fun gc⋎g<:⋆ A₁<:C D<:B₁))) →
+        let ⊢V = fun-wt {gc = gc} f in
+        ⟨ Σ , ⊇-refl {Σ} ,
+              ⊢sub (⊢cast (⊢cast-pc (⊢app {!!} (⊢cast (⊢sub (⊢value-gc ⊢W w) A₁<:C))) {!!})) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
 preserve ⊢M ⊢μ (deref-cast x x₁) = {!!}
 preserve ⊢M ⊢μ (assign-cast x x₁ x₂) = {!!}
 preserve {Σ} (⊢cast-pc ⊢M gc~gc′) ⊢μ (β-cast-pc v) =
