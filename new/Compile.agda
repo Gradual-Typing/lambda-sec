@@ -92,7 +92,7 @@ compile-preserve {Γ} {Σ} {pc} {A} (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A�
 compile-preserve (ref[ ℓ ] M at p) (⊢ref {gc = gc} ⊢M Tg≲Tℓ gc≾ℓ)
   with ≲-prop Tg≲Tℓ | ≾-prop′ gc≾ℓ
 ... | ⟨ A , Tg~A , A<:Tℓ ⟩ | ⟨ gc′ , gc<:gc′ , gc′~ℓ ⟩ =
-  ⊢let (⊢sub (⊢cast (compile-preserve M ⊢M)) A<:Tℓ) (⊢sub-pc (⊢nsu-ref (⊢ref (⊢var refl)) gc′~ℓ) gc<:gc′)
+  ⊢let (⊢sub (⊢cast (compile-preserve M ⊢M)) A<:Tℓ) (⊢sub-pc (⊢nsu-ref (⊢ref (⊢var refl))) gc<:gc′)
 compile-preserve (!ᴳ M) (⊢deref ⊢M) = ⊢deref (compile-preserve M ⊢M)
 compile-preserve (L := M at p) (⊢assign {gc = gc} {g = g} {g₁} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1)
   with ≲-prop A≲Sg1 | ≾-prop g≾g1

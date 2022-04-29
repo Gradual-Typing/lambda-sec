@@ -79,7 +79,6 @@ data _;_;_⊢_⦂_ : Context → HeapContext → Label → Term → Type → S
 
   ⊢nsu-ref : ∀ {Γ Σ gc A M ℓ}
     → Γ ; Σ ; l ℓ ⊢ M ⦂ A
-    → gc ~ₗ l ℓ
       ------------------------------ CCNSURef
     → Γ ; Σ ; gc ⊢ nsu-ref ℓ M ⦂ A
 
@@ -96,7 +95,6 @@ data _;_;_⊢_⦂_ : Context → HeapContext → Label → Term → Type → S
 
   ⊢cast-pc : ∀ {Γ Σ gc A M ℓ}
     → Γ ; Σ ; l ℓ ⊢ M ⦂ A
-    → gc ~ₗ l ℓ
       ------------------------------ CCCastPC
     → Γ ; Σ ; gc ⊢ cast-pc ℓ M ⦂ A
 
