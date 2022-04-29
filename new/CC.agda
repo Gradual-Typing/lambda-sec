@@ -260,6 +260,21 @@ apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~Re
             (no _) → error (blame p)
 
 
+{- NOTE:
+   Categorizing by PC, there are two types of _inert_ function casts:
+     1) [ pc ] A → B of ℓ₁ ⇒ [ pc ] C → D of g₂
+     2) [ pc ] A → B of ℓ₁ ⇒ [ ⋆  ] C → D of g₂
+   -}
+elim-fun-cast : ∀ {A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
+  → (V W : Term) → (pc : StaticLabel) → Inert c → Term
+elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p _) I-label I-label) =
+  (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
+elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p _) I-label I-label) =
+  case (pc ⋎ ℓ₁) ≼? pc₁ of λ where
+    (yes _) → cast-pc pc (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
+    (no _)  → error (blame p)
+
+
 -- A helper function to unwrap (inert) casts around a value
 unwrap : ∀ V → Value V → Term
 unwrap (V ⟨ c ⟩) (V-cast v i) = unwrap V v
