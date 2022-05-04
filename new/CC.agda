@@ -28,8 +28,8 @@ data Err : Term → Set where
   E-error : ∀ {e : Error} → Err (error e)
 
 -- The labels on a constant and its type are related by subtyping.
-const-label-≼ : ∀ {Γ Σ gc ι} {k : rep ι} {ℓ g}
-  → Γ ; Σ ; gc ⊢ $ k of ℓ ⦂ ` ι of g
+const-label-≼ : ∀ {Γ Σ gc pc ι} {k : rep ι} {ℓ g}
+  → Γ ; Σ ; gc ; pc ⊢ $ k of ℓ ⦂ ` ι of g
   → ∃[ ℓ′ ] (g ≡ l ℓ′) × (ℓ ≼ ℓ′)
 const-label-≼ {ℓ = ℓ} ⊢const = ⟨ ℓ , refl , ≼-refl ⟩
 const-label-≼ (⊢sub ⊢M (<:-ty ℓ′<:g <:-ι)) =
@@ -39,19 +39,19 @@ const-label-≼ (⊢sub ⊢M (<:-ty ℓ′<:g <:-ι)) =
 const-label-≼ (⊢sub-pc ⊢M gc<:gc′) = const-label-≼ ⊢M
 
 -- The type on a cast and its type are related by subtyping.
-cast-<: : ∀ {Γ Σ gc A B B′ M} {c : Cast A ⇒ B}
-  → Γ ; Σ ; gc ⊢ M ⟨ c ⟩ ⦂ B′
+cast-<: : ∀ {Γ Σ gc pc A B B′ M} {c : Cast A ⇒ B}
+  → Γ ; Σ ; gc ; pc ⊢ M ⟨ c ⟩ ⦂ B′
   → B <: B′
 cast-<: (⊢cast ⊢Mc) = <:-refl
 cast-<: (⊢sub ⊢Mc B″<:B′) = let B<:B″ = cast-<: ⊢Mc in <:-trans B<:B″ B″<:B′
 cast-<: (⊢sub-pc ⊢Mc gc<:gc″) = cast-<: ⊢Mc
 
 data Fun : Term → HeapContext → Type → Set where
-  Fun-ƛ : ∀ {Σ gc pc A A′ B B′ g N ℓ}
-    → (A′ ∷ []) ; Σ ; l pc ⊢ N ⦂ B′
-    → [ l pc ] A′ ⇒ B′ of l ℓ <: [ gc ] A ⇒ B of g
+  Fun-ƛ : ∀ {Σ gc pc′ A A′ B B′ g N ℓ}
+    → (∀ {pc} → A′ ∷ [] ; Σ ; l pc′ ; pc ⊢ N ⦂ B′)
+    → [ l pc′ ] A′ ⇒ B′ of l ℓ <: [ gc ] A ⇒ B of g
       ----------------------------------------------------- Lambda
-    → Fun (ƛ[ pc ] A′ ˙ N of ℓ) Σ ([ gc ] A ⇒ B of g)
+    → Fun (ƛ[ pc′ ] A′ ˙ N of ℓ) Σ ([ gc ] A ⇒ B of g)
 
   Fun-proxy : ∀ {Σ gc gc₁ gc₂ A A₁ A₂ B B₁ B₂ g g₁ g₂ V}
                 {c : Cast ([ gc₁ ] A₁ ⇒ B₁ of g₁) ⇒ ([ gc₂ ] A₂ ⇒ B₂ of g₂)}
@@ -68,15 +68,15 @@ fun-is-value : ∀ {Σ V gc A B g}
 fun-is-value (Fun-ƛ _ sub) = V-ƛ
 fun-is-value (Fun-proxy fun i _) = V-cast (fun-is-value fun) i
 
-fun-wt : ∀ {Σ V gc gc′ A B g}
+fun-wt : ∀ {Σ V gc gc′ pc A B g}
   → Fun V Σ ([ gc′ ] A ⇒ B of g)
-  → [] ; Σ ; gc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
+  → [] ; Σ ; gc ; pc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
 fun-wt (Fun-ƛ {Σ} ⊢N sub) = ⊢sub (⊢lam ⊢N) sub
 fun-wt (Fun-proxy fun i sub) = ⊢sub (⊢cast (fun-wt fun)) sub
 
 -- Canonical form of value of function type
-canonical-fun : ∀ {Σ gc gc′ A B g V}
-  → [] ; Σ ; gc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
+canonical-fun : ∀ {Σ gc gc′ pc A B g V}
+  → [] ; Σ ; gc ; pc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
   → Value V
   → Fun V Σ ([ gc′ ] A ⇒ B of g)
 canonical-fun (⊢lam ⊢N) V-ƛ = Fun-ƛ ⊢N <:-refl
@@ -110,8 +110,14 @@ ref-is-value : ∀ {Σ V A g}
 ref-is-value (Ref-addr _ _) = V-addr
 ref-is-value (Ref-proxy ref i _) = V-cast (ref-is-value ref) i
 
-canonical-ref : ∀ {Σ gc A g V}
-  → [] ; Σ ; gc ⊢ V ⦂ Ref A of g
+ref-wt : ∀ {Σ V gc pc A g}
+  → Reference V Σ (Ref A of g)
+  → [] ; Σ ; gc ; pc ⊢ V ⦂ Ref A of g
+ref-wt (Ref-addr eq sub) = ⊢sub (⊢addr eq) sub
+ref-wt (Ref-proxy ref i sub) = ⊢sub (⊢cast (ref-wt ref)) sub
+
+canonical-ref : ∀ {Σ gc pc A g V}
+  → [] ; Σ ; gc ; pc ⊢ V ⦂ Ref A of g
   → Value V
   → Reference V Σ (Ref A of g)
 canonical-ref (⊢addr eq) V-addr = Ref-addr eq <:-refl
@@ -135,8 +141,8 @@ data Constant : Term → Base → Set where
       ------------------------------- Injected constant
     → Constant ($ k of ℓ′ ⟨ c ⟩) ι
 
-canonical-const : ∀ {Σ gc ι g V}
-  → [] ; Σ ; gc ⊢ V ⦂ ` ι of g
+canonical-const : ∀ {Σ gc pc ι g V}
+  → [] ; Σ ; gc ; pc ⊢ V ⦂ ` ι of g
   → Value V
   → Constant V ι
 canonical-const ⊢const V-const = Const-base
@@ -149,8 +155,8 @@ canonical-const (⊢cast ⊢V) (V-cast v (I-base-inj c)) =
 canonical-const (⊢sub ⊢V (<:-ty _ <:-ι)) v = canonical-const ⊢V v
 canonical-const (⊢sub-pc ⊢V _) v = canonical-const ⊢V v
 
-canonical⋆ : ∀ {Γ Σ gc V T}
-  → Γ ; Σ ; gc ⊢ V ⦂ T of ⋆
+canonical⋆ : ∀ {Γ Σ gc pc V T}
+  → Γ ; Σ ; gc ; pc ⊢ V ⦂ T of ⋆
   → Value V
   → ∃[ A ] ∃[ B ] Σ[ c ∈ Cast A ⇒ B ] ∃[ W ]
        (V ≡ W ⟨ c ⟩) × (Inert c) × (B <: T of ⋆)
@@ -162,8 +168,8 @@ canonical⋆ (⊢sub ⊢V (<:-ty {S = T′} <:-⋆ T′<:T)) v =
       ⟨ A , B , c , W , refl , i , <:-trans B<:T′⋆ (<:-ty <:-⋆ T′<:T) ⟩
 canonical⋆ (⊢sub-pc ⊢V gc<:gc′) v = canonical⋆ ⊢V v
 
-canonical-pc⋆ : ∀ {Γ Σ gc V A B g}
-  → Γ ; Σ ; gc ⊢ V ⦂ [ ⋆ ] A ⇒ B of g
+canonical-pc⋆ : ∀ {Γ Σ gc pc V A B g}
+  → Γ ; Σ ; gc ; pc ⊢ V ⦂ [ ⋆ ] A ⇒ B of g
   → Value V
   → ∃[ C ] ∃[ D ] Σ[ c ∈ Cast C ⇒ D ] ∃[ W ]
        (V ≡ W ⟨ c ⟩) × (Inert c) × (D <: [ ⋆ ] A ⇒ B of g)
@@ -176,7 +182,7 @@ canonical-pc⋆ (⊢sub ⊢V (<:-ty g′<:g (<:-fun <:-⋆ A<:A′ B′<:B))) v 
         ⟨ C , D , c , W , refl , i , D<:A→B ⟩
 canonical-pc⋆ (⊢sub-pc ⊢V gc<:gc′) v = canonical-pc⋆ ⊢V v
 
-apply-cast : ∀ {Γ Σ gc A B} → (V : Term) → Γ ; Σ ; gc ⊢ V ⦂ A → Value V → (c : Cast A ⇒ B) → Active c → Term
+apply-cast : ∀ {Γ Σ gc pc A B} → (V : Term) → Γ ; Σ ; gc ; pc ⊢ V ⦂ A → Value V → (c : Cast A ⇒ B) → Active c → Term
 -- V ⟨ ` ι of g ⇒ ` ι of g ⟩ —→ V
 apply-cast V ⊢V v c (A-base-id .c) = V
 apply-cast V ⊢V v c (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty ⋆~ ~-ι))) =
@@ -280,11 +286,11 @@ unwrap : ∀ V → Value V → Term
 unwrap (V ⟨ c ⟩) (V-cast v i) = unwrap V v
 unwrap V _ = V
 
-unwrap-ref : ∀ {Γ Σ gc V A g}
-  → Γ ; Σ ; gc ⊢ V ⦂ Ref A of g
+unwrap-ref : ∀ {Γ Σ gc pc V A g}
+  → Γ ; Σ ; gc ; pc ⊢ V ⦂ Ref A of g
   → (v : Value V)
   → ∃[ a ] ∃[ ℓ ] (unwrap V v ≡ addr a of ℓ) ×
-                   (∃[ A′ ] Γ ; Σ ; gc ⊢ addr a of ℓ ⦂ Ref A′ of l ℓ)
+                   (∃[ A′ ] Γ ; Σ ; gc ; pc ⊢ addr a of ℓ ⦂ Ref A′ of l ℓ)
 unwrap-ref (⊢addr eq) V-addr = ⟨ _ , _ , refl , _ , ⊢addr eq ⟩
 unwrap-ref (⊢cast ⊢V) (V-cast {c = cast A B _ (~-ty _ (~-ref _))} v i) =
   unwrap-ref ⊢V v
@@ -315,10 +321,10 @@ stamp-val ($ k of ℓ₁) V-const ℓ = $ k of (ℓ₁ ⋎ ℓ)
 stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = stamp-val V v ℓ ⟨ stamp-inert c i ℓ ⟩
 
 -- Value stamping is well-typed
-stamp-val-wt : ∀ {Γ Σ gc V A ℓ}
-  → Γ ; Σ ; gc ⊢ V ⦂ A
+stamp-val-wt : ∀ {Γ Σ gc pc V A ℓ}
+  → Γ ; Σ ; gc ; pc ⊢ V ⦂ A
   → (v : Value V)
-  → Γ ; Σ ; gc ⊢ stamp-val V v ℓ ⦂ stamp A (l ℓ)
+  → Γ ; Σ ; gc ; pc ⊢ stamp-val V v ℓ ⦂ stamp A (l ℓ)
 stamp-val-wt (⊢addr eq) V-addr = ⊢addr eq
 stamp-val-wt (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
 stamp-val-wt ⊢const V-const = ⊢const
@@ -345,10 +351,10 @@ stamp-val-value V-const = V-const
 stamp-val-value (V-cast v i) =
   V-cast (stamp-val-value v) (stamp-inert-inert i)
 
-⊢value-gc : ∀ {Σ gc gc′ V A}
-  → [] ; Σ ; gc ⊢ V ⦂ A
+⊢value-gc : ∀ {Σ gc gc′ pc pc′ V A}
+  → [] ; Σ ; gc  ; pc ⊢ V ⦂ A
   → Value V
-  → [] ; Σ ; gc′ ⊢ V ⦂ A
+  → [] ; Σ ; gc′ ; pc′ ⊢ V ⦂ A
 ⊢value-gc (⊢addr eq) V-addr = ⊢addr eq
 ⊢value-gc (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
 ⊢value-gc ⊢const V-const = ⊢const
@@ -358,8 +364,8 @@ stamp-val-value (V-cast v i) =
 
 -- If an address is well-typed, the heap context lookup is successful.
 -- (inversion on the typing derivation of an address)
-⊢addr-lookup : ∀ {Σ gc a ℓ A g}
-  → [] ; Σ ; gc ⊢ addr a of ℓ ⦂ Ref A of g
+⊢addr-lookup : ∀ {Σ gc pc a ℓ A g}
+  → [] ; Σ ; gc ; pc ⊢ addr a of ℓ ⦂ Ref A of g
   → key _≟_ Σ a ≡ just A
 ⊢addr-lookup ⊢a =
  case canonical-ref ⊢a V-addr of λ where

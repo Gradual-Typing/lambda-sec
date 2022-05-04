@@ -20,7 +20,7 @@ _⊢_ : HeapContext → Heap → Set
 Σ ⊢ μ = ∀ a {A}
   → key _≟_ Σ a ≡ just A
   → ∃[ T ] ∃[ ℓ ] (A ≡ T of l ℓ) ×
-                   (∃[ V ] (key _≟_ μ a ≡ just ⟨ V , ℓ ⟩) × ([] ; Σ ; l low ⊢ V ⦂ A))
+                   (∃[ V ] (key _≟_ μ a ≡ just ⟨ V , ℓ ⟩) × ([] ; Σ ; l low ; low ⊢ V ⦂ A))
 
 _⊇_ : HeapContext → HeapContext → Set
 Σ′ ⊇ Σ = ∀ a {A} → key _≟_ Σ a ≡ just A → key _≟_ Σ′ a ≡ just A

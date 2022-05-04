@@ -22,21 +22,21 @@ open import Preservation using (rename-↑1-pres)
 open import Utils
 
 
-compile : ∀ {Γ Σ gc A} (M : Term) → Γ ; Σ ; gc ⊢ᴳ M ⦂ A → CCTerm
+compile : ∀ {Γ Σ gc pc A} (M : Term) → Γ ; Σ ; gc ; pc ⊢ᴳ M ⦂ A → CCTerm
 compile ($ᴳ k of ℓ) ⊢const = $ k of ℓ
 compile (`ᴳ x) (⊢var x∈Γ) = ` x
 compile (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ƛ[ pc ] A ˙ compile N ⊢N of ℓ
-compile (L · M at p) (⊢app {gc = gc} {gc′} {A} {A′} {B} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′) =
+compile (L · M at p) (⊢app {gc = gc} {gc′} {A = A} {A′} {B} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′) =
   case ≲-prop A′≲A of λ where
     ⟨ C , A′~C , C<:A ⟩ →
       case ⟨ ≾-prop′ gc≾gc′ , ≾-prop′ g≾gc′ ⟩ of λ where
         ⟨ ⟨ g₁ , gc<:g₁ , g₁~gc′ ⟩ , ⟨ g₂ , g<:g₂ , g₂~gc′ ⟩ ⟩ →
           let gc′~g₁⋎g₂ = subst (λ □ → □ ~ₗ g₁ ⋎̃ g₂) g⋎̃g≡g (consis-join-~ₗ (~ₗ-sym g₁~gc′) (~ₗ-sym g₂~gc′))
               c~ = ~-ty ~ₗ-refl (~-fun gc′~g₁⋎g₂ ~-refl ~-refl)
-              c = cast (([ gc′ ] A ⇒ B) of g) (([ g₁ ⋎̃ g₂ ] A ⇒ B) of g) p c~ in
+              c = cast ([ gc′ ] A ⇒ B of g) ([ g₁ ⋎̃ g₂ ] A ⇒ B of g) p c~ in
           (compile L ⊢L ⟨ c ⟩) · (compile M ⊢M ⟨ cast A′ C p A′~C ⟩)
 compile (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B≡C) =
-  case consis-join-≲ {A} {B} A∨̃B≡C of λ where
+  case consis-join-≲-inv {A} {B} A∨̃B≡C of λ where
     ⟨ A≲C , B≲C ⟩ →
       case ⟨ ≲-prop A≲C , ≲-prop B≲C ⟩ of λ where
         ⟨ ⟨ A′ , A~A′ , A′<:C ⟩ , ⟨ B′ , B~B′ , B′<:C ⟩ ⟩ →
@@ -65,9 +65,9 @@ compile (L := M at p) (⊢assign {gc = gc} {A = A} {S} {g} {g₁} ⊢L ⊢M A≲
         `let L″ (`let (rename (↑ 1) M″) (nsu-assign (` 1) ((` 1) := (` 0))))
 
 
-compile-preserve : ∀ {Γ Σ gc A} (M : Term)
-  → (⊢M : Γ ; Σ ; gc ⊢ᴳ M ⦂ A)
-  → Γ ; Σ ; gc ⊢ compile M ⊢M ⦂ A
+compile-preserve : ∀ {Γ Σ gc pc A} (M : Term)
+  → (⊢M : Γ ; Σ ; gc ; pc ⊢ᴳ M ⦂ A)
+  → Γ ; Σ ; gc ; pc ⊢ compile M ⊢M ⦂ A
 compile-preserve ($ᴳ k of ℓ) ⊢const = ⊢const
 compile-preserve (`ᴳ x) (⊢var Γ∋x) = ⊢var Γ∋x
 compile-preserve (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ⊢lam (compile-preserve N ⊢N)
@@ -79,14 +79,14 @@ compile-preserve (L · M at p) (⊢app {gc = gc} {gc′} {g = g} ⊢L ⊢M A′�
   ⊢app (⊢sub (⊢cast (compile-preserve L ⊢L)) (<:-ty <:ₗ-refl (<:-fun (consis-join-<:ₗ gc<:g₁ g<:g₂) <:-refl <:-refl)))
        (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A)
 compile-preserve (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B≡C)
-  with consis-join-≲ {A} {B} A∨̃B≡C
+  with consis-join-≲-inv {A} {B} A∨̃B≡C
 ... | ⟨ A≲C , B≲C ⟩
   with ≲-prop A≲C | ≲-prop B≲C
 ... | ⟨ A′ , A~A′ , A′<:C ⟩ | ⟨ B′ , B~B′ , B′<:C ⟩ =
   ⊢if (compile-preserve L ⊢L)
       (⊢sub (⊢cast (compile-preserve M ⊢M)) A′<:C)
       (⊢sub (⊢cast (compile-preserve N ⊢N)) B′<:C)
-compile-preserve {Γ} {Σ} {pc} {A} (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A)
+compile-preserve {Γ} {Σ} {A = A} (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A)
   with ≲-prop A′≲A
 ... | ⟨ B , A′~B , B<:A ⟩ = ⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A
 compile-preserve (ref[ ℓ ] M at p) (⊢ref {gc = gc} ⊢M Tg≲Tℓ gc≾ℓ)

@@ -140,8 +140,8 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → nsu-assign W M ∣ μ ∣ pc —→ error nsu-error ∣ μ
 
   {- Reduction rules about casts, active and inert: -}
-  cast : ∀ {Σ gc A B V μ pc} {c : Cast A ⇒ B}
-    → (⊢V : [] ; Σ ; gc ⊢ V ⦂ A)
+  cast : ∀ {Σ gc A B V μ pc pc′} {c : Cast A ⇒ B}
+    → (⊢V : [] ; Σ ; gc ; pc′ ⊢ V ⦂ A)
     → (v : Value V)
     → (a : Active c)
       -------------------------------------------------- Cast
