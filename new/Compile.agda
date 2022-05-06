@@ -22,7 +22,7 @@ open import Preservation using (rename-↑1-pres)
 open import Utils
 
 
-compile : ∀ {Γ Σ gc pc A} (M : Term) → Γ ; Σ ; gc ; pc ⊢ᴳ M ⦂ A → CCTerm
+compile : ∀ {Γ gc A} (M : Term) → Γ ; gc ⊢ᴳ M ⦂ A → CCTerm
 compile ($ᴳ k of ℓ) ⊢const = $ k of ℓ
 compile (`ᴳ x) (⊢var x∈Γ) = ` x
 compile (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ƛ[ pc ] A ˙ compile N ⊢N of ℓ
@@ -65,9 +65,9 @@ compile (L := M at p) (⊢assign {gc = gc} {A = A} {S} {g} {g₁} ⊢L ⊢M A≲
         `let L″ (`let (rename (↑ 1) M″) (nsu-assign (` 1) ((` 1) := (` 0))))
 
 
-compile-preserve : ∀ {Γ Σ gc pc A} (M : Term)
-  → (⊢M : Γ ; Σ ; gc ; pc ⊢ᴳ M ⦂ A)
-  → Γ ; Σ ; gc ; pc ⊢ compile M ⊢M ⦂ A
+compile-preserve : ∀ {Γ gc A} (M : Term)
+  → (⊢M : Γ ; gc ⊢ᴳ M ⦂ A)
+  → (∀ {pc} → Γ ; [] ; gc ; pc ⊢ compile M ⊢M ⦂ A)
 compile-preserve ($ᴳ k of ℓ) ⊢const = ⊢const
 compile-preserve (`ᴳ x) (⊢var Γ∋x) = ⊢var Γ∋x
 compile-preserve (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ⊢lam (compile-preserve N ⊢N)
@@ -99,3 +99,9 @@ compile-preserve (L := M at p) (⊢assign {gc = gc} {g = g} {g₁} ⊢L ⊢M A�
 ... | ⟨ B , A~B , B<:Sg1 ⟩ | ⟨ g₂ , g~g₂ , g₂<:g₁ ⟩ =
   ⊢let (⊢sub (⊢cast (compile-preserve L ⊢L)) (<:-ty g₂<:g₁ <:ᵣ-refl))
        (⊢let (⊢sub (⊢cast (rename-↑1-pres (compile-preserve M ⊢M))) B<:Sg1) (⊢nsu-assign (⊢var refl) (⊢assign (⊢var refl) (⊢var refl))))
+
+{- Compilation from Surface to CC is type-preserving. -}
+compilation-preserves-type : ∀ {Γ gc A} (M : Term)
+  → (⊢M : Γ ; gc ⊢ᴳ M ⦂ A)
+  → Γ ; [] ; gc ; low ⊢ compile M ⊢M ⦂ A
+compilation-preserves-type M ⊢M = compile-preserve M ⊢M {low}
