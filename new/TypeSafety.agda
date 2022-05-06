@@ -203,7 +203,7 @@ preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-false {ℓ = ℓ}) =
 preserve ⊢M ⊢μ pc≾gc (β-let x) = {!!}
 preserve {Σ} {μ = μ} (⊢ref {T = T} {ℓ} ⊢V) ⊢μ pc≾gc (ref {a = a} v fresh {- `a` is fresh -}) =
   let is-here = here {ℕ} {Type} {_≟_} {a} in
-  ⟨ ⟨ a , T of l ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh , ⊢addr is-here , {!!} ⟩
+  ⟨ ⟨ a , T of l ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh , ⊢addr is-here , ⊢μ-ext (⊢value-gc ⊢V v) ⊢μ fresh ⟩
 preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-ok pc≼ℓ) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢cast-pc ⊢M pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-fail pc⋠ℓ) =

@@ -8,6 +8,7 @@ open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Negation using (contradiction)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; sym; subst; cong)
+open import Function using (case_of_)
 
 open import Types
 
@@ -72,12 +73,19 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
 ⊢μ-ext : ∀ {Σ V a T ℓ μ}
   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
   → Σ ⊢ μ
-  → a ≡ length μ
+  → a ≡ length μ  {- a is fresh in μ -}
+    --------------------------------------------
   → ⟨ a , T of l ℓ ⟩ ∷ Σ ⊢ ⟨ a , V , ℓ ⟩ ∷ μ
 ⊢μ-ext {Σ} {V₁} {a₁} {T₁} {ℓ₁} {μ} ⊢V₁ ⊢μ fresh = ⟨ cong suc (proj₁ ⊢μ) , wt ⟩
   where
   wt : _  {- Have to add this. I think this is a bug of Agda. -}
   wt a {A} eq with a ≟ a₁
-  ... | yes refl = {!!}
-  ... | no _ = let ⟨ a<len , T , ℓ , A≡Tℓ , V , eq′ , ⊢V ⟩ = (proj₂ ⊢μ) a eq in
-    ⟨ <-trans a<len (n<1+n _) , T , ℓ , A≡Tℓ , V , eq′ , relax-Σ ⊢V (⊇-fresh {μ = μ} ⊢μ fresh) ⟩
+  ... | yes refl =
+    case eq of λ where
+      refl → ⟨ a<1+len , T₁ , ℓ₁ , refl , V₁ , refl , relax-Σ ⊢V₁ (⊇-fresh {μ = μ} ⊢μ fresh) ⟩
+    where
+    a<1+len : a < 1 + (length Σ)
+    a<1+len = subst (λ □ → a < 1 + □) (trans fresh (sym (proj₁ ⊢μ))) (n<1+n a)
+  ... | no _ =
+    let ⟨ a<len , T , ℓ , A≡Tℓ , V , eq′ , ⊢V ⟩ = (proj₂ ⊢μ) a eq in
+      ⟨ <-trans a<len (n<1+n _) , T , ℓ , A≡Tℓ , V , eq′ , relax-Σ ⊢V (⊇-fresh {μ = μ} ⊢μ fresh) ⟩
