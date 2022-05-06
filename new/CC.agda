@@ -136,10 +136,10 @@ data Constant : Term → Base → Set where
       ------------------------------- Constant
     → Constant ($ k of ℓ) ι
 
-  Const-inj : ∀ {ι} {k : rep ι} {ℓ ℓ′} {c : Cast (` ι of l ℓ) ⇒ (` ι of ⋆)}
-    → ℓ′ ≼ ℓ
+  Const-inj : ∀ {ι} {k : rep ι} {ℓ ℓ′} {c : Cast (` ι of l ℓ′) ⇒ (` ι of ⋆)}
+    → ℓ ≼ ℓ′
       ------------------------------- Injected constant
-    → Constant ($ k of ℓ′ ⟨ c ⟩) ι
+    → Constant ($ k of ℓ ⟨ c ⟩) ι
 
 canonical-const : ∀ {Σ gc pc ι g V}
   → [] ; Σ ; gc ; pc ⊢ V ⦂ ` ι of g

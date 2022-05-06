@@ -214,7 +214,10 @@ preserve {Σ} (⊢nsu-assign ⊢L ⊢M) ⊢μ pc≾gc (nsu-assign-ok w eq1 eq2 p
   ⟨ Σ , ⊇-refl {Σ} , {!!} , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (nsu-assign-fail w x x₁ x₂) = {!!}
 preserve ⊢M ⊢μ pc≾gc (cast ⊢V v a) = {!!}
-preserve (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) = {!!}
+preserve {Σ = Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) with i
+... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
+  case canonical-const ⊢L (V-cast V-const i) of λ where
+    (Const-inj ℓ≼ℓ′) → ⟨ Σ , ⊇-refl {Σ} , {!!} , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (if-cast-false x) = {!!}
 preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc = pc} v w i) with i
 ... | (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p c~) I-label I-label) =
