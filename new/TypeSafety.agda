@@ -2,7 +2,7 @@ open import Data.Nat
 open import Data.Unit using (⊤; tt)
 open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.List hiding ([_])
-open import Data.Product using (_×_; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
+open import Data.Product using (_×_; ∃-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
@@ -85,7 +85,7 @@ progress (! M) (⊢deref ⊢M) μ ⊢μ pc =
     (done v) →
       case canonical-ref ⊢M v of λ where
         (Ref-addr eq _) →
-          let ⟨ T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ _ eq in
+          let ⟨ _ , T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = proj₂ ⊢μ _ eq in
             step (deref eq)
         (Ref-proxy r i _) → step (deref-cast (ref-is-value r) i)
     (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
@@ -98,7 +98,7 @@ progress (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ pc =
         (done w) →
           case canonical-ref ⊢L v of λ where
             (Ref-addr eq _) →
-              let ⟨ T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ _ eq in
+              let ⟨ _ , T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = proj₂ ⊢μ _ eq in
                 step (assign w eq)
             (Ref-proxy r i _) → step (assign-cast (ref-is-value r) w i)
         (err (E-error {e})) → step (ξ-err {F = (L :=□) v} {e = e})
@@ -112,7 +112,7 @@ progress (nsu-assign L M) (⊢nsu-assign ⊢L ⊢M) μ ⊢μ pc =
     (step L→L′) → step (ξ {F = nsu-assign□ M} L→L′)
     (done v) →
       let ⟨ a , ℓ , eq₁ , A′ , ⊢a ⟩ = unwrap-ref ⊢L v in
-      let ⟨ T , ℓ₁ , _ , V₁ , eq₂ , ⊢V₁ ⟩ = ⊢μ _ (⊢addr-lookup ⊢a) in
+      let ⟨ _ , T , ℓ₁ , _ , V₁ , eq₂ , ⊢V₁ ⟩ = proj₂ ⊢μ _ (⊢addr-lookup ⊢a) in
         case pc ≼? ℓ₁ of λ where
           (yes pc≼ℓ₁) → step (nsu-assign-ok v eq₁ eq₂ pc≼ℓ₁)
           (no  pc⋠ℓ₁) → step (nsu-assign-fail v eq₁ eq₂ pc⋠ℓ₁)
@@ -131,30 +131,6 @@ progress (error e) ⊢err μ ⊢μ pc = err E-error
 progress M (⊢sub ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
 progress M (⊢sub-pc ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
 
-
-relax-Σ : ∀ {Γ Σ Σ′ gc pc M A}
-  → Γ ; Σ ; gc ; pc ⊢ M ⦂ A
-  → Σ′ ⊇ Σ
-    ---------------------
-  → Γ ; Σ′ ; gc ; pc ⊢ M ⦂ A
-relax-Σ ⊢const Σ′⊇Σ = ⊢const
-relax-Σ (⊢addr eq) Σ′⊇Σ = ⊢addr (Σ′⊇Σ _ eq)
-relax-Σ (⊢var Γ∋x) Σ′⊇Σ = ⊢var Γ∋x
-relax-Σ (⊢lam ⊢M) Σ′⊇Σ = ⊢lam (relax-Σ ⊢M Σ′⊇Σ)
-relax-Σ (⊢app ⊢L ⊢M) Σ′⊇Σ = ⊢app (relax-Σ ⊢L Σ′⊇Σ) (relax-Σ ⊢M Σ′⊇Σ)
-relax-Σ (⊢if ⊢L ⊢M ⊢N) Σ′⊇Σ = ⊢if (relax-Σ ⊢L Σ′⊇Σ) (relax-Σ ⊢M Σ′⊇Σ) (relax-Σ ⊢N Σ′⊇Σ)
-relax-Σ (⊢let ⊢M ⊢N) Σ′⊇Σ = ⊢let (relax-Σ ⊢M Σ′⊇Σ) (relax-Σ ⊢N Σ′⊇Σ)
-relax-Σ (⊢cast ⊢M) Σ′⊇Σ = ⊢cast (relax-Σ ⊢M Σ′⊇Σ)
-relax-Σ (⊢ref ⊢M) Σ′⊇Σ = ⊢ref (relax-Σ ⊢M Σ′⊇Σ)
-relax-Σ (⊢deref ⊢M) Σ′⊇Σ = ⊢deref (relax-Σ ⊢M Σ′⊇Σ)
-relax-Σ (⊢assign ⊢L ⊢M) Σ′⊇Σ = ⊢assign (relax-Σ ⊢L Σ′⊇Σ) (relax-Σ ⊢M Σ′⊇Σ)
-relax-Σ (⊢nsu-ref ⊢M) Σ′⊇Σ = ⊢nsu-ref (relax-Σ ⊢M Σ′⊇Σ)
-relax-Σ (⊢nsu-assign ⊢L ⊢M) Σ′⊇Σ = ⊢nsu-assign (relax-Σ ⊢L Σ′⊇Σ) (relax-Σ ⊢M Σ′⊇Σ)
-relax-Σ (⊢prot ⊢M) Σ′⊇Σ = ⊢prot (relax-Σ ⊢M Σ′⊇Σ)
-relax-Σ (⊢cast-pc ⊢M pc≼ℓ) Σ′⊇Σ = ⊢cast-pc (relax-Σ ⊢M Σ′⊇Σ) pc≼ℓ
-relax-Σ ⊢err Σ′⊇Σ = ⊢err
-relax-Σ (⊢sub ⊢M A<:B) Σ′⊇Σ = ⊢sub (relax-Σ ⊢M Σ′⊇Σ) A<:B
-relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′⊇Σ) gc<:gc′
 
 plug-inversion : ∀ {Σ gc pc M A} {F : Frame}
   → [] ; Σ ; gc ; pc ⊢ plug M F ⦂ A
@@ -225,7 +201,9 @@ preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-false {ℓ = ℓ}) =
           A⋎ℓ<:A⋎ℓ′   = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
         ⟨ Σ , ⊇-refl {Σ} , ⊢sub (⊢prot (⊢sub-pc ⊢N gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (β-let x) = {!!}
-preserve ⊢M ⊢μ pc≾gc (ref x x₁) = {!!}
+preserve {Σ} {μ = μ} (⊢ref {T = T} {ℓ} ⊢V) ⊢μ pc≾gc (ref {a = a} v fresh {- `a` is fresh -}) =
+  let is-here = here {ℕ} {Type} {_≟_} {a} in
+  ⟨ ⟨ a , T of l ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh , ⊢addr is-here , {!!} ⟩
 preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-ok pc≼ℓ) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢cast-pc ⊢M pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-fail pc⋠ℓ) =

@@ -4,7 +4,8 @@ open import Data.List
 open import Data.Product using (_×_) renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
 open import Data.Nat
-open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Nullary using (Dec; yes; no; ¬_)
+open import Relation.Nullary.Negation using (contradiction)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Function using (case_of_)
 
@@ -24,6 +25,12 @@ key _≟_ (⟨ k₀ , v₀ ⟩ ∷ l) k =
   case k ≟ k₀ of λ where
     (yes _) → just v₀
     (no  _) → key _≟_ l k
+
+here : ∀ {K V : Set} {_≟_} {k : K} {v : V} {kvs}
+  → key _≟_ (⟨ k , v ⟩ ∷ kvs) k ≡ just v
+here {_≟_ = _≟_} {k} with k ≟ k
+... | yes refl = refl
+... | no ¬k≡k = contradiction refl ¬k≡k
 
 pattern ⟨_,_,_⟩ x y z = ⟨ x , ⟨ y , z ⟩ ⟩
 pattern ⟨_,_,_,_⟩ x y z w = ⟨ x , ⟨ y , ⟨ z , w ⟩ ⟩ ⟩
