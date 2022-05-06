@@ -351,16 +351,16 @@ stamp-val-value V-const = V-const
 stamp-val-value (V-cast v i) =
   V-cast (stamp-val-value v) (stamp-inert-inert i)
 
-⊢value-gc : ∀ {Σ gc gc′ pc pc′ V A}
+⊢value-pc : ∀ {Σ gc gc′ pc pc′ V A}
   → [] ; Σ ; gc  ; pc ⊢ V ⦂ A
   → Value V
   → [] ; Σ ; gc′ ; pc′ ⊢ V ⦂ A
-⊢value-gc (⊢addr eq) V-addr = ⊢addr eq
-⊢value-gc (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
-⊢value-gc ⊢const V-const = ⊢const
-⊢value-gc (⊢cast ⊢V) (V-cast v i) = ⊢cast (⊢value-gc ⊢V v)
-⊢value-gc (⊢sub ⊢V A<:B) v = ⊢sub (⊢value-gc ⊢V v) A<:B
-⊢value-gc (⊢sub-pc ⊢V gc<:gc′) v = ⊢value-gc ⊢V v
+⊢value-pc (⊢addr eq) V-addr = ⊢addr eq
+⊢value-pc (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
+⊢value-pc ⊢const V-const = ⊢const
+⊢value-pc (⊢cast ⊢V) (V-cast v i) = ⊢cast (⊢value-pc ⊢V v)
+⊢value-pc (⊢sub ⊢V A<:B) v = ⊢sub (⊢value-pc ⊢V v) A<:B
+⊢value-pc (⊢sub-pc ⊢V gc<:gc′) v = ⊢value-pc ⊢V v
 
 -- If an address is well-typed, the heap context lookup is successful.
 -- (inversion on the typing derivation of an address)

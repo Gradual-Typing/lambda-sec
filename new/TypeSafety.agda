@@ -182,7 +182,7 @@ preserve ⊢plug ⊢μ pc≾gc (ξ {F = F} M→M′) =
     ⟨ Σ′ , Σ′⊇Σ , wt-plug ⊢M′ Σ′⊇Σ , ⊢μ′ ⟩
 preserve {Σ} ⊢M ⊢μ pc≾gc ξ-err = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve {Σ} (⊢prot ⊢V) ⊢μ pc≾gc (prot-val v) =
-  ⟨ Σ , ⊇-refl {Σ} , ⊢value-gc (stamp-val-wt ⊢V v) (stamp-val-value v) , ⊢μ ⟩
+  ⟨ Σ , ⊇-refl {Σ} , ⊢value-pc (stamp-val-wt ⊢V v) (stamp-val-value v) , ⊢μ ⟩
 preserve (⊢prot ⊢M) ⊢μ pc≾gc (prot-ctx M→M′) =
   let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ (consis-join-≾ pc≾gc ≾-refl) M→M′ in
     ⟨ Σ′ , Σ′⊇Σ , ⊢prot ⊢M′ , ⊢μ′ ⟩
@@ -203,7 +203,7 @@ preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-false {ℓ = ℓ}) =
 preserve ⊢M ⊢μ pc≾gc (β-let x) = {!!}
 preserve {Σ} {μ = μ} (⊢ref {T = T} {ℓ} ⊢V) ⊢μ pc≾gc (ref {a = a} v fresh {- `a` is fresh -}) =
   let is-here = here {ℕ} {Type} {_≟_} {a} in
-  ⟨ ⟨ a , T of l ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh , ⊢addr is-here , ⊢μ-ext (⊢value-gc ⊢V v) ⊢μ fresh ⟩
+  ⟨ ⟨ a , T of l ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh , ⊢addr is-here , ⊢μ-ext (⊢value-pc ⊢V v) ⊢μ fresh ⟩
 preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-ok pc≼ℓ) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢cast-pc ⊢M pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-fail pc⋠ℓ) =
@@ -228,21 +228,21 @@ preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc 
               gc⋎g₂≼pc₂ = subst (λ □ → _ ⋎ _ ≼ □) ℓ⋎ℓ≡ℓ (join-≼′ gc≼pc₂ g₂≼pc₂)
               ⊢V† = ⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l gc⋎g₂≼pc₂) <:-refl <:-refl)) in
           ⟨ Σ , ⊇-refl {Σ} ,
-            ⊢sub (⊢cast (⊢app ⊢V† (⊢cast (⊢sub (⊢value-gc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
+            ⊢sub (⊢cast (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
 ... | (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p c~) I-label I-label)
   with (pc ⋎ ℓ₁) ≼? pc₁
 ... | (yes pc⋎ℓ₁≼pc₁) =
   case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
     ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:⋆ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun ~⋆ _ _) ⟩ →
       let ⊢V = fun-wt {gc = gc} {pc = pc} f
-          ⊢V† = ⊢value-gc {gc′ = l pc} (⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l pc⋎ℓ₁≼pc₁) <:-refl <:-refl))) v in
+          ⊢V† = ⊢value-pc {gc′ = l pc} (⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l pc⋎ℓ₁≼pc₁) <:-refl <:-refl))) v in
       ⟨ Σ , ⊇-refl {Σ} ,
-            ⊢sub (⊢cast (⊢cast-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-gc ⊢W w) A₁<:C))) ≼-refl)) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
+            ⊢sub (⊢cast (⊢cast-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C))) ≼-refl)) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
 ... | (no  pc⋎ℓ₁⋠pc₁) = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (deref-cast x x₁) = {!!}
 preserve ⊢M ⊢μ pc≾gc (assign-cast x x₁ x₂) = {!!}
 preserve {Σ} (⊢cast-pc ⊢V _) ⊢μ pc≾gc (β-cast-pc v) =
-  ⟨ Σ , ⊇-refl {Σ} , ⊢value-gc ⊢V v , ⊢μ ⟩
+  ⟨ Σ , ⊇-refl {Σ} , ⊢value-pc ⊢V v , ⊢μ ⟩
 preserve (⊢sub ⊢M A<:B) ⊢μ pc≾gc M→M′ =
   let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ pc≾gc M→M′ in
     ⟨ Σ′ , Σ′⊇Σ , ⊢sub ⊢M′ A<:B , ⊢μ′ ⟩
