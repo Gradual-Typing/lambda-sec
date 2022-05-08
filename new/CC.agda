@@ -131,28 +131,31 @@ canonical-ref (⊢sub ⊢V sub) v =
         (Ref-proxy ref i sub₁) → Ref-proxy ref i (<:-trans sub₁ sub)
 canonical-ref (⊢sub-pc ⊢V gc<:gc′) v = canonical-ref ⊢V v
 
-data Constant : Term → Base → Set where
-  Const-base : ∀ {ι} {k : rep ι} {ℓ}
+data Constant : Term → Type → Set where
+  Const-base : ∀ {ι} {k : rep ι} {ℓ ℓ′}
+    → ℓ ≼ ℓ′
       ------------------------------- Constant
-    → Constant ($ k of ℓ) ι
+    → Constant ($ k of ℓ) (` ι of l ℓ′)
 
   Const-inj : ∀ {ι} {k : rep ι} {ℓ ℓ′} {c : Cast (` ι of l ℓ′) ⇒ (` ι of ⋆)}
     → ℓ ≼ ℓ′
       ------------------------------- Injected constant
-    → Constant ($ k of ℓ ⟨ c ⟩) ι
+    → Constant ($ k of ℓ ⟨ c ⟩) (` ι of ⋆)
 
 canonical-const : ∀ {Σ gc pc ι g V}
   → [] ; Σ ; gc ; pc ⊢ V ⦂ ` ι of g
   → Value V
-  → Constant V ι
-canonical-const ⊢const V-const = Const-base
+  → Constant V (` ι of g)
+canonical-const ⊢const V-const = (Const-base ≼-refl)
 canonical-const (⊢cast ⊢V) (V-cast v (I-base-inj c)) =
   case canonical-const ⊢V v of λ where
-    Const-base →
+    (Const-base _) →
       case const-label-≼ ⊢V of λ where
         ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ → Const-inj ℓ≼ℓ′
-    (Const-inj _) → case cast-<: ⊢V of λ where (<:-ty () <:-ι)
-canonical-const (⊢sub ⊢V (<:-ty _ <:-ι)) v = canonical-const ⊢V v
+canonical-const (⊢sub ⊢V (<:-ty ℓ′<:g <:-ι)) v =
+  case ⟨ canonical-const ⊢V v , ℓ′<:g ⟩ of λ where
+    ⟨ Const-base ℓ≼ℓ′ , <:-l ℓ′≼ℓ″ ⟩ → Const-base (≼-trans ℓ≼ℓ′ ℓ′≼ℓ″)
+    ⟨ Const-inj  ℓ≼ℓ′ , <:-⋆ ⟩ → Const-inj ℓ≼ℓ′
 canonical-const (⊢sub-pc ⊢V _) v = canonical-const ⊢V v
 
 canonical⋆ : ∀ {Γ Σ gc pc V T}

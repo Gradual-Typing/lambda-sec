@@ -56,8 +56,8 @@ progress (if L then M else N endif) (⊢if {g = g} ⊢L ⊢M ⊢N) μ ⊢μ pc =
     (step L→L′) → step (ξ {F = if□ M N} L→L′)
     (done v) →
       case canonical-const ⊢L v of λ where
-        (Const-base {𝔹} {true})   → step β-if-true
-        (Const-base {𝔹} {false})  → step β-if-false
+        (Const-base {𝔹} {true} _)   → step β-if-true
+        (Const-base {𝔹} {false} _)  → step β-if-false
         (Const-inj {𝔹} {true} _)  → step (if-cast-true (I-base-inj _))
         (Const-inj {𝔹} {false} _) → step (if-cast-false (I-base-inj _))
     (err (E-error {e})) → step (ξ-err {F = if□ M N} {e = e})
