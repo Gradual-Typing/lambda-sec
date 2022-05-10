@@ -280,7 +280,7 @@ elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l
   (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
 elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p _) I-label I-label) =
   case (pc ⋎ ℓ₁) ≼? pc₁ of λ where
-    (yes _) → cast-pc pc (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
+    (yes _) → proj-pc pc (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
     (no _)  → error (blame p)
 
 

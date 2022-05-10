@@ -122,11 +122,16 @@ progress (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ pc =
     (step M→N) → step (prot-ctx M→N)
     (done v) → step (prot-val v)
     (err E-error) → step prot-err
-progress (cast-pc ℓ M) (⊢cast-pc ⊢M pc≼ℓ) μ ⊢μ pc =
+progress (inj-pc M) (⊢inj-pc ⊢M) μ ⊢μ pc =
   case progress M ⊢M μ ⊢μ pc of λ where
-    (step M→N) → step (ξ {F = cast-pc ℓ □} M→N)
-    (done v) → step (β-cast-pc v)
-    (err E-error) → step (ξ-err {F = cast-pc ℓ □})
+    (step M→N) → step (ξ {F = inj-pc□} M→N)
+    (done v) → step (β-inj-pc v)
+    (err E-error) → step (ξ-err {F = inj-pc□})
+progress (proj-pc ℓ M) (⊢proj-pc ⊢M pc≼ℓ) μ ⊢μ pc =
+  case progress M ⊢M μ ⊢μ pc of λ where
+    (step M→N) → step (ξ {F = proj-pc ℓ □} M→N)
+    (done v) → step (β-proj-pc v)
+    (err E-error) → step (ξ-err {F = proj-pc ℓ □})
 progress (error e) ⊢err μ ⊢μ pc = err E-error
 progress M (⊢sub ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
 progress M (⊢sub-pc ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
@@ -160,8 +165,10 @@ plug-inversion {F = □⟨ c ⟩} (⊢cast ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast ⊢M′) ⟩
 plug-inversion {F = nsu-assign□ M} (⊢nsu-assign ⊢L ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢nsu-assign ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
-plug-inversion {F = cast-pc ℓ □} (⊢cast-pc ⊢M pc≼ℓ) _ =
-  ⟨ l ℓ , _ , ≾-l pc≼ℓ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast-pc ⊢M′ pc≼ℓ) ⟩
+plug-inversion {F = inj-pc□} (⊢inj-pc ⊢M) _ =
+  ⟨ ⋆ , _ , ≾-⋆r , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢inj-pc ⊢M′) ⟩
+plug-inversion {F = proj-pc ℓ □} (⊢proj-pc ⊢M pc≼ℓ) _ =
+  ⟨ l ℓ , _ , ≾-l pc≼ℓ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢proj-pc ⊢M′ pc≼ℓ) ⟩
 plug-inversion (⊢sub ⊢M A<:B) pc≾gc =
   let ⟨ gc′ , B , pc≾gc′ , ⊢M , wt-plug ⟩ = plug-inversion ⊢M pc≾gc in
     ⟨ gc′ , B , pc≾gc′ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢sub (wt-plug ⊢M′ Σ′⊇Σ) A<:B) ⟩
@@ -205,7 +212,7 @@ preserve {Σ} {μ = μ} (⊢ref {T = T} {ℓ} ⊢V) ⊢μ pc≾gc (ref {a = a} v
   let is-here = here {ℕ} {Type} {_≟_} {a} in
   ⟨ ⟨ a , T of l ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh , ⊢addr is-here , ⊢μ-ext (⊢value-pc ⊢V v) ⊢μ fresh ⟩
 preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-ok pc≼ℓ) =
-  ⟨ Σ , ⊇-refl {Σ} , ⊢cast-pc ⊢M pc≼ℓ , ⊢μ ⟩
+  ⟨ Σ , ⊇-refl {Σ} , ⊢proj-pc ⊢M pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-fail pc⋠ℓ) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (deref x) = {!!}
@@ -214,11 +221,20 @@ preserve {Σ} (⊢nsu-assign ⊢L ⊢M) ⊢μ pc≾gc (nsu-assign-ok w eq1 eq2 p
   ⟨ Σ , ⊇-refl {Σ} , {!!} , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (nsu-assign-fail w x x₁ x₂) = {!!}
 preserve ⊢M ⊢μ pc≾gc (cast ⊢V v a) = {!!}
-preserve {Σ = Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) with i
+preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) with i
 ... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
   case canonical-const ⊢L (V-cast V-const i) of λ where
-    (Const-inj ℓ≼ℓ′) → ⟨ Σ , ⊇-refl {Σ} , ⊢cast (⊢prot {!!}) , ⊢μ ⟩
-preserve ⊢M ⊢μ pc≾gc (if-cast-false x) = {!!}
+    (Const-inj {ℓ = ℓ} ℓ≼ℓ′) →
+      let ⊢M† : [] ; Σ ; ⋆ ; pc ⋎ ℓ ⊢ M ⦂ A
+          ⊢M† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ M ⦂ A) g⋎̃⋆≡⋆ (⊢M {pc ⋎ ℓ}) in
+      ⟨ Σ , ⊇-refl {Σ} , ⊢cast (⊢prot (⊢inj-pc ⊢M†)) , ⊢μ ⟩
+preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-false i) with i
+... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
+  case canonical-const ⊢L (V-cast V-const i) of λ where
+    (Const-inj {ℓ = ℓ} ℓ≼ℓ′) →
+      let ⊢N† : [] ; Σ ; ⋆ ; pc ⋎ ℓ ⊢ N ⦂ A
+          ⊢N† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ N ⦂ A) g⋎̃⋆≡⋆ (⊢N {pc ⋎ ℓ}) in
+      ⟨ Σ , ⊇-refl {Σ} , ⊢cast (⊢prot (⊢inj-pc ⊢N†)) , ⊢μ ⟩
 preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc = pc} v w i) with i
 ... | (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p c~) I-label I-label) =
   case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
@@ -240,11 +256,13 @@ preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc 
       let ⊢V = fun-wt {gc = gc} {pc = pc} f
           ⊢V† = ⊢value-pc {gc′ = l pc} (⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l pc⋎ℓ₁≼pc₁) <:-refl <:-refl))) v in
       ⟨ Σ , ⊇-refl {Σ} ,
-            ⊢sub (⊢cast (⊢cast-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C))) ≼-refl)) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
+            ⊢sub (⊢cast (⊢proj-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C))) ≼-refl)) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
 ... | (no  pc⋎ℓ₁⋠pc₁) = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (deref-cast x x₁) = {!!}
 preserve ⊢M ⊢μ pc≾gc (assign-cast x x₁ x₂) = {!!}
-preserve {Σ} (⊢cast-pc ⊢V _) ⊢μ pc≾gc (β-cast-pc v) =
+preserve {Σ} (⊢inj-pc ⊢V) ⊢μ pc≾gc (β-inj-pc v) =
+  ⟨ Σ , ⊇-refl {Σ} , ⊢value-pc ⊢V v , ⊢μ ⟩
+preserve {Σ} (⊢proj-pc ⊢V _) ⊢μ pc≾gc (β-proj-pc v) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢value-pc ⊢V v , ⊢μ ⟩
 preserve (⊢sub ⊢M A<:B) ⊢μ pc≾gc M→M′ =
   let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ pc≾gc M→M′ in

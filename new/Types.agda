@@ -197,6 +197,10 @@ g⋎̃g≡g : ∀ {g} → g ⋎̃ g ≡ g
 g⋎̃g≡g {⋆} = refl
 g⋎̃g≡g {l ℓ} = cong l ℓ⋎ℓ≡ℓ
 
+g⋎̃⋆≡⋆ : ∀ {g} → g ⋎̃ ⋆ ≡ ⋆
+g⋎̃⋆≡⋆ {⋆} = refl
+g⋎̃⋆≡⋆ {l ℓ} = refl
+
 consis-join-~ₗ : ∀ {g₁ g₂ g₃ g₄}
   → g₁ ~ₗ g₂
   → g₃ ~ₗ g₄
