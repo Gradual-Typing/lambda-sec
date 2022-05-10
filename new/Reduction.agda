@@ -30,7 +30,7 @@ data Frame : Set where
 
   let□ : Term → Frame
 
-  if□ : Term → Term → Frame
+  if□ : Type → Term → Term → Frame
 
   □⟨_⟩ : ∀ {A B} → Cast A ⇒ B → Frame
 
@@ -47,7 +47,7 @@ plug M !□              = ! M
 plug L (□:= M)         = L := M
 plug M ((V :=□) v)     = V := M
 plug M (let□ N)        = `let M N
-plug L (if□ M N)       = if L then M else N endif
+plug L (if□ A M N)     = if L A M N
 plug M □⟨ c ⟩          = M ⟨ c ⟩
 plug L (nsu-assign□ M) = nsu-assign L M
 plug M (cast-pc pc □)  = cast-pc pc M
@@ -85,13 +85,13 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ------------------------------------------------------------------- β
     → (ƛ[ gc′ ] A ˙ N of ℓ) · V ∣ μ ∣ pc —→ prot[ ℓ ] (N [ V ]) ∣ μ
 
-  β-if-true : ∀ {M N μ pc ℓ}
+  β-if-true : ∀ {M N μ pc A ℓ}
       ----------------------------------------------------------------------- IfTrue
-    → if ($ true of ℓ) then M else N endif ∣ μ ∣ pc —→ prot[ ℓ ] M ∣ μ
+    → if ($ true of ℓ) A M N ∣ μ ∣ pc —→ prot[ ℓ ] M ∣ μ
 
-  β-if-false : ∀ {M N μ pc ℓ}
+  β-if-false : ∀ {M N μ pc A ℓ}
       ----------------------------------------------------------------------- IfFalse
-    → if ($ false of ℓ) then M else N endif ∣ μ ∣ pc —→ prot[ ℓ ] N ∣ μ
+    → if ($ false of ℓ) A M N ∣ μ ∣ pc —→ prot[ ℓ ] N ∣ μ
 
   β-let : ∀ {V N μ pc}
     → Value V
@@ -147,15 +147,15 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       -------------------------------------------------- Cast
     → V ⟨ c ⟩ ∣ μ ∣ pc —→ apply-cast V ⊢V v c a ∣ μ
 
-  if-cast-true : ∀ {M N μ pc g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
+  if-cast-true : ∀ {M N μ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
       ----------------------------------------------------------------------- IfCastTrue
-    → if ($ true of ℓ ⟨ c ⟩) then M else N endif ∣ μ ∣ pc —→ prot[ ℓ ] M ∣ μ
+    → if ($ true of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] M ⟨ stamp-c A ℓ c ⟩ ∣ μ
 
-  if-cast-false : ∀ {M N μ pc g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
+  if-cast-false : ∀ {M N μ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
       ----------------------------------------------------------------------- IfCastFalse
-    → if ($ false of ℓ ⟨ c ⟩) then M else N endif ∣ μ ∣ pc —→ prot[ ℓ ] N ∣ μ
+    → if ($ false of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] N ⟨ stamp-c A ℓ c ⟩ ∣ μ
 
   fun-cast : ∀ {V W μ pc A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
     → Value V → Value W

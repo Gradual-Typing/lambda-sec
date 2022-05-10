@@ -19,7 +19,7 @@ data Op : Set where
   op-lam    : (pc : StaticLabel) → Type → (ℓ : StaticLabel) → Op
   op-app    : Op
   op-const  : ∀ {ι} → rep ι → StaticLabel → Op
-  op-if     : Op
+  op-if     : Type → Op
   op-let    : Op
   op-ref    : StaticLabel → Op
   op-deref  : Op
@@ -36,7 +36,7 @@ sig (op-addr a ℓ)      = []
 sig (op-lam pc A ℓ)    = (ν ■) ∷ []
 sig op-app             = ■ ∷ ■ ∷ []
 sig (op-const k ℓ)     = []
-sig op-if              = ■ ∷ ■ ∷ ■ ∷ []
+sig (op-if A)          = ■ ∷ ■ ∷ ■ ∷ []
 sig op-let             = ■ ∷ (ν ■) ∷ []
 sig (op-ref ℓ)         = ■ ∷ []
 sig op-deref           = ■ ∷ []
@@ -57,7 +57,7 @@ pattern addr_of_ a ℓ             = (op-addr a ℓ) ⦅ nil ⦆
 pattern ƛ[_]_˙_of_ pc A N ℓ      = (op-lam pc A ℓ) ⦅ cons (bind (ast N)) nil ⦆
 pattern _·_ L M                  = op-app ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern $_of_ k ℓ                = (op-const k ℓ) ⦅ nil ⦆
-pattern if_then_else_endif L M N = op-if ⦅ cons (ast L) (cons (ast M) (cons (ast N) nil)) ⦆
+pattern if L A M N               = (op-if A) ⦅ cons (ast L) (cons (ast M) (cons (ast N) nil)) ⦆
 pattern `let M N                 = op-let ⦅ cons (ast M) (cons (bind (ast N)) nil) ⦆
 pattern ref[_]_ ℓ M              = (op-ref ℓ) ⦅ cons (ast M) nil ⦆
 pattern !_ M                     = op-deref ⦅ cons (ast M) nil ⦆

@@ -51,16 +51,16 @@ progress (L · M) (⊢app ⊢L ⊢M) μ ⊢μ pc =
             (Fun-proxy f i _) → step (fun-cast (fun-is-value f) w i)
         (err (E-error {e})) → step (ξ-err {F = (L ·□) v} {e = e})
     (err (E-error {e})) → step (ξ-err {F = □· M} {e = e})
-progress (if L then M else N endif) (⊢if {g = g} ⊢L ⊢M ⊢N) μ ⊢μ pc =
+progress (if L A M N) (⊢if {g = g} ⊢L ⊢M ⊢N) μ ⊢μ pc =
   case progress L ⊢L μ ⊢μ pc of λ where
-    (step L→L′) → step (ξ {F = if□ M N} L→L′)
+    (step L→L′) → step (ξ {F = if□ A M N} L→L′)
     (done v) →
       case canonical-const ⊢L v of λ where
         (Const-base {𝔹} {true} _)   → step β-if-true
         (Const-base {𝔹} {false} _)  → step β-if-false
         (Const-inj {𝔹} {true} _)  → step (if-cast-true (I-base-inj _))
         (Const-inj {𝔹} {false} _) → step (if-cast-false (I-base-inj _))
-    (err (E-error {e})) → step (ξ-err {F = if□ M N} {e = e})
+    (err (E-error {e})) → step (ξ-err {F = if□ A M N} {e = e})
 progress (`let M N) (⊢let ⊢M ⊢N) μ ⊢μ pc =
   case progress M ⊢M μ ⊢μ pc of λ where
     (step M→M′) → step (ξ {F = let□ N} M→M′)
@@ -154,7 +154,7 @@ plug-inversion {F = (V :=□) v} (⊢assign ⊢V ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢assign (relax-Σ ⊢V Σ′⊇Σ) ⊢M′) ⟩
 plug-inversion {F = let□ N} (⊢let ⊢M ⊢N) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢let ⊢M′ (relax-Σ ⊢N Σ′⊇Σ)) ⟩
-plug-inversion {F = if□ M N} (⊢if ⊢L ⊢M ⊢N) pc≾gc =
+plug-inversion {F = if□ A M N} (⊢if ⊢L ⊢M ⊢N) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢if ⊢L′ (relax-Σ ⊢M Σ′⊇Σ) (relax-Σ ⊢N Σ′⊇Σ)) ⟩
 plug-inversion {F = □⟨ c ⟩} (⊢cast ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast ⊢M′) ⟩
@@ -217,7 +217,7 @@ preserve ⊢M ⊢μ pc≾gc (cast ⊢V v a) = {!!}
 preserve {Σ = Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) with i
 ... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
   case canonical-const ⊢L (V-cast V-const i) of λ where
-    (Const-inj ℓ≼ℓ′) → ⟨ Σ , ⊇-refl {Σ} , {!!} , ⊢μ ⟩
+    (Const-inj ℓ≼ℓ′) → ⟨ Σ , ⊇-refl {Σ} , ⊢cast (⊢prot {!!}) , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (if-cast-false x) = {!!}
 preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc = pc} v w i) with i
 ... | (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p c~) I-label I-label) =

@@ -40,10 +40,7 @@ compile (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B�
     ⟨ A≲C , B≲C ⟩ →
       case ⟨ ≲-prop A≲C , ≲-prop B≲C ⟩ of λ where
         ⟨ ⟨ A′ , A~A′ , A′<:C ⟩ , ⟨ B′ , B~B′ , B′<:C ⟩ ⟩ →
-          if (compile L ⊢L)
-            then (compile M ⊢M ⟨ cast A A′ p A~A′ ⟩)
-            else (compile N ⊢N ⟨ cast B B′ p B~B′ ⟩)
-          endif
+          if (compile L ⊢L) C (compile M ⊢M ⟨ cast A A′ p A~A′ ⟩) (compile N ⊢N ⟨ cast B B′ p B~B′ ⟩)
 compile (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A) =
   case ≲-prop A′≲A of λ where
     ⟨ B , A′~B , B<:A ⟩ →

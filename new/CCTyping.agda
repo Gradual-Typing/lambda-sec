@@ -48,7 +48,7 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
     → (∀ {pc′} → Γ ; Σ ; gc ⋎̃ g ; pc′ ⊢ M ⦂ A)
     → (∀ {pc′} → Γ ; Σ ; gc ⋎̃ g ; pc′ ⊢ N ⦂ A)
       --------------------------------------------------------- CCIf
-    → Γ ; Σ ; gc ; pc ⊢ if L then M else N endif ⦂ stamp A g
+    → Γ ; Σ ; gc ; pc ⊢ if L A M N ⦂ stamp A g
 
   ⊢let : ∀ {Γ Σ gc pc M N A B}
     → Γ       ; Σ ; gc ; pc ⊢ M ⦂ A

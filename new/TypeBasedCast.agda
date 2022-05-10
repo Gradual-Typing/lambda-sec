@@ -115,3 +115,6 @@ out-c : ∀ {A B g₁ g₂}
   → Cast (stamp A g₁) ⇒ (stamp B g₂)
 out-c (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ (~-ref A~B))) =
   cast (stamp A g₁) (stamp B g₂) p (stamp-~ A~B g₁~g₂)
+
+stamp-c : ∀ {g} A ℓ → Cast (` Bool of g) ⇒ (` Bool of ⋆) → Cast (stamp A (l ℓ)) ⇒ (stamp A ⋆)
+stamp-c A ℓ (cast _ _ p _) = cast (stamp A (l ℓ)) (stamp A ⋆) p (stamp-~ ~-refl ~⋆)
