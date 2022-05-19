@@ -5,6 +5,7 @@ open import Types
 module CCTyping (Cast_⇒_ : Type → Type → Set) where
 
 open import Data.Nat
+open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
 open import Data.List
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
@@ -22,10 +23,10 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
       -------------------------------------------- CCConst
     → Γ ; Σ ; gc ; pc ⊢ $ k of ℓ ⦂ ` ι of l ℓ
 
-  ⊢addr : ∀ {Γ Σ gc pc A a ℓ}
-    → key _≟_ Σ a ≡ just A
+  ⊢addr : ∀ {Γ Σ gc pc a T ℓ ℓ₁}
+    → key _≟_ Σ a ≡ just ⟨ T , ℓ₁ ⟩
       ------------------------------------------------ CCAddr
-    → Γ ; Σ ; gc ; pc ⊢ addr a of ℓ ⦂ Ref A of l ℓ
+    → Γ ; Σ ; gc ; pc ⊢ addr a of ℓ ⦂ Ref (T of l ℓ₁) of l ℓ
 
   ⊢var : ∀ {Γ Σ gc pc A x}
     → Γ ∋ x ⦂ A

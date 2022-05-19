@@ -91,9 +91,9 @@ canonical-fun (⊢sub ⊢V sub) v =
 canonical-fun (⊢sub-pc ⊢V gc<:gc′) v = canonical-fun ⊢V v
 
 data Reference : Term → HeapContext → Type → Set where
-  Ref-addr : ∀ {Σ A A′ a g ℓ}
-    → key _≟_ Σ a ≡ just A′
-    → Ref A′ of l ℓ <: Ref A of g
+  Ref-addr : ∀ {Σ A a T g ℓ ℓ₁}
+    → key _≟_ Σ a ≡ just ⟨ T , ℓ₁ ⟩
+    → Ref (T of l ℓ₁) of l ℓ <: Ref A of g
       ---------------------------------------- Reference
     → Reference (addr a of ℓ) Σ (Ref A of g)
 
@@ -121,8 +121,8 @@ canonical-ref : ∀ {Σ gc pc A g V}
   → Value V
   → Reference V Σ (Ref A of g)
 canonical-ref (⊢addr eq) V-addr = Ref-addr eq <:-refl
-canonical-ref (⊢cast ⊢V) (V-cast v (I-ref c i)) =
-  Ref-proxy (canonical-ref ⊢V v) (I-ref c i) <:-refl
+canonical-ref (⊢cast ⊢V) (V-cast v (I-ref c i₁ i₂)) =
+  Ref-proxy (canonical-ref ⊢V v) (I-ref c i₁ i₂) <:-refl
 canonical-ref (⊢sub ⊢V sub) v =
   case sub of λ where
     (<:-ty _ (<:-ref _ _)) →
@@ -185,7 +185,24 @@ canonical-pc⋆ (⊢sub ⊢V (<:-ty g′<:g (<:-fun <:-⋆ A<:A′ B′<:B))) v 
         ⟨ C , D , c , W , refl , i , D<:A→B ⟩
 canonical-pc⋆ (⊢sub-pc ⊢V gc<:gc′) v = canonical-pc⋆ ⊢V v
 
-apply-cast : ∀ {Γ Σ gc pc A B} → (V : Term) → Γ ; Σ ; gc ; pc ⊢ V ⦂ A → Value V → (c : Cast A ⇒ B) → Active c → Term
+canonical-ref⋆ : ∀ {Γ Σ gc pc V T g}
+  → Γ ; Σ ; gc ; pc ⊢ V ⦂ Ref (T of ⋆) of g
+  → Value V
+  → ∃[ A ] ∃[ B ] Σ[ c ∈ Cast A ⇒ B ] ∃[ W ]
+       (V ≡ W ⟨ c ⟩) × (Inert c) × (B <: Ref (T of ⋆) of g)
+canonical-ref⋆ (⊢cast ⊢W) (V-cast {V = W} {c} w i) =
+  ⟨ _ , _ , c , W , refl , i , <:-refl ⟩
+canonical-ref⋆ (⊢sub ⊢V sub) v =
+  case sub of λ where
+    (<:-ty _ (<:-ref (<:-ty <:-⋆ S<:T) (<:-ty <:-⋆ T<:S))) →
+      case canonical-ref⋆ ⊢V v of λ where
+        ⟨ A , B , c , W , refl , i , B<:RefS ⟩ →
+          ⟨ A , B , c , W , refl , i , <:-trans B<:RefS sub ⟩
+canonical-ref⋆ (⊢sub-pc ⊢V gc<:gc′) v = canonical-ref⋆ ⊢V v
+
+apply-cast : ∀ {Γ Σ gc pc A B}
+  → (V : Term) → Γ ; Σ ; gc ; pc ⊢ V ⦂ A → Value V
+  → (c : Cast A ⇒ B) → Active c → Term
 -- V ⟨ ` ι of g ⇒ ` ι of g ⟩ —→ V
 apply-cast V ⊢V v c (A-base-id .c) = V
 apply-cast V ⊢V v c (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty ⋆~ ~-ι))) =
@@ -249,7 +266,7 @@ apply-cast V ⊢V v c (A-fun-pc (cast ([ ⋆ ] C₁ ⇒ C₂ of g₁) ([ gc ] D�
 apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~RefD)) a) =
   case canonical⋆ ⊢V v of λ where
     ⟨ _ , _ , cast (Ref A of l ℓ′) (Ref B of ⋆) q (~-ty ~⋆ RefA~RefB) ,
-      W , refl , I-ref _ I-label , <:-ty <:-⋆ (<:-ref B<:C C<:B) ⟩ →
+      W , refl , I-ref _ I-label I-label , <:-ty <:-⋆ (<:-ref B<:C C<:B) ⟩ →
       case a of λ where
         --      W ⟨ Ref A of ℓ′ ⇒ Ref B of ⋆  ⟩ ⟨ Ref C of ⋆  ⇒ Ref D of ⋆ ⟩
         -- —→ W ⟨ Ref A of ℓ′ ⇒ Ref B of ℓ′ ⟩ ⟨ Ref C of ℓ′ ⇒ Ref D of ⋆ ⟩
@@ -266,6 +283,29 @@ apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~Re
               let c~₁ = ~-ty ~ₗ-refl RefA~RefB
                   c~₂ = ~-ty ~ₗ-refl RefC~RefD in
                 W ⟨ cast (Ref A of l ℓ) (Ref B of l ℓ) q c~₁ ⟩ ⟨ cast (Ref C of l ℓ) (Ref D of l ℓ) p c~₂ ⟩
+            (no _) → error (blame p)
+apply-cast V ⊢V v c (A-ref-ref (cast (Ref (S of ⋆) of g₁) (Ref (T of g₂₁) of g₂) p (~-ty g₁~g₂ (~-ref (~-ty _ S~T)))) a I-label) =
+  case canonical-ref⋆ ⊢V v of λ where
+    ⟨ _ , _ , cast (Ref (S′ of l ℓ₁′) of g₁′) (Ref (T′ of ⋆) of g₂′) q (~-ty g₁′~g₂′ (~-ref (~-ty ~⋆ S′~T′))) ,
+      W , refl , I-ref _ I-label I-label , <:-ty _ (<:-ref (<:-ty <:-⋆ _) (<:-ty <:-⋆ _)) ⟩ →
+      case a of λ where
+        --      W ⟨ Ref (S′ of ℓ₁′) of g₁′ ⇒ Ref (T′ of  ⋆ ) of g₂′ ⟩ ⟨ Ref (S of  ⋆ ) of g₁ ⇒ Ref (T of ⋆) of g₂ ⟩
+        -- —→ W ⟨ Ref (S′ of ℓ₁′) of g₁′ ⇒ Ref (T′ of ℓ₁′) of g₂′ ⟩ ⟨ Ref (S of ℓ₁′) of g₁ ⇒ Ref (T of ⋆) of g₂ ⟩
+        A-id⋆ →
+          let c~₁ = ~-ty g₁′~g₂′ (~-ref (~-ty ~ₗ-refl S′~T′))
+              c~₂ = ~-ty g₁~g₂ (~-ref (~-ty ~⋆ S~T)) in
+          W ⟨ cast (Ref (S′ of l ℓ₁′) of g₁′) (Ref (T′ of l ℓ₁′) of g₂′) q c~₁ ⟩
+            ⟨ cast (Ref (S of l ℓ₁′) of g₁) (Ref (T of ⋆) of g₂) p c~₂ ⟩
+        --      W ⟨ Ref (S′ of ℓ₁′) of g₁′ ⇒ Ref (T′ of  ⋆ ) of g₂′ ⟩ ⟨ Ref (S of  ⋆ ) of g₁ ⇒ Ref (T of ℓ₁) of g₂ ⟩
+        -- —→ W ⟨ Ref (S′ of ℓ₁ ) of g₁′ ⇒ Ref (T′ of  ℓ₁) of g₂′ ⟩ ⟨ Ref (S of  ℓ₁) of g₁ ⇒ Ref (T of ℓ₁) of g₂ ⟩ , if ℓ₁′ = ℓ₁
+        --      blame p  , otherwise
+        (A-proj {ℓ₁}) →
+          case ℓ₁′ =? ℓ₁ of λ where
+            (yes _) →
+              let c~₁ = ~-ty g₁′~g₂′ (~-ref (~-ty ~ₗ-refl S′~T′))
+                  c~₂ = ~-ty g₁~g₂ (~-ref (~-ty ~ₗ-refl S~T)) in
+              W ⟨ cast (Ref (S′ of l ℓ₁) of g₁′) (Ref (T′ of l ℓ₁) of g₂′) q c~₁ ⟩
+                ⟨ cast (Ref (S of l ℓ₁) of g₁) (Ref (T of l ℓ₁) of g₂) p c~₂ ⟩
             (no _) → error (blame p)
 
 
@@ -303,6 +343,18 @@ unwrap-ref (⊢sub-pc ⊢V gc<:gc′) v =
   let ⟨ a , ℓ , eq , A′ , ⊢a ⟩ = unwrap-ref ⊢V v in
     ⟨ a , ℓ , eq , A′ , ⊢sub-pc ⊢a gc<:gc′ ⟩
 
+-- unwrap-label : ∀ {Σ gc pc V T ℓ₁ g}
+--   → [] ; Σ ; gc ; pc ⊢ V ⦂ Ref (T of l ℓ₁) of g
+--   → (v : Value V)
+--     ------------------------
+--   → ∃[ T′ ] ∃[ ℓ ] [] ; Σ ; gc ; pc ⊢ unwrap V v ⦂ Ref (T′ of l ℓ₁) of l ℓ
+-- unwrap-label (⊢addr eq) (V-addr {a} {ℓ}) = ⟨ _ , ℓ , ⊢addr eq ⟩
+-- unwrap-label (⊢cast ⊢V) (V-cast v (I-ref _ I-label)) = {!!}
+-- unwrap-label (⊢sub ⊢V (<:-ty _ (<:-ref A<:B B<:A))) v
+--   rewrite <:-antisym A<:B B<:A = unwrap-label ⊢V v
+-- unwrap-label (⊢sub-pc ⊢V gc<:gc′) v =
+--   let ⟨ T′ , ℓ , ⊢a ⟩ = unwrap-label ⊢V v in ⟨ T′ , ℓ , ⊢sub-pc ⊢a gc<:gc′ ⟩
+
 stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → ∀ ℓ
                       → (Cast (stamp A (l ℓ)) ⇒ (stamp B (l ℓ)))
 stamp-inert (cast (` ι of l ℓ₁) (` ι of ⋆) p (~-ty ~⋆ ~-ι))
@@ -313,7 +365,7 @@ stamp-inert (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-t
   let c~ = ~-ty (consis-join-~ₗ g₁~g₂ ~ₗ-refl) A→B~C→D in
     cast ([ gc₁ ] A ⇒ B of (g₁ ⋎̃ l ℓ)) ([ gc₂ ] C ⇒ D of (g₂ ⋎̃ l ℓ)) p c~
 stamp-inert (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ RefA~RefB))
-            (I-ref _ I-label) ℓ =
+            (I-ref _ I-label I-label) ℓ =
   let c~ = ~-ty (consis-join-~ₗ g₁~g₂ ~ₗ-refl) RefA~RefB in
     cast (Ref A of (g₁ ⋎̃ l ℓ)) (Ref B of (g₂ ⋎̃ l ℓ)) p c~
 
@@ -342,8 +394,8 @@ stamp-inert-inert : ∀ {A B} {c : Cast A ⇒ B} {ℓ}
 stamp-inert-inert (I-base-inj c) = I-base-inj _
 stamp-inert-inert (I-fun c I-label I-label) =
   I-fun (stamp-inert c _ _) I-label I-label
-stamp-inert-inert (I-ref c I-label) =
-  I-ref (stamp-inert c _ _) I-label
+stamp-inert-inert (I-ref c I-label I-label) =
+  I-ref (stamp-inert c _ _) I-label I-label
 
 stamp-val-value : ∀ {V ℓ}
   → (v : Value V)
@@ -367,10 +419,11 @@ stamp-val-value (V-cast v i) =
 
 -- If an address is well-typed, the heap context lookup is successful.
 -- (inversion on the typing derivation of an address)
-⊢addr-lookup : ∀ {Σ gc pc a ℓ A g}
+⊢addr-inv : ∀ {Σ gc pc a ℓ A g}
   → [] ; Σ ; gc ; pc ⊢ addr a of ℓ ⦂ Ref A of g
-  → key _≟_ Σ a ≡ just A
-⊢addr-lookup ⊢a =
+  → ∃[ T ] ∃[ ℓ₁ ] (A ≡ T of l ℓ₁) × (key _≟_ Σ a ≡ just ⟨ T , ℓ₁ ⟩)
+⊢addr-inv ⊢a =
  case canonical-ref ⊢a V-addr of λ where
     (Ref-addr eq (<:-ty _ (<:-ref A′<:A A<:A′))) →
-      case <:-antisym A′<:A A<:A′ of λ where refl → eq
+      case <:-antisym A′<:A A<:A′ of λ where
+        refl → ⟨ _ , _ , refl , eq ⟩

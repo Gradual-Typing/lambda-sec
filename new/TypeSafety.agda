@@ -85,7 +85,7 @@ progress (! M) (⊢deref ⊢M) μ ⊢μ pc =
     (done v) →
       case canonical-ref ⊢M v of λ where
         (Ref-addr eq _) →
-          let ⟨ _ , T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = proj₂ ⊢μ _ eq in
+          let ⟨ _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ _ eq in
             step (deref eq)
         (Ref-proxy r i _) → step (deref-cast (ref-is-value r) i)
     (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
@@ -98,7 +98,7 @@ progress (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ pc =
         (done w) →
           case canonical-ref ⊢L v of λ where
             (Ref-addr eq _) →
-              let ⟨ _ , T , ℓ , _ , V₁ , eq , ⊢V₁ ⟩ = proj₂ ⊢μ _ eq in
+              let ⟨ _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ _ eq in
                 step (assign w eq)
             (Ref-proxy r i _) → step (assign-cast (ref-is-value r) w i)
         (err (E-error {e})) → step (ξ-err {F = (L :=□) v} {e = e})
@@ -111,8 +111,9 @@ progress (nsu-assign L M) (⊢nsu-assign ⊢L ⊢M) μ ⊢μ pc =
   case progress L ⊢L μ ⊢μ pc of λ where
     (step L→L′) → step (ξ {F = nsu-assign□ M} L→L′)
     (done v) →
-      let ⟨ a , ℓ , eq₁ , A′ , ⊢a ⟩ = unwrap-ref ⊢L v in
-      let ⟨ _ , T , ℓ₁ , _ , V₁ , eq₂ , ⊢V₁ ⟩ = proj₂ ⊢μ _ (⊢addr-lookup ⊢a) in
+      let ⟨ a , ℓ , eq₁ , A′ , ⊢a ⟩ = unwrap-ref ⊢L v
+          ⟨ T , ℓ₁ , A≡Tℓ₁ , eq ⟩   = ⊢addr-inv ⊢a
+          ⟨ _ , V₁ , eq₂ , ⊢V₁ ⟩    = ⊢μ _ eq in
         case pc ≼? ℓ₁ of λ where
           (yes pc≼ℓ₁) → step (nsu-assign-ok v eq₁ eq₂ pc≼ℓ₁)
           (no  pc⋠ℓ₁) → step (nsu-assign-fail v eq₁ eq₂ pc⋠ℓ₁)
@@ -142,8 +143,7 @@ plug-inversion : ∀ {Σ gc pc M A} {F : Frame}
   → l pc ≾ gc
     -------------------------------------------------------------
   → ∃[ gc′ ] ∃[ B ]
-       (l pc ≾ gc′) ×
-       ([] ; Σ ; gc′ ; pc ⊢ M ⦂ B) ×
+       (l pc ≾ gc′) × ([] ; Σ ; gc′ ; pc ⊢ M ⦂ B) ×
        (∀ {Σ′ M′} → [] ; Σ′ ; gc′ ; pc ⊢ M′ ⦂ B → Σ′ ⊇ Σ → [] ; Σ′ ; gc ; pc ⊢ plug M′ F ⦂ A)
 plug-inversion {F = □· M} (⊢app ⊢L ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢app ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
@@ -209,8 +209,8 @@ preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-false {ℓ = ℓ}) =
         ⟨ Σ , ⊇-refl {Σ} , ⊢sub (⊢prot (⊢sub-pc ⊢N gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (β-let x) = {!!}
 preserve {Σ} {μ = μ} (⊢ref {T = T} {ℓ} ⊢V) ⊢μ pc≾gc (ref {a = a} v fresh {- `a` is fresh -}) =
-  let is-here = here {ℕ} {Type} {_≟_} {a} in
-  ⟨ ⟨ a , T of l ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh , ⊢addr is-here , ⊢μ-ext (⊢value-pc ⊢V v) ⊢μ fresh ⟩
+  let is-here = here {Addr} {RawType × StaticLabel} {_≟_} {a} in
+  ⟨ ⟨ a , T , ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh , ⊢addr is-here , ⊢μ-ext (⊢value-pc ⊢V v) ⊢μ fresh ⟩
 preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-ok pc≼ℓ) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢proj-pc ⊢M pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-fail pc⋠ℓ) =

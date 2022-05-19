@@ -744,12 +744,18 @@ stamp-<: (<:-ty g₁′<:g₂′ S<:T) g₁<:g₂ = <:-ty (consis-join-<:ₗ g�
 ≾-<: {l ℓ₁} {l ℓ₂} {l ℓ} (≾-l ℓ₁≼ℓ₂) (<:-l ℓ₂≼ℓ) = ≾-l (≼-trans ℓ₁≼ℓ₂ ℓ₂≼ℓ)
 
 _≼?_ : ∀ ℓ₁ ℓ₂ → Dec (ℓ₁ ≼ ℓ₂)
+low ≼? low = yes l⊑l
+low ≼? high = yes l⊑h
 high ≼? high = yes h⊑h
 high ≼? low = no λ ()
-low ≼? high = yes l⊑h
-low ≼? low = yes l⊑l
+
+_=?_ : ∀ (ℓ₁ ℓ₂ : StaticLabel) → Dec (ℓ₁ ≡ ℓ₂)
+low =? low = yes refl
+high =? high = yes refl
+low =? high = no λ ()
+high =? low = no λ ()
 
 Context = List Type
-{- Addr ↦ Type -}
-HeapContext = List (Addr × Type)
+{- a ↦ T , ℓ -}
+HeapContext = List (Addr × RawType × StaticLabel)
 
