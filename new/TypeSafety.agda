@@ -34,25 +34,25 @@ data Progress (M : Term) (μ : Heap) (pc : StaticLabel) : Set where
       ------------- Error
     → Progress M μ pc
 
-progress : ∀ {Σ gc pc A} M → [] ; Σ ; gc ; pc ⊢ M ⦂ A → ∀ μ → Σ ⊢ μ → ∀ pc → Progress M μ pc
-progress ($ k of ℓ) ⊢const μ ⊢μ pc = done V-const
-progress (addr a of ℓ) (⊢addr _) μ ⊢μ pc = done V-addr
-progress (` x) (⊢var ())
-progress (ƛ[ _ ] A ˙ N of ℓ) (⊢lam ⊢M) μ ⊢μ pc = done V-ƛ
-progress (L · M) (⊢app ⊢L ⊢M) μ ⊢μ pc =
-  case progress L ⊢L μ ⊢μ pc of λ where
-    (step L→L′) → step (ξ {F = □· M} L→L′)
-    (done v) →
-      case progress M ⊢M μ ⊢μ pc of λ where
-        (step M→M′) → step (ξ {F = (L ·□) v} M→M′)
-        (done w) →
-          case canonical-fun ⊢L v of λ where
-            (Fun-ƛ _ _) → step (β w)
-            (Fun-proxy f i _) → step (fun-cast (fun-is-value f) w i)
-        (err (E-error {e})) → step (ξ-err {F = (L ·□) v} {e = e})
-    (err (E-error {e})) → step (ξ-err {F = □· M} {e = e})
-progress (if L A M N) (⊢if {g = g} ⊢L ⊢M ⊢N) μ ⊢μ pc =
-  case progress L ⊢L μ ⊢μ pc of λ where
+progress : ∀ {Σ gc A} pc M → [] ; Σ ; gc ; pc ⊢ M ⦂ A → ∀ μ → Σ ⊢ μ → Progress M μ pc
+progress pc ($ k of ℓ) ⊢const μ ⊢μ = done V-const
+progress pc (addr a of ℓ) (⊢addr _) μ ⊢μ = done V-addr
+progress pc (` x) (⊢var ())
+progress pc (ƛ[ _ ] A ˙ N of ℓ) (⊢lam ⊢M) μ ⊢μ = done V-ƛ
+progress pc (L · M) (⊢app ⊢L ⊢M) μ ⊢μ =
+  case progress pc L ⊢L μ ⊢μ of λ where
+  (step L→L′) → step (ξ {F = □· M} L→L′)
+  (done v) →
+    case progress pc M ⊢M μ ⊢μ of λ where
+    (step M→M′) → step (ξ {F = (L ·□) v} M→M′)
+    (done w) →
+      case canonical-fun ⊢L v of λ where
+      (Fun-ƛ _ _) → step (β w)
+      (Fun-proxy f i _) → step (fun-cast (fun-is-value f) w i)
+    (err (E-error {e})) → step (ξ-err {F = (L ·□) v} {e = e})
+  (err (E-error {e})) → step (ξ-err {F = □· M} {e = e})
+progress pc (if L A M N) (⊢if {g = g} ⊢L ⊢M ⊢N) μ ⊢μ =
+  case progress pc L ⊢L μ ⊢μ of λ where
     (step L→L′) → step (ξ {F = if□ A M N} L→L′)
     (done v) →
       case canonical-const ⊢L v of λ where
@@ -61,26 +61,26 @@ progress (if L A M N) (⊢if {g = g} ⊢L ⊢M ⊢N) μ ⊢μ pc =
         (Const-inj {𝔹} {true} _)  → step (if-cast-true (I-base-inj _))
         (Const-inj {𝔹} {false} _) → step (if-cast-false (I-base-inj _))
     (err (E-error {e})) → step (ξ-err {F = if□ A M N} {e = e})
-progress (`let M N) (⊢let ⊢M ⊢N) μ ⊢μ pc =
-  case progress M ⊢M μ ⊢μ pc of λ where
+progress pc (`let M N) (⊢let ⊢M ⊢N) μ ⊢μ =
+  case progress pc M ⊢M μ ⊢μ of λ where
     (step M→M′) → step (ξ {F = let□ N} M→M′)
     (done v) → step (β-let v)
     (err (E-error {e})) → step (ξ-err {F = let□ N} {e = e})
-progress (M ⟨ c ⟩) (⊢cast ⊢M) μ ⊢μ pc =
-  case progress M ⊢M μ ⊢μ pc of λ where
+progress pc (M ⟨ c ⟩) (⊢cast ⊢M) μ ⊢μ =
+  case progress pc M ⊢M μ ⊢μ of λ where
     (step M→M′) → step (ξ {F = □⟨ c ⟩} M→M′)
     (done v) →
       case active-or-inert c of λ where
         (inj₁ a) → step (cast ⊢M v a)
         (inj₂ i) → done (V-cast v i)
     (err (E-error {e})) → step (ξ-err {F = □⟨ c ⟩} {e = e})
-progress (ref[ ℓ ] M) (⊢ref ⊢M) μ ⊢μ pc =
-  case progress M ⊢M μ ⊢μ pc of λ where
+progress pc (ref[ ℓ ] M) (⊢ref ⊢M) μ ⊢μ =
+  case progress pc M ⊢M μ ⊢μ of λ where
     (step M→M′) → step (ξ {F = ref[ ℓ ]□} M→M′)
     (done v) → step (ref v refl)
     (err (E-error {e})) → step (ξ-err {F = ref[ ℓ ]□} {e = e})
-progress (! M) (⊢deref ⊢M) μ ⊢μ pc =
-  case progress M ⊢M μ ⊢μ pc of λ where
+progress pc (! M) (⊢deref ⊢M) μ ⊢μ =
+  case progress pc M ⊢M μ ⊢μ of λ where
     (step M→M′) → step (ξ {F = !□} M→M′)
     (done v) →
       case canonical-ref ⊢M v of λ where
@@ -89,11 +89,11 @@ progress (! M) (⊢deref ⊢M) μ ⊢μ pc =
             step (deref eq)
         (Ref-proxy r i _) → step (deref-cast (ref-is-value r) i)
     (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
-progress (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ pc =
-  case progress L ⊢L μ ⊢μ pc of λ where
+progress pc (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ =
+  case progress pc L ⊢L μ ⊢μ of λ where
     (step L→L′) → step (ξ {F = □:= M} L→L′)
     (done v) →
-      case progress M ⊢M μ ⊢μ pc of λ where
+      case progress pc M ⊢M μ ⊢μ of λ where
         (step M→M′) → step (ξ {F = (L :=□) v} M→M′)
         (done w) →
           case canonical-ref ⊢L v of λ where
@@ -103,12 +103,12 @@ progress (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ pc =
             (Ref-proxy r i _) → step (assign-cast (ref-is-value r) w i)
         (err (E-error {e})) → step (ξ-err {F = (L :=□) v} {e = e})
     (err (E-error {e})) → step (ξ-err {F = □:= M} {e = e})
-progress (nsu-direct ℓ M) (⊢nsu-direct ⊢M) μ ⊢μ pc =
+progress pc (nsu-direct ℓ M) (⊢nsu-direct ⊢M) μ ⊢μ =
   case pc ≼? ℓ of λ where
     (yes pc≼ℓ) → step (nsu-direct-ok pc≼ℓ)
     (no  pc⋠ℓ) → step (nsu-direct-fail pc⋠ℓ)
-progress (nsu-indirect L M) (⊢nsu-indirect ⊢L ⊢M) μ ⊢μ pc =
-  case progress L ⊢L μ ⊢μ pc of λ where
+progress pc (nsu-indirect L M) (⊢nsu-indirect ⊢L ⊢M) μ ⊢μ =
+  case progress pc L ⊢L μ ⊢μ of λ where
     (step L→L′) → step (ξ {F = nsu-indirect□ M} L→L′)
     (done v) →
       case canonical-ref ⊢L v of λ where
@@ -120,19 +120,19 @@ progress (nsu-indirect L M) (⊢nsu-indirect ⊢L ⊢M) μ ⊢μ pc =
       (Ref-proxy r i (<:-ty _ (<:-ref (<:-ty _ _) _))) →
         step (nsu-indirect-cast (ref-is-value r) i)
     (err (E-error {e})) → step (ξ-err {F = nsu-indirect□ M} {e = e})
-progress (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ pc =
-  case progress M ⊢M μ ⊢μ (pc ⋎ ℓ) of λ where
+progress pc (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ =
+  case progress (pc ⋎ ℓ) M ⊢M μ ⊢μ of λ where
     (step M→N) → step (prot-ctx M→N)
     (done v) → step (prot-val v)
     (err E-error) → step prot-err
-progress (cast-pc g M) (⊢cast-pc ⊢M pc≾g) μ ⊢μ pc =
-  case progress M ⊢M μ ⊢μ pc of λ where
+progress pc (cast-pc g M) (⊢cast-pc ⊢M pc≾g) μ ⊢μ =
+  case progress pc M ⊢M μ ⊢μ of λ where
     (step M→N) → step (ξ {F = cast-pc g □} M→N)
     (done v) → step (β-cast-pc v)
     (err E-error) → step (ξ-err {F = cast-pc g □})
-progress (error e) ⊢err μ ⊢μ pc = err E-error
-progress M (⊢sub ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
-progress M (⊢sub-pc ⊢M _) μ ⊢μ pc = progress M ⊢M μ ⊢μ pc
+progress pc (error e) ⊢err μ ⊢μ = err E-error
+progress pc M (⊢sub ⊢M _) μ ⊢μ = progress pc M ⊢M μ ⊢μ
+progress pc M (⊢sub-pc ⊢M _) μ ⊢μ = progress pc M ⊢M μ ⊢μ
 
 
 plug-inversion : ∀ {Σ gc pc M A} {F : Frame}
