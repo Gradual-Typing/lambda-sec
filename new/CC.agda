@@ -323,37 +323,11 @@ elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ �
     (yes _) → cast-pc (l pc) (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
     (no _)  → error (blame p)
 
+-- A helper to adjust PC
+inject-pc : Label → Term → Term
+inject-pc ⋆     M = cast-pc ⋆ M
+inject-pc (l ℓ) M = M
 
--- A helper function to unwrap (inert) casts around a value
-unwrap : ∀ V → Value V → Term
-unwrap (V ⟨ c ⟩) (V-cast v i) = unwrap V v
-unwrap V _ = V
-
-unwrap-ref : ∀ {Γ Σ gc pc V A g}
-  → Γ ; Σ ; gc ; pc ⊢ V ⦂ Ref A of g
-  → (v : Value V)
-  → ∃[ a ] ∃[ ℓ ] (unwrap V v ≡ addr a of ℓ) ×
-                   (∃[ A′ ] Γ ; Σ ; gc ; pc ⊢ addr a of ℓ ⦂ Ref A′ of l ℓ)
-unwrap-ref (⊢addr eq) V-addr = ⟨ _ , _ , refl , _ , ⊢addr eq ⟩
-unwrap-ref (⊢cast ⊢V) (V-cast {c = cast A B _ (~-ty _ (~-ref _))} v i) =
-  unwrap-ref ⊢V v
-unwrap-ref (⊢sub ⊢V (<:-ty _ (<:-ref A<:B B<:A))) v
-  rewrite <:-antisym A<:B B<:A = unwrap-ref ⊢V v
-unwrap-ref (⊢sub-pc ⊢V gc<:gc′) v =
-  let ⟨ a , ℓ , eq , A′ , ⊢a ⟩ = unwrap-ref ⊢V v in
-    ⟨ a , ℓ , eq , A′ , ⊢sub-pc ⊢a gc<:gc′ ⟩
-
--- unwrap-label : ∀ {Σ gc pc V T ℓ₁ g}
---   → [] ; Σ ; gc ; pc ⊢ V ⦂ Ref (T of l ℓ₁) of g
---   → (v : Value V)
---     ------------------------
---   → ∃[ T′ ] ∃[ ℓ ] [] ; Σ ; gc ; pc ⊢ unwrap V v ⦂ Ref (T′ of l ℓ₁) of l ℓ
--- unwrap-label (⊢addr eq) (V-addr {a} {ℓ}) = ⟨ _ , ℓ , ⊢addr eq ⟩
--- unwrap-label (⊢cast ⊢V) (V-cast v (I-ref _ I-label)) = {!!}
--- unwrap-label (⊢sub ⊢V (<:-ty _ (<:-ref A<:B B<:A))) v
---   rewrite <:-antisym A<:B B<:A = unwrap-label ⊢V v
--- unwrap-label (⊢sub-pc ⊢V gc<:gc′) v =
---   let ⟨ T′ , ℓ , ⊢a ⟩ = unwrap-label ⊢V v in ⟨ T′ , ℓ , ⊢sub-pc ⊢a gc<:gc′ ⟩
 
 stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → ∀ ℓ
                       → (Cast (stamp A (l ℓ)) ⇒ (stamp B (l ℓ)))

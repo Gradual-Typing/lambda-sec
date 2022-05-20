@@ -6,7 +6,7 @@ open import Data.Product using (_×_; ∃-syntax; proj₁; proj₂) renaming (_,
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; subst; sym)
 open import Function using (case_of_)
 
 open import Utils
@@ -111,12 +111,14 @@ progress (nsu-assign L M) (⊢nsu-assign ⊢L ⊢M) μ ⊢μ pc =
   case progress L ⊢L μ ⊢μ pc of λ where
     (step L→L′) → step (ξ {F = nsu-assign□ M} L→L′)
     (done v) →
-      let ⟨ a , ℓ , eq₁ , A′ , ⊢a ⟩ = unwrap-ref ⊢L v
-          ⟨ T , ℓ₁ , A≡Tℓ₁ , eq ⟩   = ⊢addr-inv ⊢a
-          ⟨ _ , V₁ , eq₂ , ⊢V₁ ⟩    = ⊢μ _ eq in
+      case canonical-ref ⊢L v of λ where
+      (Ref-addr {ℓ₁ = ℓ₁} eq sub) →
+        let ⟨ _ , V₁ , eq₁ , ⊢V₁ ⟩ = ⊢μ _ eq in
         case pc ≼? ℓ₁ of λ where
-          (yes pc≼ℓ₁) → step (nsu-assign-ok v eq₁ eq₂ pc≼ℓ₁)
-          (no  pc⋠ℓ₁) → step (nsu-assign-fail v eq₁ eq₂ pc⋠ℓ₁)
+        (yes pc≼ℓ₁) → step (nsu-assign-ok eq₁ pc≼ℓ₁)
+        (no  pc⋠ℓ₁) → step (nsu-assign-fail eq₁ pc⋠ℓ₁)
+      (Ref-proxy r i (<:-ty _ (<:-ref (<:-ty _ _) _))) →
+        step (nsu-assign-cast (ref-is-value r) i)
     (err (E-error {e})) → step (ξ-err {F = nsu-assign□ M} {e = e})
 progress (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ pc =
   case progress M ⊢M μ ⊢μ (pc ⋎ ℓ) of λ where
@@ -210,9 +212,24 @@ preserve {Σ} (⊢nsu-ref ⊢M) ⊢μ pc≾gc (nsu-ref-fail pc⋠ℓ) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (deref x) = {!!}
 preserve ⊢M ⊢μ pc≾gc (assign x x₁) = {!!}
-preserve {Σ} (⊢nsu-assign ⊢L ⊢M) ⊢μ pc≾gc (nsu-assign-ok w eq1 eq2 pc≼ℓ₁) =
-  ⟨ Σ , ⊇-refl {Σ} , {!!} , ⊢μ ⟩
-preserve ⊢M ⊢μ pc≾gc (nsu-assign-fail w x x₁ x₂) = {!!}
+preserve {Σ} (⊢nsu-assign ⊢L ⊢M) ⊢μ pc≾gc (nsu-assign-cast w i) =
+  case canonical-ref ⊢L (V-cast w i) of λ where
+  (Ref-proxy r (I-ref (cast _ _ _ c~) I-label I-label) (<:-ty _ (<:-ref A<:B B<:A))) →
+    case <:-antisym A<:B B<:A of λ where
+    refl →
+      let ⊢M′ = case c~ of λ where  {- follow inject-pc and case on g₁ -}
+                (~-ty _ (~-ref (~-ty ~⋆ _))) → ⊢nsu-assign (ref-wt r) (⊢cast-pc ⊢M ≾-⋆r)
+                (~-ty _ (~-ref (~-ty l~ _))) → ⊢nsu-assign (ref-wt r) ⊢M
+      in
+      ⟨ Σ , ⊇-refl {Σ} , ⊢M′ , ⊢μ ⟩
+preserve {Σ} (⊢nsu-assign ⊢L ⊢M) ⊢μ pc≾gc (nsu-assign-ok eq pc≼ℓ₁) =
+  case ⊢addr-inv ⊢L of λ where
+  ⟨ T , ℓ₁′ , refl , eq₁ ⟩ →
+    let ⟨ _ , _ , eq′ , _ ⟩ = ⊢μ _ eq₁ in
+    case trans (sym eq) eq′ of λ where
+    refl → ⟨ Σ , ⊇-refl {Σ} , ⊢cast-pc ⊢M (≾-l pc≼ℓ₁) , ⊢μ ⟩
+preserve {Σ} ⊢M ⊢μ pc≾gc (nsu-assign-fail eq pc⋠ℓ₁) =
+  ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (cast ⊢V v a) = {!!}
 preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) with i
 ... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =

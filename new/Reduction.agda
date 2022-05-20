@@ -59,7 +59,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
 
   ξ : ∀ {M M′ F μ μ′ pc}
     → M        ∣ μ ∣ pc —→ M′        ∣ μ′
-      ---------------------------------------- ξ
+      ---------------------------------------------- ξ
     → plug M F ∣ μ ∣ pc —→ plug M′ F ∣ μ′
 
   ξ-err : ∀ {F μ pc e}
@@ -116,7 +116,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
 
   deref : ∀ {V μ pc a ℓ ℓ₁}
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
-      -------------------------------------------------- Deref
+      ------------------------------------------------------- Deref
     → ! (addr a of ℓ) ∣ μ ∣ pc —→ prot[ ℓ ⋎ ℓ₁ ] V ∣ μ
 
   assign : ∀ {V V₁ μ pc a ℓ ℓ₁}
@@ -125,19 +125,22 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       --------------------------------------------------------------------- Assign
     → (addr a of ℓ) := V ∣ μ ∣ pc —→ $ tt of low ∣ ⟨ a , V , ℓ₁ ⟩ ∷ μ
 
-  nsu-assign-ok : ∀ {V W M μ pc a ℓ ℓ₁}
-    → (w : Value W) → unwrap W w ≡ addr a of ℓ {- W might be wrapped in casts -}
+  nsu-assign-cast : ∀ {W M μ pc A T g g₁} {c : Cast A ⇒ (Ref (T of g₁) of g)}
+    → Value W → Inert c
+      ------------------------------------------------------------------------- NSUAssignCast
+    → nsu-assign (W ⟨ c ⟩) M ∣ μ ∣ pc —→ nsu-assign W (inject-pc g₁ M) ∣ μ
+
+  nsu-assign-ok : ∀ {V M μ pc a ℓ ℓ₁}
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
     → pc ≼ ℓ₁
-      -------------------------------------- NSUAssignSuccess
-    → nsu-assign W M ∣ μ ∣ pc —→ M ∣ μ
+      ------------------------------------------------------------------------- NSUAssignSuccess
+    → nsu-assign (addr a of ℓ) M ∣ μ ∣ pc —→ cast-pc (l ℓ₁) M ∣ μ
 
-  nsu-assign-fail : ∀ {V W M μ pc a ℓ ℓ₁}
-    → (w : Value W) → unwrap W w ≡ addr a of ℓ
+  nsu-assign-fail : ∀ {V M μ pc a ℓ ℓ₁}
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
     → ¬ pc ≼ ℓ₁
-      --------------------------------------------------- NSUAssignFail
-    → nsu-assign W M ∣ μ ∣ pc —→ error nsu-error ∣ μ
+      ------------------------------------------------------------------------- NSUAssignFail
+    → nsu-assign (addr a of ℓ) M ∣ μ ∣ pc —→ error nsu-error ∣ μ
 
   {- Reduction rules about casts, active and inert: -}
   cast : ∀ {Σ gc A B V μ pc pc′} {c : Cast A ⇒ B}
@@ -149,12 +152,12 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
 
   if-cast-true : ∀ {M N μ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
-      ----------------------------------------------------------------------- IfCastTrue
+      --------------------------------------------------------------------------------------------- IfCastTrue
     → if ($ true of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] (cast-pc ⋆ M) ⟨ stamp-c A ℓ c ⟩ ∣ μ
 
   if-cast-false : ∀ {M N μ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
-      ----------------------------------------------------------------------- IfCastFalse
+      --------------------------------------------------------------------------------------------- IfCastFalse
     → if ($ false of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] (cast-pc ⋆ N) ⟨ stamp-c A ℓ c ⟩ ∣ μ
 
   fun-cast : ∀ {V W μ pc A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
