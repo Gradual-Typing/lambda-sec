@@ -78,16 +78,16 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
       --------------------------------------------- CCAssign
     → Γ ; Σ ; g ; pc ⊢ L := M ⦂ ` Unit of l low
 
-  ⊢nsu-ref : ∀ {Γ Σ gc pc A M ℓ}
+  ⊢nsu-direct : ∀ {Γ Σ gc pc A M ℓ}
     → (∀ {pc′} → Γ ; Σ ; l ℓ ; pc′ ⊢ M ⦂ A)
-      ------------------------------------- CCNSURef
-    → Γ ; Σ ; gc  ; pc ⊢ nsu-ref ℓ M ⦂ A
+      --------------------------------------------- CCNSUDirect
+    → Γ ; Σ ; gc  ; pc ⊢ nsu-direct ℓ M ⦂ A
 
-  ⊢nsu-assign : ∀ {Γ Σ gc pc A L M S g g₁}
+  ⊢nsu-indirect : ∀ {Γ Σ gc pc A L M S g g₁}
     → Γ ; Σ ; gc ; pc ⊢ L ⦂ Ref (S of g₁) of g
     → (∀ {pc′} → Γ ; Σ ; g₁ ; pc′ ⊢ M ⦂ A)
-      -------------------------------------- CCNSUAssign
-    → Γ ; Σ ; gc ; pc ⊢ nsu-assign L M ⦂ A
+      --------------------------------------------- CCNSUIndirect
+    → Γ ; Σ ; gc ; pc ⊢ nsu-indirect L M ⦂ A
 
   ⊢prot : ∀ {Γ Σ gc pc A M ℓ}
     → Γ ; Σ ; gc ⋎̃ l ℓ ; pc ⋎ ℓ ⊢ M ⦂ A

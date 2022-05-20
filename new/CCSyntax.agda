@@ -15,21 +15,21 @@ data Error : Set where
   nsu-error : Error
 
 data Op : Set where
-  op-addr   : (a : Addr) → (ℓ : StaticLabel) → Op
-  op-lam    : (pc : StaticLabel) → Type → (ℓ : StaticLabel) → Op
-  op-app    : Op
-  op-const  : ∀ {ι} → rep ι → StaticLabel → Op
-  op-if     : Type → Op
-  op-let    : Op
-  op-ref    : StaticLabel → Op
-  op-deref  : Op
-  op-assign : Op
-  op-cast   : ∀ {A B} → Cast A ⇒ B → Op
-  op-nsu-ref : StaticLabel → Op
-  op-nsu-assign : Op
-  op-prot   : StaticLabel → Op
-  op-cast-pc : Label → Op
-  op-error  : Error → Op
+  op-addr         : (a : Addr) → (ℓ : StaticLabel) → Op
+  op-lam          : (pc : StaticLabel) → Type → (ℓ : StaticLabel) → Op
+  op-app          : Op
+  op-const        : ∀ {ι} → rep ι → StaticLabel → Op
+  op-if           : Type → Op
+  op-let          : Op
+  op-ref          : StaticLabel → Op
+  op-deref        : Op
+  op-assign       : Op
+  op-cast         : ∀ {A B} → Cast A ⇒ B → Op
+  op-nsu-direct   : StaticLabel → Op
+  op-nsu-indirect : Op
+  op-prot         : StaticLabel → Op
+  op-cast-pc      : Label → Op
+  op-error        : Error → Op
 
 sig : Op → List Sig
 sig (op-addr a ℓ)      = []
@@ -42,8 +42,8 @@ sig (op-ref ℓ)         = ■ ∷ []
 sig op-deref           = ■ ∷ []
 sig op-assign          = ■ ∷ ■ ∷ []
 sig (op-cast c)        = ■ ∷ []
-sig (op-nsu-ref ℓ)     = ■ ∷ []
-sig op-nsu-assign      = ■ ∷ ■ ∷ []
+sig (op-nsu-direct ℓ)  = ■ ∷ []
+sig op-nsu-indirect    = ■ ∷ ■ ∷ []
 sig (op-prot ℓ)        = ■ ∷ []
 sig (op-cast-pc g)     = ■ ∷ []
 sig (op-error e)       = []
@@ -63,8 +63,8 @@ pattern ref[_]_ ℓ M              = (op-ref ℓ) ⦅ cons (ast M) nil ⦆
 pattern !_ M                     = op-deref ⦅ cons (ast M) nil ⦆
 pattern _:=_ L M                 = op-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern _⟨_⟩ M c                 = (op-cast c) ⦅ cons (ast M) nil ⦆
-pattern nsu-ref ℓ M              = (op-nsu-ref ℓ) ⦅ cons (ast M) nil ⦆
-pattern nsu-assign L M           = op-nsu-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆
+pattern nsu-direct ℓ M           = (op-nsu-direct ℓ) ⦅ cons (ast M) nil ⦆
+pattern nsu-indirect L M         = op-nsu-indirect ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern prot[_]_ ℓ M             = (op-prot ℓ) ⦅ cons (ast M) nil ⦆      {- protection term -}
 pattern cast-pc g M              = (op-cast-pc g) ⦅ cons (ast M) nil ⦆
 pattern error e                  = (op-error e) ⦅ nil ⦆                  {- blame / nsu error -}
