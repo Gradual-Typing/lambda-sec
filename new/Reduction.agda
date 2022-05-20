@@ -36,9 +36,7 @@ data Frame : Set where
 
   nsu-assign□ : Term → Frame
 
-  inj-pc□ : Frame
-
-  proj-pc_□ : StaticLabel → Frame
+  cast-pc_□ : Label → Frame
 
 
 plug : Term → Frame → Term
@@ -52,8 +50,7 @@ plug M (let□ N)        = `let M N
 plug L (if□ A M N)     = if L A M N
 plug M □⟨ c ⟩          = M ⟨ c ⟩
 plug L (nsu-assign□ M) = nsu-assign L M
-plug M inj-pc□         = inj-pc M
-plug M (proj-pc ℓ □)   = proj-pc ℓ M
+plug M (cast-pc g □)   = cast-pc g M
 
 
 infix 2 _∣_∣_—→_∣_
@@ -109,8 +106,8 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
 
   nsu-ref-ok : ∀ {M μ pc ℓ}
     → pc ≼ ℓ
-      -------------------------------------- NSURefSuccess
-    → nsu-ref ℓ M ∣ μ ∣ pc —→ proj-pc ℓ M ∣ μ
+      ------------------------------------------------- NSURefSuccess
+    → nsu-ref ℓ M ∣ μ ∣ pc —→ cast-pc (l ℓ) M ∣ μ
 
   nsu-ref-fail : ∀ {M μ pc ℓ}
     → ¬ pc ≼ ℓ
@@ -153,12 +150,12 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
   if-cast-true : ∀ {M N μ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
       ----------------------------------------------------------------------- IfCastTrue
-    → if ($ true of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] (inj-pc M) ⟨ stamp-c A ℓ c ⟩ ∣ μ
+    → if ($ true of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] (cast-pc ⋆ M) ⟨ stamp-c A ℓ c ⟩ ∣ μ
 
   if-cast-false : ∀ {M N μ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
       ----------------------------------------------------------------------- IfCastFalse
-    → if ($ false of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] (inj-pc N) ⟨ stamp-c A ℓ c ⟩ ∣ μ
+    → if ($ false of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] (cast-pc ⋆ N) ⟨ stamp-c A ℓ c ⟩ ∣ μ
 
   fun-cast : ∀ {V W μ pc A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
     → Value V → Value W
@@ -178,12 +175,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ------------------------------------------------------ AssignCast
     → (V ⟨ c ⟩) := W ∣ μ ∣ pc —→ V := (W ⟨ in-c c ⟩) ∣ μ
 
-  β-inj-pc : ∀ {V μ pc}
+  β-cast-pc : ∀ {V μ pc g}
     → Value V
-      ------------------------------------- InjectedPC
-    → inj-pc V ∣ μ ∣ pc —→ V ∣ μ
-
-  β-proj-pc : ∀ {V μ pc ℓ}
-    → Value V
-      ------------------------------------- ProjectedPC
-    → proj-pc ℓ V ∣ μ ∣ pc —→ V ∣ μ
+      ------------------------------------- CastPC
+    → cast-pc g V ∣ μ ∣ pc —→ V ∣ μ

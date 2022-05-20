@@ -94,16 +94,11 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
       ----------------------------------------------- CCProt
     → Γ ; Σ ; gc ; pc ⊢ prot[ ℓ ] M ⦂ stamp A (l ℓ)
 
-  ⊢inj-pc : ∀ {Γ Σ gc pc A M}
-    → Γ ; Σ ; ⋆ ; pc ⊢ M ⦂ A
-      ------------------------------------ CCInjectedPC
-    → Γ ; Σ ; gc ; pc ⊢ inj-pc M ⦂ A
-
-  ⊢proj-pc : ∀ {Γ Σ gc pc A M ℓ}
-    → Γ ; Σ ; l ℓ ; pc ⊢ M ⦂ A
-    → pc ≼ ℓ
-      ------------------------------------ CCProjectedPC
-    → Γ ; Σ ; gc ; pc ⊢ proj-pc ℓ M ⦂ A
+  ⊢cast-pc : ∀ {Γ Σ gc pc A M g}
+    → Γ ; Σ ; g ; pc ⊢ M ⦂ A
+    → l pc ≾ g
+      ------------------------------------ CCCastPC
+    → Γ ; Σ ; gc ; pc ⊢ cast-pc g M ⦂ A
 
   ⊢err : ∀ {Γ Σ gc pc A e}
       ------------------------------------ CCError
