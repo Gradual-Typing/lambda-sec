@@ -128,7 +128,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
   nsu-indirect-cast : ∀ {W M μ pc A T g g₁} {c : Cast A ⇒ (Ref (T of g₁) of g)}
     → Value W → Inert c
       ----------------------------------------------------------------------------- NSUIndirectCast
-    → nsu-indirect (W ⟨ c ⟩) M ∣ μ ∣ pc —→ nsu-indirect W (inject-pc g₁ M) ∣ μ
+    → nsu-indirect (W ⟨ c ⟩) M ∣ μ ∣ pc —→ nsu-indirect W (adjust-pc g₁ ⋆ M) ∣ μ
 
   nsu-indirect-ok : ∀ {V M μ pc a ℓ ℓ₁}
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
@@ -172,11 +172,11 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ------------------------------------------------------ DerefCast
     → ! (V ⟨ c ⟩) ∣ μ ∣ pc —→ ! V ⟨ out-c c ⟩ ∣ μ
 
-  assign-cast : ∀ {V W μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
+  assign-cast : ∀ {V W μ pc S T g₁ g₁₁ g₂ g₂₁} {c : Cast (Ref (S of g₁₁) of g₁) ⇒ (Ref (T of g₂₁) of g₂)}
     → Value V → Value W
     → Inert c
       ------------------------------------------------------ AssignCast
-    → (V ⟨ c ⟩) := W ∣ μ ∣ pc —→ V := (W ⟨ in-c c ⟩) ∣ μ
+    → (V ⟨ c ⟩) := W ∣ μ ∣ pc —→ adjust-pc g₂₁ g₁₁ (V := (W ⟨ in-c c ⟩)) ∣ μ
 
   β-cast-pc : ∀ {V μ pc g}
     → Value V

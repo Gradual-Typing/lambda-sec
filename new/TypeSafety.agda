@@ -100,7 +100,9 @@ progress pc (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ =
       (Ref-addr eq _) →
         let ⟨ _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ _ eq in
         step (assign w eq)
-      (Ref-proxy r i _) → step (assign-cast (ref-is-value r) w i)
+      (Ref-proxy r i _) →
+        case i of λ where
+        (I-ref _ I-label I-label) → step (assign-cast (ref-is-value r) w i)
     (err (E-error {e})) → step (ξ-err {F = (L :=□) v} {e = e})
   (err (E-error {e})) → step (ξ-err {F = □:= M} {e = e})
 progress pc (nsu-direct ℓ M) (⊢nsu-direct ⊢M) μ ⊢μ =
@@ -278,7 +280,18 @@ preserve {Σ} (⊢deref {A = A′} ⊢M) ⊢μ pc≾gc (deref-cast v i) =
     refl →
       ⟨ Σ , ⊇-refl {Σ} ,
         ⊢sub (⊢cast (⊢deref (ref-wt r))) (stamp-<: <:-refl g₂<:g) , ⊢μ ⟩
-preserve ⊢M ⊢μ pc≾gc (assign-cast x x₁ x₂) = {!!}
+preserve {Σ} {gc} (⊢assign ⊢L ⊢M {- V ⟨ c ⟩ := W -}) ⊢μ pc≾gc (assign-cast {g₂₁ = g₂₁} v w i) =
+  case canonical-ref ⊢L (V-cast v i) of λ where
+  (Ref-proxy r (I-ref (cast _ _ _ c~) (I-label {ℓ₁}) (I-label {ℓ})) (<:-ty g₂<:gc (<:-ref Tg₂₁<:Sgc Sgc<:Tg₂₁))) →
+    case <:-antisym Tg₂₁<:Sgc Sgc<:Tg₂₁ of λ where
+    refl → {- we know gc ≡ gc₂₁ -}
+      {- Now we have Ref (S of ℓ₁) of ℓ ~ Ref (T of gc) of g₂ .
+         Because g₂ <: gc , they must be ⋆ or concrete at the same time. -}
+      case ⟨ c~ , g₂<:gc ⟩ of λ where
+        ⟨ ~-ty ~⋆ (~-ref (~-ty ~⋆ _)) , <:-⋆ ⟩ →
+          ⟨ Σ , ⊇-refl {Σ} , ⊢cast-pc (⊢assign {!!} (⊢cast (⊢value-pc ⊢M w))) {!!} , ⊢μ ⟩
+        ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , ℓ<:ℓ₁ ⟩ →
+          ⟨ Σ , ⊇-refl {Σ} , ⊢assign (⊢sub (ref-wt r) (<:-ty ℓ<:ℓ₁ <:ᵣ-refl)) (⊢cast ⊢M) , ⊢μ ⟩
 preserve {Σ} (⊢cast-pc ⊢V _) ⊢μ pc≾gc (β-cast-pc v) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢value-pc ⊢V v , ⊢μ ⟩
 preserve (⊢sub ⊢M A<:B) ⊢μ pc≾gc M→M′ =
