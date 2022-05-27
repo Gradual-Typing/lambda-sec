@@ -2,7 +2,6 @@ open import Data.Nat
 open import Data.List
 
 open import Syntax
--- open import GenericSubstitution
 
 open import Types
 open import CC
@@ -34,13 +33,12 @@ rename-pres (⊢if ⊢L ⊢M ⊢N) ⊢ρ =
 rename-pres {Γ} {Δ} (⊢let ⊢M ⊢N) ⊢ρ =
   ⊢let (rename-pres ⊢M ⊢ρ) (rename-pres ⊢N (λ {x} {A} → ext-pres {Γ} {Δ} ⊢ρ {x} {A}))
 rename-pres (⊢cast ⊢M) ⊢ρ = ⊢cast (rename-pres ⊢M ⊢ρ)
-rename-pres (⊢ref ⊢M) ⊢ρ = ⊢ref (rename-pres ⊢M ⊢ρ)
+rename-pres (⊢ref? ⊢M) ⊢ρ = ⊢ref? (rename-pres ⊢M ⊢ρ)
+rename-pres (⊢ref ⊢M pc≼ℓ) ⊢ρ = ⊢ref (rename-pres ⊢M ⊢ρ) pc≼ℓ
 rename-pres (⊢deref ⊢M) ⊢ρ = ⊢deref (rename-pres ⊢M ⊢ρ)
-rename-pres (⊢assign ⊢L ⊢M) ⊢ρ = ⊢assign (rename-pres ⊢L ⊢ρ) (rename-pres ⊢M ⊢ρ)
-rename-pres (⊢nsu-direct ⊢M) ⊢ρ = ⊢nsu-direct (rename-pres ⊢M ⊢ρ)
-rename-pres (⊢nsu-indirect ⊢L ⊢M) ⊢ρ = ⊢nsu-indirect (rename-pres ⊢L ⊢ρ) (rename-pres ⊢M ⊢ρ)
+rename-pres (⊢assign? ⊢L ⊢M) ⊢ρ = ⊢assign? (rename-pres ⊢L ⊢ρ) (rename-pres ⊢M ⊢ρ)
+rename-pres (⊢assign ⊢L ⊢M pc≼ℓ) ⊢ρ = ⊢assign (rename-pres ⊢L ⊢ρ) (rename-pres ⊢M ⊢ρ) pc≼ℓ
 rename-pres (⊢prot ⊢M) ⊢ρ = ⊢prot (rename-pres ⊢M ⊢ρ)
-rename-pres (⊢cast-pc ⊢M pc≾g) ⊢ρ = ⊢cast-pc (rename-pres ⊢M ⊢ρ) pc≾g
 rename-pres ⊢err ⊢ρ = ⊢err
 rename-pres (⊢sub ⊢M A<:B) ⊢ρ = ⊢sub (rename-pres ⊢M ⊢ρ) A<:B
 rename-pres (⊢sub-pc ⊢M gc<:gc′) ⊢ρ = ⊢sub-pc (rename-pres ⊢M ⊢ρ) gc<:gc′

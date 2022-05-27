@@ -52,16 +52,16 @@ compile (ref[ ℓ ] M at p) (⊢ref {gc = gc} {T = T} {g} ⊢M Tg≲Tℓ gc≾�
     ⟨ A , Tg~A , A<:Tℓ ⟩ →
       let M′ = compile M ⊢M
           M″ = M′ ⟨ cast (T of g) A p Tg~A ⟩ in
-        `let M″ (nsu-direct ℓ (ref[ ℓ ] (` 0)))
+        ref?[ ℓ ] M″
 compile (!ᴳ M) (⊢deref ⊢M) = ! (compile M ⊢M)
-compile (L := M at p) (⊢assign {gc = gc} {A = A} {S} {g} {g₁} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1) =
-  case ⟨ ≲-prop A≲Sg1 , ≾-prop g≾g1 ⟩ of λ where
-    ⟨ ⟨ B , A~B , B<:Sg1 ⟩ , ⟨ g₂ , g~g₂ , g₂<:g₁ ⟩ ⟩ →
+compile (L := M at p) (⊢assign {gc = gc} {A = A} {T} {g} {g₁} ⊢L ⊢M A≲Tg1 g≾g1 gc≾g1) =
+  case ⟨ ≲-prop A≲Tg1 , ≾-prop g≾g1 ⟩ of λ where
+    ⟨ ⟨ B , A~B , B<:Tg1 ⟩ , ⟨ g₂ , g~g₂ , g₂<:g₁ ⟩ ⟩ →
       let L′ = compile L ⊢L
-          L″ = L′ ⟨ cast (Ref (S of g₁) of g) (Ref (S of g₁) of g₂) p (~-ty g~g₂ ~ᵣ-refl) ⟩
+          L″ = L′ ⟨ cast (Ref (T of g₁) of g) (Ref (T of g₁) of g₂) p (~-ty g~g₂ ~ᵣ-refl) ⟩
           M′ = compile M ⊢M
           M″ = M′ ⟨ cast A B p A~B ⟩ in
-        `let L″ (`let (rename (↑ 1) M″) (nsu-indirect (` 1) ((` 1) := (` 0))))
+        L″ :=? M″
 
 
 compile-preserve : ∀ {Γ gc A} (M : Term)
@@ -90,17 +90,14 @@ compile-preserve {Γ} {Σ} {A = A} (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A�
   with ≲-prop A′≲A
 ... | ⟨ B , A′~B , B<:A ⟩ = ⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A
 compile-preserve (ref[ ℓ ] M at p) (⊢ref {gc = gc} ⊢M Tg≲Tℓ gc≾ℓ)
-  with ≲-prop Tg≲Tℓ | ≾-prop′ gc≾ℓ
-... | ⟨ A , Tg~A , A<:Tℓ ⟩ | ⟨ gc′ , gc<:gc′ , gc′~ℓ ⟩ =
-  ⊢let (⊢sub (⊢cast (compile-preserve M ⊢M)) A<:Tℓ)
-       (⊢sub-pc (⊢nsu-direct (⊢ref (⊢var refl))) gc<:gc′)
+  with ≲-prop Tg≲Tℓ
+... | ⟨ A , Tg~A , A<:Tℓ ⟩ = ⊢ref? (⊢sub (⊢cast (compile-preserve M ⊢M)) A<:Tℓ)
 compile-preserve (!ᴳ M) (⊢deref ⊢M) = ⊢deref (compile-preserve M ⊢M)
-compile-preserve (L := M at p) (⊢assign {gc = gc} {g = g} {g₁} ⊢L ⊢M A≲Sg1 g≾g1 gc≾g1)
-  with ≲-prop A≲Sg1 | ≾-prop g≾g1
-... | ⟨ B , A~B , B<:Sg1 ⟩ | ⟨ g₂ , g~g₂ , g₂<:g₁ ⟩ =
-  ⊢let (⊢sub (⊢cast (compile-preserve L ⊢L)) (<:-ty g₂<:g₁ <:ᵣ-refl))
-       (⊢let (⊢sub (⊢cast (rename-↑1-pres (compile-preserve M ⊢M))) B<:Sg1)
-             (⊢nsu-indirect (⊢var refl) (⊢assign (⊢var refl) (⊢var refl))))
+compile-preserve (L := M at p) (⊢assign {gc = gc} {g = g} {g₁} ⊢L ⊢M A≲Tg1 g≾g1 gc≾g1)
+  with ≲-prop A≲Tg1 | ≾-prop g≾g1
+... | ⟨ B , A~B , B<:Tg1 ⟩ | ⟨ g₂ , g~g₂ , g₂<:g₁ ⟩ =
+  ⊢assign? (⊢sub (⊢cast (compile-preserve L ⊢L)) (<:-ty g₂<:g₁ <:ᵣ-refl))
+           (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Tg1)
 
 {- Compilation from Surface to CC is type-preserving. -}
 compilation-preserves-type : ∀ {Γ gc A} (M : Term)

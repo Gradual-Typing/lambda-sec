@@ -62,9 +62,15 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
       ----------------------------------------- CCCast
     → Γ ; Σ ; gc ; pc ⊢ M ⟨ c ⟩ ⦂ B
 
+  ⊢ref? : ∀ {Γ Σ gc pc M T ℓ}
+    → Γ ; Σ ; gc ; pc ⊢ M ⦂ T of l ℓ
+      ---------------------------------------------------------- CCRefUnchecked
+    → Γ ; Σ ; gc ; pc ⊢ ref?[ ℓ ] M ⦂ Ref (T of l ℓ) of l low
+
   ⊢ref : ∀ {Γ Σ pc M T ℓ}
     → Γ ; Σ ; l ℓ ; pc ⊢ M ⦂ T of l ℓ
-      ---------------------------------------------------------- CCRef
+    → pc ≼ ℓ
+      ---------------------------------------------------------- CCRefChecked
     → Γ ; Σ ; l ℓ ; pc ⊢ ref[ ℓ ] M ⦂ Ref (T of l ℓ) of l low
 
   ⊢deref : ∀ {Γ Σ gc pc M A g}
@@ -72,33 +78,29 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
       ------------------------------------- CCDeref
     → Γ ; Σ ; gc ; pc ⊢ ! M ⦂ stamp A g
 
-  ⊢assign : ∀ {Γ Σ pc L M S g}
-    → Γ ; Σ ; g ; pc ⊢ L ⦂ Ref (S of g) of g
-    → Γ ; Σ ; g ; pc ⊢ M ⦂ S of g
-      --------------------------------------------- CCAssign
-    → Γ ; Σ ; g ; pc ⊢ L := M ⦂ ` Unit of l low
+  ⊢assign? : ∀ {Γ Σ gc pc L M T g}
+    → Γ ; Σ ; gc ; pc ⊢ L ⦂ Ref (T of g) of g
+    → (∀ {pc′} → Γ ; Σ ; gc ; pc′ ⊢ M ⦂ T of g)
+      --------------------------------------------- CCAssignUnchecked
+    → Γ ; Σ ; gc ; pc ⊢ L :=? M ⦂ ` Unit of l low
 
-  ⊢nsu-direct : ∀ {Γ Σ gc pc A M ℓ}
-    → (∀ {pc′} → Γ ; Σ ; l ℓ ; pc′ ⊢ M ⦂ A)
-      --------------------------------------------- CCNSUDirect
-    → Γ ; Σ ; gc  ; pc ⊢ nsu-direct ℓ M ⦂ A
-
-  ⊢nsu-indirect : ∀ {Γ Σ gc pc A L M S g g₁}
-    → Γ ; Σ ; gc ; pc ⊢ L ⦂ Ref (S of g₁) of g
-    → (∀ {pc′} → Γ ; Σ ; g₁ ; pc′ ⊢ M ⦂ A)
-      --------------------------------------------- CCNSUIndirect
-    → Γ ; Σ ; gc ; pc ⊢ nsu-indirect L M ⦂ A
+  ⊢assign : ∀ {Γ Σ pc L M T ℓ}
+    → Γ ; Σ ; l ℓ ; pc ⊢ L ⦂ Ref (T of l ℓ) of l ℓ
+    → Γ ; Σ ; l ℓ ; pc ⊢ M ⦂ T of l ℓ
+    → pc ≼ ℓ
+      --------------------------------------------- CCAssignChecked
+    → Γ ; Σ ; l ℓ ; pc ⊢ L := M ⦂ ` Unit of l low
 
   ⊢prot : ∀ {Γ Σ gc pc A M ℓ}
     → Γ ; Σ ; gc ⋎̃ l ℓ ; pc ⋎ ℓ ⊢ M ⦂ A
       ----------------------------------------------- CCProt
     → Γ ; Σ ; gc ; pc ⊢ prot[ ℓ ] M ⦂ stamp A (l ℓ)
 
-  ⊢cast-pc : ∀ {Γ Σ gc pc A M g}
-    → Γ ; Σ ; g ; pc ⊢ M ⦂ A
-    → l pc ≾ g
-      ------------------------------------ CCCastPC
-    → Γ ; Σ ; gc ; pc ⊢ cast-pc g M ⦂ A
+  -- ⊢cast-pc : ∀ {Γ Σ gc pc A M g}
+  --   → Γ ; Σ ; g ; pc ⊢ M ⦂ A
+  --   → l pc ≾ g
+  --     ------------------------------------ CCCastPC
+  --   → Γ ; Σ ; gc ; pc ⊢ cast-pc g M ⦂ A
 
   ⊢err : ∀ {Γ Σ gc pc A e}
       ------------------------------------ CCError
