@@ -2,7 +2,7 @@ module Compile where
 
 open import Data.Nat
 open import Data.List
-open import Data.Product using (_×_) renaming (_,_ to ⟨_,_⟩)
+open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst)
 open import Function using (case_of_)
@@ -52,7 +52,9 @@ compile (ref[ ℓ ] M at p) (⊢ref {gc = gc} {T = T} {g} ⊢M Tg≲Tℓ gc≾�
     ⟨ A , Tg~A , A<:Tℓ ⟩ →
       let M′ = compile M ⊢M
           M″ = M′ ⟨ cast (T of g) A p Tg~A ⟩ in
-        ref?[ ℓ ] M″
+        case gc≾ℓ of λ where
+          ≾-⋆l       → ref?[ ℓ ] M″
+          (≾-l ℓᶜ≼ℓ) →  ref[ ℓ ] M″
 compile (!ᴳ M) (⊢deref ⊢M) = ! (compile M ⊢M)
 compile (L := M at p) (⊢assign {gc = gc} {A = A} {T} {g} {g₁} ⊢L ⊢M A≲Tg1 g≾g1 gc≾g1) =
   case ⟨ ≲-prop A≲Tg1 , ≾-prop g≾g1 ⟩ of λ where
@@ -61,46 +63,63 @@ compile (L := M at p) (⊢assign {gc = gc} {A = A} {T} {g} {g₁} ⊢L ⊢M A≲
           L″ = L′ ⟨ cast (Ref (T of g₁) of g) (Ref (T of g₁) of g₂) p (~-ty g~g₂ ~ᵣ-refl) ⟩
           M′ = compile M ⊢M
           M″ = M′ ⟨ cast A B p A~B ⟩ in
-        L″ :=? M″
+        case gc≾g1 of λ where
+          (≾-l ℓᶜ≼ℓ₁) → L″ :=  M″
+          _           → L″ :=? M″
 
 
-compile-preserve : ∀ {Γ gc A} (M : Term)
+compile-preserve : ∀ {Γ gc pc A} (M : Term)
   → (⊢M : Γ ; gc ⊢ᴳ M ⦂ A)
-  → (∀ {pc} → Γ ; [] ; gc ; pc ⊢ compile M ⊢M ⦂ A)
-compile-preserve ($ᴳ k of ℓ) ⊢const = ⊢const
-compile-preserve (`ᴳ x) (⊢var Γ∋x) = ⊢var Γ∋x
-compile-preserve (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ⊢lam (compile-preserve N ⊢N)
-compile-preserve (L · M at p) (⊢app {gc = gc} {gc′} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′)
-  with ≲-prop A′≲A
-... | ⟨ B , A′~B , B<:A ⟩
-  with ≾-prop′ gc≾gc′ | ≾-prop′ g≾gc′
-... | ⟨ g₁ , gc<:g₁ , g₁~gc′ ⟩ | ⟨ g₂ , g<:g₂ , g₂~gc′ ⟩ =
-  ⊢app (⊢sub (⊢cast (compile-preserve L ⊢L))
+  → l pc ≾ gc
+  → Γ ; [] ; gc ; pc ⊢ compile M ⊢M ⦂ A
+compile-preserve ($ᴳ k of ℓ) ⊢const pc≾gc = ⊢const
+compile-preserve (`ᴳ x) (⊢var Γ∋x) pc≾gc = ⊢var Γ∋x
+compile-preserve (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) pc≾gc = ⊢lam (compile-preserve N ⊢N (low≾ _))
+compile-preserve (L · M at p) (⊢app {gc = gc} {gc′} {g = g} ⊢L ⊢M A′≲A g≾gc′ gc≾gc′) pc≾gc
+  with ≲-prop A′≲A | ≾-prop′ gc≾gc′ | ≾-prop′ g≾gc′
+... | ⟨ B , A′~B , B<:A ⟩ | ⟨ g₁ , gc<:g₁ , g₁~gc′ ⟩ | ⟨ g₂ , g<:g₂ , g₂~gc′ ⟩ =
+  ⊢app (⊢sub (⊢cast (compile-preserve L ⊢L pc≾gc))
              (<:-ty <:ₗ-refl (<:-fun (consis-join-<:ₗ gc<:g₁ g<:g₂) <:-refl <:-refl)))
-       (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A)
-compile-preserve (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B≡C)
+       (⊢sub (⊢cast (compile-preserve M ⊢M pc≾gc)) B<:A)
+compile-preserve (if L then M else N at p) (⊢if {A = A} {B} {C} ⊢L ⊢M ⊢N A∨̃B≡C) pc≾gc
   with consis-join-≲-inv {A} {B} A∨̃B≡C
 ... | ⟨ A≲C , B≲C ⟩
   with ≲-prop A≲C | ≲-prop B≲C
 ... | ⟨ A′ , A~A′ , A′<:C ⟩ | ⟨ B′ , B~B′ , B′<:C ⟩ =
-  ⊢if (compile-preserve L ⊢L)
-      (⊢sub (⊢cast (compile-preserve M ⊢M)) A′<:C)
-      (⊢sub (⊢cast (compile-preserve N ⊢N)) B′<:C)
-compile-preserve {Γ} {Σ} {A = A} (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A)
+  ⊢if (compile-preserve L ⊢L pc≾gc)
+      (⊢sub (⊢cast (compile-preserve M ⊢M (low≾ _))) A′<:C)
+      (⊢sub (⊢cast (compile-preserve {pc = low} N ⊢N (low≾ _))) B′<:C)
+compile-preserve {Γ} {Σ} {A = A} (M ꞉ A at p) (⊢ann {A′ = A′} ⊢M A′≲A) pc≾gc
   with ≲-prop A′≲A
-... | ⟨ B , A′~B , B<:A ⟩ = ⊢sub (⊢cast (compile-preserve M ⊢M)) B<:A
-compile-preserve (ref[ ℓ ] M at p) (⊢ref {gc = gc} ⊢M Tg≲Tℓ gc≾ℓ)
+... | ⟨ B , A′~B , B<:A ⟩ = ⊢sub (⊢cast (compile-preserve M ⊢M pc≾gc)) B<:A
+compile-preserve (ref[ ℓ ] M at p) (⊢ref {gc = gc} ⊢M Tg≲Tℓ gc≾ℓ) pc≾gc
   with ≲-prop Tg≲Tℓ
-... | ⟨ A , Tg~A , A<:Tℓ ⟩ = ⊢ref? (⊢sub (⊢cast (compile-preserve M ⊢M)) A<:Tℓ)
-compile-preserve (!ᴳ M) (⊢deref ⊢M) = ⊢deref (compile-preserve M ⊢M)
-compile-preserve (L := M at p) (⊢assign {gc = gc} {g = g} {g₁} ⊢L ⊢M A≲Tg1 g≾g1 gc≾g1)
+... | ⟨ A , Tg~A , A<:Tℓ ⟩
+  with gc≾ℓ
+...   | ≾-⋆l     = ⊢ref? (⊢sub (⊢cast (compile-preserve M ⊢M ≾-⋆r)) A<:Tℓ)
+...   | ≾-l ℓᶜ≼ℓ = {- gc = ℓᶜ -}
+  case pc≾gc of λ where
+  (≾-l pc≼ℓᶜ) → ⊢ref (⊢sub (⊢cast (compile-preserve M ⊢M pc≾gc)) A<:Tℓ) (≼-trans pc≼ℓᶜ ℓᶜ≼ℓ)
+compile-preserve (!ᴳ M) (⊢deref ⊢M) pc≾gc = ⊢deref (compile-preserve M ⊢M pc≾gc)
+compile-preserve (L := M at p) (⊢assign {gc = gc} {g = g} {g₁} ⊢L ⊢M A≲Tg1 g≾g1 gc≾g1) pc≾gc
   with ≲-prop A≲Tg1 | ≾-prop g≾g1
-... | ⟨ B , A~B , B<:Tg1 ⟩ | ⟨ g₂ , g~g₂ , g₂<:g₁ ⟩ =
-  ⊢assign? (⊢sub (⊢cast (compile-preserve L ⊢L)) (<:-ty g₂<:g₁ <:ᵣ-refl))
-           (⊢sub (⊢cast (compile-preserve M ⊢M)) B<:Tg1)
+... | ⟨ B , A~B , B<:Tg1 ⟩ | ⟨ g₂ , g~g₂ , g₂<:g₁ ⟩
+  with gc≾g1
+...   | ≾-l ℓᶜ≼ℓ₁ =
+  case pc≾gc of λ where
+  (≾-l pc≼ℓᶜ) {- gc = ℓᶜ and g₁ = ℓ₁ -} →
+    ⊢assign (⊢sub (⊢cast (compile-preserve L ⊢L pc≾gc)) (<:-ty g₂<:g₁ <:ᵣ-refl))
+            (⊢sub (⊢cast (compile-preserve M ⊢M pc≾gc)) B<:Tg1)
+            (≼-trans pc≼ℓᶜ ℓᶜ≼ℓ₁)
+...   | ≾-⋆l =
+  ⊢assign? (⊢sub (⊢cast (compile-preserve L ⊢L pc≾gc)) (<:-ty g₂<:g₁ <:ᵣ-refl))
+           (⊢sub (⊢cast (compile-preserve M ⊢M (low≾ gc))) B<:Tg1)
+...   | ≾-⋆r =
+  ⊢assign? (⊢sub (⊢cast (compile-preserve L ⊢L pc≾gc)) (<:-ty g₂<:g₁ <:ᵣ-refl))
+           (⊢sub (⊢cast (compile-preserve M ⊢M (low≾ gc))) B<:Tg1)
 
 {- Compilation from Surface to CC is type-preserving. -}
 compilation-preserves-type : ∀ {Γ gc A} (M : Term)
   → (⊢M : Γ ; gc ⊢ᴳ M ⦂ A)
   → Γ ; [] ; gc ; low ⊢ compile M ⊢M ⦂ A
-compilation-preserves-type M ⊢M = compile-preserve M ⊢M {low}
+compilation-preserves-type M ⊢M = compile-preserve M ⊢M (low≾ _)

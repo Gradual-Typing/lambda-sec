@@ -62,6 +62,14 @@ data _≼_ : StaticLabel → StaticLabel → Set where
   l⊑h : low  ≼ high
   h⊑h : high ≼ high
 
+low≼ : ∀ ℓ → low ≼ ℓ
+low≼ low  = l⊑l
+low≼ high = l⊑h
+
+_≼high : ∀ ℓ → ℓ ≼ high
+low  ≼high = l⊑h
+high ≼high = h⊑h
+
 data _<:ₗ_ : Label → Label → Set where
   <:-⋆ : ⋆ <:ₗ ⋆      {- neutral -}
   <:-l : ∀ {ℓ₁ ℓ₂} → ℓ₁ ≼ ℓ₂ → l ℓ₁ <:ₗ l ℓ₂
@@ -136,6 +144,14 @@ data _≾_ : Label → Label → Set where
   ≾-⋆r : ∀ {g} → g ≾ ⋆
   ≾-⋆l : ∀ {g} → ⋆ ≾ g
   ≾-l  : ∀ {ℓ₁ ℓ₂} → ℓ₁ ≼ ℓ₂ → l ℓ₁ ≾ l ℓ₂
+
+low≾ : ∀ g → l low ≾ g
+low≾ ⋆ = ≾-⋆r
+low≾ (l ℓ) = ≾-l (low≼ ℓ)
+
+_≾high : ∀ g → g ≾ l high
+⋆ ≾high = ≾-⋆l
+(l ℓ) ≾high = ≾-l (ℓ ≼high)
 
 data _≲ᵣ_ : RawType → RawType → Set
 data _≲_  : Type → Type → Set

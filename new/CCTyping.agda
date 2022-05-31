@@ -34,7 +34,7 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
     → Γ ; Σ ; gc ; pc ⊢ ` x ⦂ A
 
   ⊢lam : ∀ {Γ Σ gc pc pc′ A B N ℓ}
-    → (∀ {pc″} → A ∷ Γ ; Σ ; l pc′ ; pc″ ⊢ N ⦂ B)
+    → A ∷ Γ ; Σ ; l pc′ ; low ⊢ N ⦂ B
       ------------------------------------------------------------------- CCLam
     → Γ ; Σ ; gc ; pc ⊢ ƛ[ pc′ ] A ˙ N of ℓ ⦂ [ l pc′ ] A ⇒ B of l ℓ
 
@@ -46,14 +46,14 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
 
   ⊢if : ∀ {Γ Σ gc pc A L M N g}
     → Γ ; Σ ; gc     ; pc ⊢ L ⦂ ` Bool of g
-    → (∀ {pc′} → Γ ; Σ ; gc ⋎̃ g ; pc′ ⊢ M ⦂ A)
-    → (∀ {pc′} → Γ ; Σ ; gc ⋎̃ g ; pc′ ⊢ N ⦂ A)
+    → Γ ; Σ ; gc ⋎̃ g ; low ⊢ M ⦂ A
+    → Γ ; Σ ; gc ⋎̃ g ; low ⊢ N ⦂ A
       --------------------------------------------------------- CCIf
     → Γ ; Σ ; gc ; pc ⊢ if L A M N ⦂ stamp A g
 
   ⊢let : ∀ {Γ Σ gc pc M N A B}
     → Γ       ; Σ ; gc ; pc ⊢ M ⦂ A
-    → (∀ {pc′} → A ∷ Γ ; Σ ; gc ; pc′ ⊢ N ⦂ B)
+    → A ∷ Γ ; Σ ; gc ; low ⊢ N ⦂ B
       ----------------------------------- CCLet
     → Γ ; Σ ; gc ; pc ⊢ `let M N ⦂ B
 
@@ -67,11 +67,11 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
       ---------------------------------------------------------- CCRefUnchecked
     → Γ ; Σ ; gc ; pc ⊢ ref?[ ℓ ] M ⦂ Ref (T of l ℓ) of l low
 
-  ⊢ref : ∀ {Γ Σ pc M T ℓ}
-    → Γ ; Σ ; l ℓ ; pc ⊢ M ⦂ T of l ℓ
+  ⊢ref : ∀ {Γ Σ gc pc M T ℓ}
+    → Γ ; Σ ; gc ; pc ⊢ M ⦂ T of l ℓ
     → pc ≼ ℓ
       ---------------------------------------------------------- CCRefChecked
-    → Γ ; Σ ; l ℓ ; pc ⊢ ref[ ℓ ] M ⦂ Ref (T of l ℓ) of l low
+    → Γ ; Σ ; gc ; pc ⊢ ref[ ℓ ] M ⦂ Ref (T of l ℓ) of l low
 
   ⊢deref : ∀ {Γ Σ gc pc M A g}
     → Γ ; Σ ; gc ; pc ⊢ M ⦂ Ref A of g
@@ -80,27 +80,21 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
 
   ⊢assign? : ∀ {Γ Σ gc pc L M T g}
     → Γ ; Σ ; gc ; pc ⊢ L ⦂ Ref (T of g) of g
-    → (∀ {pc′} → Γ ; Σ ; gc ; pc′ ⊢ M ⦂ T of g)
+    → Γ ; Σ ; gc ; low ⊢ M ⦂ T of g
       --------------------------------------------- CCAssignUnchecked
     → Γ ; Σ ; gc ; pc ⊢ L :=? M ⦂ ` Unit of l low
 
-  ⊢assign : ∀ {Γ Σ pc L M T ℓ}
-    → Γ ; Σ ; l ℓ ; pc ⊢ L ⦂ Ref (T of l ℓ) of l ℓ
-    → Γ ; Σ ; l ℓ ; pc ⊢ M ⦂ T of l ℓ
+  ⊢assign : ∀ {Γ Σ gc pc L M T ℓ}
+    → Γ ; Σ ; gc ; pc ⊢ L ⦂ Ref (T of l ℓ) of l ℓ
+    → Γ ; Σ ; gc ; pc ⊢ M ⦂ T of l ℓ
     → pc ≼ ℓ
       --------------------------------------------- CCAssignChecked
-    → Γ ; Σ ; l ℓ ; pc ⊢ L := M ⦂ ` Unit of l low
+    → Γ ; Σ ; gc ; pc ⊢ L := M ⦂ ` Unit of l low
 
   ⊢prot : ∀ {Γ Σ gc pc A M ℓ}
     → Γ ; Σ ; gc ⋎̃ l ℓ ; pc ⋎ ℓ ⊢ M ⦂ A
       ----------------------------------------------- CCProt
     → Γ ; Σ ; gc ; pc ⊢ prot[ ℓ ] M ⦂ stamp A (l ℓ)
-
-  -- ⊢cast-pc : ∀ {Γ Σ gc pc A M g}
-  --   → Γ ; Σ ; g ; pc ⊢ M ⦂ A
-  --   → l pc ≾ g
-  --     ------------------------------------ CCCastPC
-  --   → Γ ; Σ ; gc ; pc ⊢ cast-pc g M ⦂ A
 
   ⊢err : ∀ {Γ Σ gc pc A e}
       ------------------------------------ CCError
