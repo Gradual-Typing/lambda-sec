@@ -23,12 +23,14 @@ data Op : Set where
   op-let          : Op
   op-ref          : StaticLabel → Op
   op-ref?         : StaticLabel → Op
+  op-ref✓         : StaticLabel → Op
   op-deref        : Op
   op-assign       : Op
   op-assign?      : Op
+  op-assign✓      : Op
   op-cast         : ∀ {A B} → Cast A ⇒ B → Op
   op-prot         : StaticLabel → Op
-  -- op-cast-pc      : Label → Op
+  op-cast-pc      : Label → Op
   op-error        : Error → Op
 
 sig : Op → List Sig
@@ -40,12 +42,14 @@ sig (op-if A)          = ■ ∷ ■ ∷ ■ ∷ []
 sig op-let             = ■ ∷ (ν ■) ∷ []
 sig (op-ref  ℓ)        = ■ ∷ []
 sig (op-ref? ℓ)        = ■ ∷ []
+sig (op-ref✓ ℓ)        = ■ ∷ []
 sig op-deref           = ■ ∷ []
 sig op-assign          = ■ ∷ ■ ∷ []
 sig op-assign?         = ■ ∷ ■ ∷ []
+sig op-assign✓         = ■ ∷ ■ ∷ []
 sig (op-cast c)        = ■ ∷ []
 sig (op-prot ℓ)        = ■ ∷ []
--- sig (op-cast-pc g)     = ■ ∷ []
+sig (op-cast-pc g)     = ■ ∷ []
 sig (op-error e)       = []
 
 open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug) public
@@ -61,10 +65,12 @@ pattern if L A M N               = (op-if A) ⦅ cons (ast L) (cons (ast M) (con
 pattern `let M N                 = op-let ⦅ cons (ast M) (cons (bind (ast N)) nil) ⦆
 pattern ref[_]_  ℓ M             = (op-ref ℓ) ⦅ cons (ast M) nil ⦆
 pattern ref?[_]_ ℓ M             = (op-ref? ℓ) ⦅ cons (ast M) nil ⦆
+pattern ref✓[_]_ ℓ M             = (op-ref✓ ℓ) ⦅ cons (ast M) nil ⦆
 pattern !_ M                     = op-deref ⦅ cons (ast M) nil ⦆
 pattern _:=_  L M                = op-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern _:=?_ L M                = op-assign? ⦅ cons (ast L) (cons (ast M) nil) ⦆
+pattern _:=✓_ L M                = op-assign✓ ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern _⟨_⟩ M c                 = (op-cast c) ⦅ cons (ast M) nil ⦆
 pattern prot[_]_ ℓ M             = (op-prot ℓ) ⦅ cons (ast M) nil ⦆      {- protection term -}
--- pattern cast-pc g M              = (op-cast-pc g) ⦅ cons (ast M) nil ⦆
+pattern cast-pc g M              = (op-cast-pc g) ⦅ cons (ast M) nil ⦆
 pattern error e                  = (op-error e) ⦅ nil ⦆                  {- blame / nsu error -}

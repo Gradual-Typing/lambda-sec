@@ -66,19 +66,17 @@ progress pc (`let M N) (⊢let ⊢M ⊢N) μ ⊢μ =
   (step M→M′) → step (ξ {F = let□ N} M→M′)
   (done v) → step (β-let v)
   (err (E-error {e})) → step (ξ-err {F = let□ N} {e = e})
-progress pc (M ⟨ c ⟩) (⊢cast ⊢M) μ ⊢μ =
+progress pc (ref[ ℓ ] M) (⊢ref ⊢M pc′≼ℓ) μ ⊢μ =
+  step ref-static
+progress pc (ref?[ ℓ ] M) (⊢ref? ⊢M) μ ⊢μ =
+  case pc ≼? ℓ of λ where
+  (yes pc≼ℓ) → step (ref?-ok pc≼ℓ)
+  (no  pc⋠ℓ) → step (ref?-fail pc⋠ℓ)
+progress pc (ref✓[ ℓ ] M) (⊢ref✓ ⊢M pc≼ℓ) μ ⊢μ =
   case progress pc M ⊢M μ ⊢μ of λ where
-  (step M→M′) → step (ξ {F = □⟨ c ⟩} M→M′)
-  (done v) →
-    case active-or-inert c of λ where
-    (inj₁ a) → step (cast ⊢M v a)
-    (inj₂ i) → done (V-cast v i)
-  (err (E-error {e})) → step (ξ-err {F = □⟨ c ⟩} {e = e})
-progress pc (ref[ ℓ ] M) (⊢ref ⊢M) μ ⊢μ =
-  case progress pc M ⊢M μ ⊢μ of λ where
-  (step M→M′) → step (ξ {F = ref[ ℓ ]□} M→M′)
+  (step M→M′) → step (ξ {F = ref✓[ ℓ ]□} M→M′)
   (done v) → step (ref v refl)
-  (err (E-error {e})) → step (ξ-err {F = ref[ ℓ ]□} {e = e})
+  (err (E-error {e})) → step (ξ-err {F = ref✓[ ℓ ]□} {e = e})
 progress pc (! M) (⊢deref ⊢M) μ ⊢μ =
   case progress pc M ⊢M μ ⊢μ of λ where
   (step M→M′) → step (ξ {F = !□} M→M′)
@@ -89,12 +87,27 @@ progress pc (! M) (⊢deref ⊢M) μ ⊢μ =
       step (deref eq)
     (Ref-proxy r i _) → step (deref-cast (ref-is-value r) i)
   (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
-progress pc (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ =
+progress pc (L := M) (⊢assign ⊢L ⊢M pc′≼ℓ) μ ⊢μ =
+  step assign-static
+progress pc (L :=? M) (⊢assign? ⊢L ⊢M) μ ⊢μ =
   case progress pc L ⊢L μ ⊢μ of λ where
-  (step L→L′) → step (ξ {F = □:= M} L→L′)
+  (step L→L′) → step (ξ {F = □:=? M} L→L′)
+  (done v) →
+    case canonical-ref ⊢L v of λ where
+    (Ref-addr {ℓ₁ = ℓ₁} eq sub) →
+      let ⟨ _ , V₁ , eq₁ , ⊢V₁ ⟩ = ⊢μ _ eq in
+      case pc ≼? ℓ₁ of λ where
+      (yes pc≼ℓ₁) → step (assign?-ok eq₁ pc≼ℓ₁)
+      (no  pc⋠ℓ₁) → step (assign?-fail eq₁ pc⋠ℓ₁)
+    (Ref-proxy r i (<:-ty _ (<:-ref (<:-ty _ _) _))) →
+      step (assign?-cast (ref-is-value r) i)
+  (err (E-error {e})) → step (ξ-err {F = □:=? M} {e = e})
+progress pc (L :=✓ M) (⊢assign✓ ⊢L ⊢M pc≼ℓ) μ ⊢μ =
+  case progress pc L ⊢L μ ⊢μ of λ where
+  (step L→L′) → step (ξ {F = □:=✓ M} L→L′)
   (done v) →
     case progress pc M ⊢M μ ⊢μ of λ where
-    (step M→M′) → step (ξ {F = (L :=□) v} M→M′)
+    (step M→M′) → step (ξ {F = (L :=✓□) v} M→M′)
     (done w) →
       case canonical-ref ⊢L v of λ where
       (Ref-addr eq _) →
@@ -103,31 +116,22 @@ progress pc (L := M) (⊢assign ⊢L ⊢M) μ ⊢μ =
       (Ref-proxy r i _) →
         case i of λ where
         (I-ref _ I-label I-label) → step (assign-cast (ref-is-value r) w i)
-    (err (E-error {e})) → step (ξ-err {F = (L :=□) v} {e = e})
-  (err (E-error {e})) → step (ξ-err {F = □:= M} {e = e})
-progress pc (nsu-direct ℓ M) (⊢nsu-direct ⊢M) μ ⊢μ =
-  case pc ≼? ℓ of λ where
-  (yes pc≼ℓ) → step (nsu-direct-ok pc≼ℓ)
-  (no  pc⋠ℓ) → step (nsu-direct-fail pc⋠ℓ)
-progress pc (nsu-indirect L M) (⊢nsu-indirect ⊢L ⊢M) μ ⊢μ =
-  case progress pc L ⊢L μ ⊢μ of λ where
-  (step L→L′) → step (ξ {F = nsu-indirect□ M} L→L′)
-  (done v) →
-    case canonical-ref ⊢L v of λ where
-    (Ref-addr {ℓ₁ = ℓ₁} eq sub) →
-      let ⟨ _ , V₁ , eq₁ , ⊢V₁ ⟩ = ⊢μ _ eq in
-      case pc ≼? ℓ₁ of λ where
-      (yes pc≼ℓ₁) → step (nsu-indirect-ok eq₁ pc≼ℓ₁)
-      (no  pc⋠ℓ₁) → step (nsu-indirect-fail eq₁ pc⋠ℓ₁)
-    (Ref-proxy r i (<:-ty _ (<:-ref (<:-ty _ _) _))) →
-      step (nsu-indirect-cast (ref-is-value r) i)
-  (err (E-error {e})) → step (ξ-err {F = nsu-indirect□ M} {e = e})
+    (err (E-error {e})) → step (ξ-err {F = (L :=✓□) v} {e = e})
+  (err (E-error {e})) → step (ξ-err {F = □:=✓ M} {e = e})
 progress pc (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ =
   case progress (pc ⋎ ℓ) M ⊢M μ ⊢μ of λ where
   (step M→N) → step (prot-ctx M→N)
   (done v) → step (prot-val v)
   (err E-error) → step prot-err
-progress pc (cast-pc g M) (⊢cast-pc ⊢M pc≾g) μ ⊢μ =
+progress pc (M ⟨ c ⟩) (⊢cast ⊢M) μ ⊢μ =
+  case progress pc M ⊢M μ ⊢μ of λ where
+  (step M→M′) → step (ξ {F = □⟨ c ⟩} M→M′)
+  (done v) →
+    case active-or-inert c of λ where
+    (inj₁ a) → step (cast ⊢M v a)
+    (inj₂ i) → done (V-cast v i)
+  (err (E-error {e})) → step (ξ-err {F = □⟨ c ⟩} {e = e})
+progress pc (cast-pc g M) (⊢cast-pc ⊢M pc~g) μ ⊢μ =
   case progress pc M ⊢M μ ⊢μ of λ where
   (step M→N) → step (ξ {F = cast-pc g □} M→N)
   (done v) → step (β-cast-pc v)
@@ -148,24 +152,24 @@ plug-inversion {F = □· M} (⊢app ⊢L ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢app ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
 plug-inversion {F = (V ·□) v} (⊢app ⊢V ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢app (relax-Σ ⊢V Σ′⊇Σ) ⊢M′) ⟩
-plug-inversion {F = ref[ ℓ ]□} (⊢ref ⊢M) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢ref ⊢M′) ⟩
+plug-inversion {F = ref✓[ ℓ ]□} (⊢ref✓ ⊢M pc≼ℓ) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢ref✓ ⊢M′ pc≼ℓ) ⟩
 plug-inversion {F = !□} (⊢deref ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢deref ⊢M′) ⟩
-plug-inversion {F = □:= M} (⊢assign ⊢L ⊢M) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
-plug-inversion {F = (V :=□) v} (⊢assign ⊢V ⊢M) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢assign (relax-Σ ⊢V Σ′⊇Σ) ⊢M′) ⟩
+plug-inversion {F = □:=? M} (⊢assign? ⊢L ⊢M) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign? ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
+plug-inversion {F = □:=✓ M} (⊢assign✓ ⊢L ⊢M pc≼ℓ) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign✓ ⊢L′ (relax-Σ ⊢M Σ′⊇Σ) pc≼ℓ) ⟩
+plug-inversion {F = (V :=✓□) v} (⊢assign✓ ⊢V ⊢M pc≼ℓ) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢assign✓ (relax-Σ ⊢V Σ′⊇Σ) ⊢M′ pc≼ℓ) ⟩
 plug-inversion {F = let□ N} (⊢let ⊢M ⊢N) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢let ⊢M′ (relax-Σ ⊢N Σ′⊇Σ)) ⟩
 plug-inversion {F = if□ A M N} (⊢if ⊢L ⊢M ⊢N) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢if ⊢L′ (relax-Σ ⊢M Σ′⊇Σ) (relax-Σ ⊢N Σ′⊇Σ)) ⟩
 plug-inversion {F = □⟨ c ⟩} (⊢cast ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast ⊢M′) ⟩
-plug-inversion {F = nsu-indirect□ M} (⊢nsu-indirect ⊢L ⊢M) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢nsu-indirect ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
-plug-inversion {F = cast-pc g □} (⊢cast-pc ⊢M pc≾g) _ =
-  ⟨ g , _ , pc≾g , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast-pc ⊢M′ pc≾g) ⟩
+plug-inversion {F = cast-pc g □} (⊢cast-pc ⊢M pc~g) _ =
+  ⟨ g , _ , proj₁ (~ₗ→≾ pc~g) , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast-pc ⊢M′ pc~g) ⟩
 plug-inversion (⊢sub ⊢M A<:B) pc≾gc =
   let ⟨ gc′ , B , pc≾gc′ , ⊢M , wt-plug ⟩ = plug-inversion ⊢M pc≾gc in
   ⟨ gc′ , B , pc≾gc′ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢sub (wt-plug ⊢M′ Σ′⊇Σ) A<:B) ⟩
@@ -205,34 +209,38 @@ preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-false {ℓ = ℓ}) =
         A⋎ℓ<:A⋎ℓ′   = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
     ⟨ Σ , ⊇-refl {Σ} , ⊢sub (⊢prot (⊢sub-pc ⊢N gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (β-let x) = {!!}
-preserve {Σ} {μ = μ} (⊢ref {T = T} {ℓ} ⊢V) ⊢μ pc≾gc (ref {a = a} v fresh {- `a` is fresh -}) =
+preserve {Σ} (⊢ref ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) ref-static =
+  ⟨ Σ , ⊇-refl {Σ} , ⊢ref✓ ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
+preserve {Σ} {μ = μ} (⊢ref✓ {T = T} {ℓ} ⊢V pc≼ℓ) ⊢μ pc≾gc (ref {a = a} v fresh {- `a` is fresh -}) =
   let is-here = here {Addr} {RawType × StaticLabel} {_≟_} {a} in
   ⟨ ⟨ a , T , ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh ,
     ⊢addr is-here , ⊢μ-ext (⊢value-pc ⊢V v) ⊢μ fresh ⟩
-preserve {Σ} (⊢nsu-direct ⊢M) ⊢μ pc≾gc (nsu-direct-ok pc≼ℓ) =
-  ⟨ Σ , ⊇-refl {Σ} , ⊢cast-pc ⊢M (≾-l pc≼ℓ) , ⊢μ ⟩
-preserve {Σ} (⊢nsu-direct ⊢M) ⊢μ pc≾gc (nsu-direct-fail pc⋠ℓ) =
+preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-ok pc≼ℓ) =
+  ⟨ Σ , ⊇-refl {Σ} , ⊢ref✓ ⊢M pc≼ℓ , ⊢μ ⟩
+preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-fail pc⋠ℓ) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (deref x) = {!!}
+preserve {Σ} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) assign-static =
+  ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ ⊢L ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (assign x x₁) = {!!}
-preserve {Σ} (⊢nsu-indirect ⊢L ⊢M) ⊢μ pc≾gc (nsu-indirect-cast w i) =
-  case canonical-ref ⊢L (V-cast w i) of λ where
-  (Ref-proxy r (I-ref (cast _ _ _ c~) I-label I-label) (<:-ty _ (<:-ref A<:B B<:A))) →
-    case <:-antisym A<:B B<:A of λ where
-    refl →
-      let ⊢M′ = case c~ of λ where  {- follow inject-pc and case on g₁ -}
-                (~-ty _ (~-ref (~-ty ~⋆ _))) →
-                  ⊢nsu-indirect (ref-wt r) (⊢cast-pc ⊢M ≾-⋆r)
-                (~-ty _ (~-ref (~-ty l~ _))) →
-                  ⊢nsu-indirect (ref-wt r) ⊢M in
-      ⟨ Σ , ⊇-refl {Σ} , ⊢M′ , ⊢μ ⟩
-preserve {Σ} (⊢nsu-indirect ⊢L ⊢M) ⊢μ pc≾gc (nsu-indirect-ok eq pc≼ℓ₁) =
+preserve {Σ} (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (assign?-cast w i) = {!!}
+  -- case canonical-ref ⊢L (V-cast w i) of λ where
+  -- (Ref-proxy r (I-ref (cast _ _ _ c~) I-label I-label) (<:-ty _ (<:-ref A<:B B<:A))) →
+  --   case <:-antisym A<:B B<:A of λ where
+  --   refl →
+  --     let ⊢M′ = case c~ of λ where  {- follow inject-pc and case on g₁ -}
+  --               (~-ty _ (~-ref (~-ty ~⋆ _))) →
+  --                 ⊢assign? (ref-wt r) (⊢cast-pc ⊢M ≾-⋆r)
+  --               (~-ty _ (~-ref (~-ty l~ _))) →
+  --                 ⊢assign? (ref-wt r) ⊢M in
+  --     ⟨ Σ , ⊇-refl {Σ} , ⊢M′ , ⊢μ ⟩
+preserve {Σ} (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (assign?-ok eq pc≼ℓ₁) =
   case ⊢addr-inv ⊢L of λ where
   ⟨ T , ℓ₁′ , refl , eq₁ ⟩ →
     let ⟨ _ , _ , eq′ , _ ⟩ = ⊢μ _ eq₁ in
     case trans (sym eq) eq′ of λ where
-    refl → ⟨ Σ , ⊇-refl {Σ} , ⊢cast-pc ⊢M (≾-l pc≼ℓ₁) , ⊢μ ⟩
-preserve {Σ} ⊢M ⊢μ pc≾gc (nsu-indirect-fail eq pc⋠ℓ₁) =
+    refl → ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ ⊢L ⊢M pc≼ℓ₁ , ⊢μ ⟩
+preserve {Σ} ⊢M ⊢μ pc≾gc (assign?-fail eq pc⋠ℓ₁) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (cast ⊢V v a) = {!!}
 preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) with i
@@ -240,15 +248,15 @@ preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc
   case canonical-const ⊢L (V-cast V-const i) of λ where
   (Const-inj {ℓ = ℓ} ℓ≼ℓ′) →
     let ⊢M† : [] ; Σ ; ⋆ ; pc ⋎ ℓ ⊢ M ⦂ A
-        ⊢M† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ M ⦂ A) g⋎̃⋆≡⋆ (⊢M {pc ⋎ ℓ}) in
-    ⟨ Σ , ⊇-refl {Σ} , ⊢cast (⊢prot (⊢cast-pc ⊢M† ≾-⋆r)) , ⊢μ ⟩
+        ⊢M† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ M ⦂ A) g⋎̃⋆≡⋆ ⊢M in
+    ⟨ Σ , ⊇-refl {Σ} , ⊢cast (⊢prot (⊢cast-pc ⊢M† ~⋆)) , ⊢μ ⟩
 preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-false i) with i
 ... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
   case canonical-const ⊢L (V-cast V-const i) of λ where
   (Const-inj {ℓ = ℓ} ℓ≼ℓ′) →
     let ⊢N† : [] ; Σ ; ⋆ ; pc ⋎ ℓ ⊢ N ⦂ A
         ⊢N† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ N ⦂ A) g⋎̃⋆≡⋆ (⊢N {pc ⋎ ℓ}) in
-    ⟨ Σ , ⊇-refl {Σ} , ⊢cast (⊢prot (⊢cast-pc ⊢N† ≾-⋆r)) , ⊢μ ⟩
+    ⟨ Σ , ⊇-refl {Σ} , ⊢cast (⊢prot (⊢cast-pc ⊢N† ~⋆)) , ⊢μ ⟩
 preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc = pc} v w i) with i
 ... | (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p c~) I-label I-label) =
   case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
@@ -270,7 +278,7 @@ preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc 
     let ⊢V  = fun-wt {gc = gc} {pc = pc} f
         ⊢V† = ⊢value-pc {gc′ = l pc} (⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l pc⋎ℓ₁≼pc₁) <:-refl <:-refl))) v in
     ⟨ Σ , ⊇-refl {Σ} ,
-      ⊢sub (⊢cast (⊢cast-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C))) ≾-refl))
+      ⊢sub (⊢cast (⊢cast-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C))) l~))
            (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
 ... | (no  pc⋎ℓ₁⋠pc₁) = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve {Σ} (⊢deref {A = A′} ⊢M) ⊢μ pc≾gc (deref-cast v i) =
@@ -280,18 +288,12 @@ preserve {Σ} (⊢deref {A = A′} ⊢M) ⊢μ pc≾gc (deref-cast v i) =
     refl →
       ⟨ Σ , ⊇-refl {Σ} ,
         ⊢sub (⊢cast (⊢deref (ref-wt r))) (stamp-<: <:-refl g₂<:g) , ⊢μ ⟩
-preserve {Σ} {gc} (⊢assign ⊢L ⊢M {- V ⟨ c ⟩ := W -}) ⊢μ pc≾gc (assign-cast {g₂₁ = g₂₁} v w i) =
+preserve {Σ} {gc} (⊢assign✓ ⊢L ⊢M {- V ⟨ c ⟩ :=✓ W -} pc≼ℓ) ⊢μ pc≾gc (assign-cast v w i) =
   case canonical-ref ⊢L (V-cast v i) of λ where
   (Ref-proxy r (I-ref (cast _ _ _ c~) (I-label {ℓ₁}) (I-label {ℓ})) (<:-ty g₂<:gc (<:-ref Tg₂₁<:Sgc Sgc<:Tg₂₁))) →
     case <:-antisym Tg₂₁<:Sgc Sgc<:Tg₂₁ of λ where
     refl → {- we know gc ≡ gc₂₁ -}
-      {- Now we have Ref (S of ℓ₁) of ℓ ~ Ref (T of gc) of g₂ .
-         Because g₂ <: gc , they must be ⋆ or concrete at the same time. -}
-      case ⟨ c~ , g₂<:gc ⟩ of λ where
-        ⟨ ~-ty ~⋆ (~-ref (~-ty ~⋆ _)) , <:-⋆ ⟩ →
-          ⟨ Σ , ⊇-refl {Σ} , ⊢cast-pc (⊢assign {!!} (⊢cast (⊢value-pc ⊢M w))) {!!} , ⊢μ ⟩
-        ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , ℓ<:ℓ₁ ⟩ →
-          ⟨ Σ , ⊇-refl {Σ} , ⊢assign (⊢sub (ref-wt r) (<:-ty ℓ<:ℓ₁ <:ᵣ-refl)) (⊢cast ⊢M) , ⊢μ ⟩
+      ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ {!ref-wt r!} {!⊢cast!} pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢cast-pc ⊢V _) ⊢μ pc≾gc (β-cast-pc v) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢value-pc ⊢V v , ⊢μ ⟩
 preserve (⊢sub ⊢M A<:B) ⊢μ pc≾gc M→M′ =

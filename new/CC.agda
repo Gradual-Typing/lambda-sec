@@ -309,24 +309,24 @@ apply-cast V ⊢V v c (A-ref-ref (cast (Ref (S of ⋆) of g₁) (Ref (T of g₂�
             (no _) → error (blame p)
 
 
--- {- NOTE:
---    Categorizing by PC, there are two types of _inert_ function casts:
---      1) [ pc ] A → B of ℓ₁ ⇒ [ pc ] C → D of g₂
---      2) [ pc ] A → B of ℓ₁ ⇒ [ ⋆  ] C → D of g₂
---    -}
--- elim-fun-cast : ∀ {A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
---   → (V W : Term) → (pc : StaticLabel) → Inert c → Term
--- elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p _) I-label I-label) =
---   (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
--- elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p _) I-label I-label) =
---   case (pc ⋎ ℓ₁) ≼? pc₁ of λ where
---     (yes _) → cast-pc (l pc) (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
---     (no _)  → error (blame p)
+{- NOTE:
+   Categorizing by PC, there are two types of _inert_ function casts:
+     1) [ pc ] A → B of ℓ₁ ⇒ [ pc ] C → D of g₂
+     2) [ pc ] A → B of ℓ₁ ⇒ [ ⋆  ] C → D of g₂
+   -}
+elim-fun-cast : ∀ {A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
+  → (V W : Term) → (pc : StaticLabel) → Inert c → Term
+elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p _) I-label I-label) =
+  (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
+elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p _) I-label I-label) =
+  case (pc ⋎ ℓ₁) ≼? pc₁ of λ where
+    (yes _) → cast-pc (l pc) (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
+    (no _)  → error (blame p)
 
--- -- Adjust PC to g₂ according to g₁
--- adjust-pc : (g₁ g₂ : Label) → Term → Term
--- adjust-pc ⋆     g M = cast-pc g M
--- adjust-pc (l ℓ) g M = M
+-- Adjust PC to g₂ according to g₁
+adjust-pc : (g₁ g₂ : Label) → Term → Term
+adjust-pc ⋆     g M = cast-pc g M
+adjust-pc (l ℓ) g M = M
 
 
 stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → ∀ ℓ

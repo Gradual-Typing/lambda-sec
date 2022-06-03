@@ -20,13 +20,15 @@ data Frame : Set where
 
   _·□ : (V : Term) → Value V → Frame
 
-  ref[_]□ : StaticLabel → Frame
+  ref✓[_]□ : StaticLabel → Frame
 
   !□ : Frame
 
-  □:=_ : Term → Frame
+  □:=?_ : Term → Frame
 
-  _:=□ : (V : Term) → Value V → Frame
+  □:=✓_ : Term → Frame
+
+  _:=✓□ : (V : Term) → Value V → Frame
 
   let□ : Term → Frame
 
@@ -34,22 +36,20 @@ data Frame : Set where
 
   □⟨_⟩ : ∀ {A B} → Cast A ⇒ B → Frame
 
-  nsu-indirect□ : Term → Frame
-
   cast-pc_□ : Label → Frame
 
 
 plug : Term → Frame → Term
 plug L (□· M)          = L · M
 plug M ((V ·□) v)      = V · M
-plug M ref[ ℓ ]□       = ref[ ℓ ] M
+plug M ref✓[ ℓ ]□      = ref✓[ ℓ ] M
 plug M !□              = ! M
-plug L (□:= M)         = L := M
-plug M ((V :=□) v)     = V := M
+plug L (□:=? M)        = L :=? M
+plug L (□:=✓ M)        = L :=✓ M
+plug M ((V :=✓□) v)    = V :=✓ M
 plug M (let□ N)        = `let M N
 plug L (if□ A M N)     = if L A M N
 plug M □⟨ c ⟩          = M ⟨ c ⟩
-plug L (nsu-indirect□ M) = nsu-indirect L M
 plug M (cast-pc g □)   = cast-pc g M
 
 
@@ -98,49 +98,52 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       -------------------------------------- Let
     → `let V N ∣ μ ∣ pc —→ N [ V ] ∣ μ
 
+  ref-static : ∀ {M μ pc ℓ}
+      ------------------------------------------------- RefStatic
+    → ref[ ℓ ] M ∣ μ ∣ pc —→ ref✓[ ℓ ] M ∣ μ
+
+  ref?-ok : ∀ {M μ pc ℓ}
+    → pc ≼ ℓ
+      ------------------------------------------------- RefNSUSuccess
+    → ref?[ ℓ ] M ∣ μ ∣ pc —→ ref✓[ ℓ ] M ∣ μ
+
+  ref?-fail : ∀ {M μ pc ℓ}
+    → ¬ pc ≼ ℓ
+      ------------------------------------------------- RefNSUFail
+    → ref?[ ℓ ] M ∣ μ ∣ pc —→ error nsu-error ∣ μ
+
   ref : ∀ {V μ pc a ℓ}
     → Value V
     → a ≡ length μ  {- address a is fresh -}
       ----------------------------------------------------------------- Ref
-    → ref[ ℓ ] V ∣ μ ∣ pc —→ addr a of low ∣ ⟨ a , V , ℓ ⟩ ∷ μ
-
-  nsu-direct-ok : ∀ {M μ pc ℓ}
-    → pc ≼ ℓ
-      ------------------------------------------------------- NSUDirectSuccess
-    → nsu-direct ℓ M ∣ μ ∣ pc —→ cast-pc (l ℓ) M ∣ μ
-
-  nsu-direct-fail : ∀ {M μ pc ℓ}
-    → ¬ pc ≼ ℓ
-      ------------------------------------------------------- NSUDirectFail
-    → nsu-direct ℓ M ∣ μ ∣ pc —→ error nsu-error ∣ μ
+    → ref✓[ ℓ ] V ∣ μ ∣ pc —→ addr a of low ∣ ⟨ a , V , ℓ ⟩ ∷ μ
 
   deref : ∀ {V μ pc a ℓ ℓ₁}
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
       ------------------------------------------------------- Deref
     → ! (addr a of ℓ) ∣ μ ∣ pc —→ prot[ ℓ ⋎ ℓ₁ ] V ∣ μ
 
+  assign-static : ∀ {L M μ pc}
+      ----------------------------------------- AssignStatic
+    → L := M ∣ μ ∣ pc —→ L :=✓ M ∣ μ
+
+  assign?-ok : ∀ {V M μ pc a ℓ ℓ₁}
+    → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
+    → pc ≼ ℓ₁
+      ----------------------------------------------------------------------------- AssignNSUSuccess
+    → (addr a of ℓ) :=? M ∣ μ ∣ pc —→ (addr a of ℓ) :=✓ M ∣ μ
+
+  assign?-fail : ∀ {V M μ pc a ℓ ℓ₁}
+    → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
+    → ¬ pc ≼ ℓ₁
+      ----------------------------------------------------------------------------- NSUIndirectFail
+    → (addr a of ℓ) :=? M ∣ μ ∣ pc —→ error nsu-error ∣ μ
+
   assign : ∀ {V V₁ μ pc a ℓ ℓ₁}
     → Value V
     → key _≟_ μ a ≡ just ⟨ V₁ , ℓ₁ ⟩
       --------------------------------------------------------------------- Assign
-    → (addr a of ℓ) := V ∣ μ ∣ pc —→ $ tt of low ∣ ⟨ a , V , ℓ₁ ⟩ ∷ μ
-
-  nsu-indirect-cast : ∀ {W M μ pc A T g g₁} {c : Cast A ⇒ (Ref (T of g₁) of g)}
-    → Value W → Inert c
-      ----------------------------------------------------------------------------- NSUIndirectCast
-    → nsu-indirect (W ⟨ c ⟩) M ∣ μ ∣ pc —→ nsu-indirect W (adjust-pc g₁ ⋆ M) ∣ μ
-
-  nsu-indirect-ok : ∀ {V M μ pc a ℓ ℓ₁}
-    → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
-    → pc ≼ ℓ₁
-      ----------------------------------------------------------------------------- NSUIndirectSuccess
-    → nsu-indirect (addr a of ℓ) M ∣ μ ∣ pc —→ cast-pc (l ℓ₁) M ∣ μ
-
-  nsu-indirect-fail : ∀ {V M μ pc a ℓ ℓ₁}
-    → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
-    → ¬ pc ≼ ℓ₁
-      ----------------------------------------------------------------------------- NSUIndirectFail
-    → nsu-indirect (addr a of ℓ) M ∣ μ ∣ pc —→ error nsu-error ∣ μ
+    → (addr a of ℓ) :=✓ V ∣ μ ∣ pc —→ $ tt of low ∣ ⟨ a , V , ℓ₁ ⟩ ∷ μ
 
   {- Reduction rules about casts, active and inert: -}
   cast : ∀ {Σ gc A B V μ pc pc′} {c : Cast A ⇒ B}
@@ -172,11 +175,16 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ------------------------------------------------------ DerefCast
     → ! (V ⟨ c ⟩) ∣ μ ∣ pc —→ ! V ⟨ out-c c ⟩ ∣ μ
 
-  assign-cast : ∀ {V W μ pc S T g₁ g₁₁ g₂ g₂₁} {c : Cast (Ref (S of g₁₁) of g₁) ⇒ (Ref (T of g₂₁) of g₂)}
+  assign?-cast : ∀ {W M μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
+    → Value W → Inert c
+      ----------------------------------------------------------------------------- AssignNSUCast
+    → (W ⟨ c ⟩) :=? M ∣ μ ∣ pc —→ W :=? (M ⟨ in-c c ⟩) ∣ μ
+
+  assign-cast : ∀ {V W μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → Value V → Value W
     → Inert c
       ------------------------------------------------------ AssignCast
-    → (V ⟨ c ⟩) := W ∣ μ ∣ pc —→ adjust-pc g₂₁ g₁₁ (V := (W ⟨ in-c c ⟩)) ∣ μ
+    → (V ⟨ c ⟩) :=✓ W ∣ μ ∣ pc —→ V :=✓ (W ⟨ in-c c ⟩) ∣ μ
 
   β-cast-pc : ∀ {V μ pc g}
     → Value V
