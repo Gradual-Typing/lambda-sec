@@ -223,17 +223,6 @@ preserve ⊢M ⊢μ pc≾gc (deref x) = {!!}
 preserve {Σ} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) assign-static =
   ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ ⊢L ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (assign x x₁) = {!!}
-preserve {Σ} (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (assign?-cast w i) = {!!}
-  -- case canonical-ref ⊢L (V-cast w i) of λ where
-  -- (Ref-proxy r (I-ref (cast _ _ _ c~) I-label I-label) (<:-ty _ (<:-ref A<:B B<:A))) →
-  --   case <:-antisym A<:B B<:A of λ where
-  --   refl →
-  --     let ⊢M′ = case c~ of λ where  {- follow inject-pc and case on g₁ -}
-  --               (~-ty _ (~-ref (~-ty ~⋆ _))) →
-  --                 ⊢assign? (ref-wt r) (⊢cast-pc ⊢M ≾-⋆r)
-  --               (~-ty _ (~-ref (~-ty l~ _))) →
-  --                 ⊢assign? (ref-wt r) ⊢M in
-  --     ⟨ Σ , ⊇-refl {Σ} , ⊢M′ , ⊢μ ⟩
 preserve {Σ} (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (assign?-ok eq pc≼ℓ₁) =
   case ⊢addr-inv ⊢L of λ where
   ⟨ T , ℓ₁′ , refl , eq₁ ⟩ →
@@ -258,7 +247,7 @@ preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc
         ⊢N† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ N ⦂ A) g⋎̃⋆≡⋆ (⊢N {pc ⋎ ℓ}) in
     ⟨ Σ , ⊇-refl {Σ} , ⊢cast (⊢prot (⊢cast-pc ⊢N† ~⋆)) , ⊢μ ⟩
 preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc = pc} v w i) with i
-... | (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p c~) I-label I-label) =
+... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p c~) I-label I-label =
   case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
   ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:pc₂ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun l~ _ _) ⟩ →
     -- doing some label arithmetic ...
@@ -270,9 +259,9 @@ preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc 
           ⊢V† = ⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l gc⋎g₂≼pc₂) <:-refl <:-refl)) in
       ⟨ Σ , ⊇-refl {Σ} ,
         ⊢sub (⊢cast (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
-... | (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p c~) I-label I-label)
+... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p c~) I-label I-label
   with (pc ⋎ ℓ₁) ≼? pc₁
-... | (yes pc⋎ℓ₁≼pc₁) =
+...   | yes pc⋎ℓ₁≼pc₁ =
   case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
   ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:⋆ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun ~⋆ _ _) ⟩ →
     let ⊢V  = fun-wt {gc = gc} {pc = pc} f
@@ -280,7 +269,7 @@ preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc 
     ⟨ Σ , ⊇-refl {Σ} ,
       ⊢sub (⊢cast (⊢cast-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C))) l~))
            (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
-... | (no  pc⋎ℓ₁⋠pc₁) = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
+...   | no  _ = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve {Σ} (⊢deref {A = A′} ⊢M) ⊢μ pc≾gc (deref-cast v i) =
   case canonical-ref ⊢M (V-cast v i) of λ where
   (Ref-proxy r _ (<:-ty g₂<:g (<:-ref B<:A′ A′<:B))) →
@@ -288,12 +277,32 @@ preserve {Σ} (⊢deref {A = A′} ⊢M) ⊢μ pc≾gc (deref-cast v i) =
     refl →
       ⟨ Σ , ⊇-refl {Σ} ,
         ⊢sub (⊢cast (⊢deref (ref-wt r))) (stamp-<: <:-refl g₂<:g) , ⊢μ ⟩
-preserve {Σ} {gc} (⊢assign✓ ⊢L ⊢M {- V ⟨ c ⟩ :=✓ W -} pc≼ℓ) ⊢μ pc≾gc (assign-cast v w i) =
+preserve {Σ} (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (assign?-cast v i) with i
+... | I-ref (cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of l ℓ₂) of g) p c~) I-label I-label =
   case canonical-ref ⊢L (V-cast v i) of λ where
-  (Ref-proxy r (I-ref (cast _ _ _ (~-ty l~ (~-ref c~))) I-label I-label) (<:-ty ℓ<:ℓ₁ (<:-ref A<:B B<:A))) →
+  (Ref-proxy r _ (<:-ty g<:g′ (<:-ref A<:B B<:A))) →
+    case ⟨ c~ , g<:g′ , <:-antisym A<:B B<:A ⟩ of λ where
+    ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , <:-l ℓ≼ℓ′ , refl ⟩ →
+      ⟨ Σ , ⊇-refl {Σ} ,
+        ⊢assign? (⊢sub (ref-wt r) (<:-ty (<:-l ℓ≼ℓ′) <:ᵣ-refl)) (⊢cast ⊢M) , ⊢μ ⟩
+... | I-ref (cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of ⋆) of g) p c~) I-label I-label
+  with ℓ ≼? ℓ₁
+...   | yes ℓ≼ℓ₁ =
+  case canonical-ref ⊢L (V-cast v i) of λ where
+  (Ref-proxy r _ (<:-ty g<:g′ (<:-ref A<:B B<:A))) →
+    case ⟨ c~ , g<:g′ , <:-antisym A<:B B<:A ⟩ of λ where
+    ⟨ ~-ty ~⋆ (~-ref (~-ty ~⋆ _)) , <:-⋆ , refl ⟩ →
+      ⟨ Σ , ⊇-refl {Σ} ,
+        ⊢assign? (⊢sub (ref-wt r) (<:-ty (<:-l ℓ≼ℓ₁) <:ᵣ-refl)) (⊢cast ⊢M) , ⊢μ ⟩
+...   | no  _ = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
+preserve {Σ} {gc} (⊢assign✓ ⊢L ⊢M pc≼ℓ) ⊢μ pc≾gc (assign-cast v w i) with i
+... | I-ref (cast _ _ _ c~) I-label I-label =
+  case canonical-ref ⊢L (V-cast v i) of λ where
+  (Ref-proxy r _ (<:-ty ℓ<:ℓ′ (<:-ref A<:B B<:A))) →
     case ⟨ c~ , <:-antisym A<:B B<:A ⟩ of λ where
-    ⟨ ~-ty l~ _ , refl ⟩ →
-      ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ (⊢sub (ref-wt r) (<:-ty ℓ<:ℓ₁ <:ᵣ-refl)) (⊢cast ⊢M) pc≼ℓ , ⊢μ ⟩
+    ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , refl ⟩ →
+      ⟨ Σ , ⊇-refl {Σ} ,
+        ⊢assign✓ (⊢sub (ref-wt r) (<:-ty ℓ<:ℓ′ <:ᵣ-refl)) (⊢cast ⊢M) pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢cast-pc ⊢V _) ⊢μ pc≾gc (β-cast-pc v) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢value-pc ⊢V v , ⊢μ ⟩
 preserve (⊢sub ⊢M A<:B) ⊢μ pc≾gc M→M′ =

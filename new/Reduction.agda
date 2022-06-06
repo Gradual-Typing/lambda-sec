@@ -167,7 +167,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → Value V → Value W
     → (i : Inert c)
       ---------------------------------------------------------------- FunCast
-    → (V ⟨ c ⟩) · W ∣ μ ∣ pc —→ elim-fun-cast V W pc i ∣ μ
+    → (V ⟨ c ⟩) · W ∣ μ ∣ pc —→ elim-fun-proxy V W i pc ∣ μ
 
   deref-cast : ∀ {V μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → Value V
@@ -176,9 +176,10 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → ! (V ⟨ c ⟩) ∣ μ ∣ pc —→ ! V ⟨ out-c c ⟩ ∣ μ
 
   assign?-cast : ∀ {V M μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
-    → Value V → Inert c
+    → Value V
+    → (i : Inert c)
       ----------------------------------------------------------------------------- AssignNSUCast
-    → (V ⟨ c ⟩) :=? M ∣ μ ∣ pc —→ V :=? (M ⟨ in-c c ⟩) ∣ μ
+    → (V ⟨ c ⟩) :=? M ∣ μ ∣ pc —→ elim-ref-proxy V M i ∣ μ
 
   assign-cast : ∀ {V W μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → Value V → Value W

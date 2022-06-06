@@ -314,14 +314,27 @@ apply-cast V ⊢V v c (A-ref-ref (cast (Ref (S of ⋆) of g₁) (Ref (T of g₂�
      1) [ pc ] A → B of ℓ₁ ⇒ [ pc ] C → D of g₂
      2) [ pc ] A → B of ℓ₁ ⇒ [ ⋆  ] C → D of g₂
    -}
-elim-fun-cast : ∀ {A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
-  → (V W : Term) → (pc : StaticLabel) → Inert c → Term
-elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p _) I-label I-label) =
-  (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
-elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p _) I-label I-label) =
-  case (pc ⋎ ℓ₁) ≼? pc₁ of λ where
+elim-fun-proxy : ∀ {A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
+  → (V W : Term) → Inert c → (pc : StaticLabel) → Term
+elim-fun-proxy V W (I-fun c I-label I-label) pc =
+  case c of λ where
+  (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p _) →
+    (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
+  (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p _) →
+    case (pc ⋎ ℓ₁) ≼? pc₁ of λ where
     (yes _) → cast-pc (l pc) (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
-    (no _)  → error (blame p)
+    (no  _) → error (blame p)
+
+elim-ref-proxy : ∀ {A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
+  → (V M : Term) → Inert c → Term
+elim-ref-proxy V M (I-ref c I-label I-label) =
+  case c of λ where
+  (cast (Ref (S of (l ℓ₁)) of (l ℓ)) (Ref (T of (l ℓ₂)) of g) p _) →
+    V :=? (M ⟨ in-c c ⟩)
+  (cast (Ref (S of (l ℓ₁)) of (l ℓ)) (Ref (T of ⋆) of g) p _) →
+    case ℓ ≼? ℓ₁ of λ where
+    (yes _) → V :=? (M ⟨ in-c c ⟩)
+    (no  _) → error (blame p)
 
 
 stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → ∀ ℓ
