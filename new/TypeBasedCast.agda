@@ -105,33 +105,33 @@ active-or-inert (cast ([ ⋆ ] A ⇒ B of l ℓ) ([ gc ] C ⇒ D of _) p (~-ty _
 active-or-inert (cast ([ l pc ] A ⇒ B of l _) C→D p (~-ty _ (~-fun _ _ _))) =
   inj₂ (I-fun _ I-label I-label)
 
-dom : ∀ {A B C D gc₁ gc₂ g₁ g₂}
+
+dom/c : ∀ {A B C D gc₁ gc₂ g₁ g₂}
   → Cast [ gc₁ ] A ⇒ B of g₁ ⇒ [ gc₂ ] C ⇒ D of g₂
   → Cast C ⇒ A
-dom (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-ty _ (~-fun _ A~C B~D))) =
+dom/c (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-ty _ (~-fun _ A~C B~D))) =
   cast C A p (~-sym A~C)
 
-cod : ∀ {A B C D gc₁ gc₂ g₁ g₂}
+cod/c : ∀ {A B C D gc₁ gc₂ g₁ g₂}
   → Cast [ gc₁ ] A ⇒ B of g₁ ⇒ [ gc₂ ] C ⇒ D of g₂
   → Cast stamp B g₁ ⇒ stamp D g₂
-cod (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-ty g₁~g₂ (~-fun _ A~C B~D))) =
+cod/c (cast ([ gc₁ ] A ⇒ B of g₁) ([ gc₂ ] C ⇒ D of g₂) p (~-ty g₁~g₂ (~-fun _ A~C B~D))) =
   cast (stamp B g₁) (stamp D g₂) p (stamp-~ B~D g₁~g₂)
 
-in-c : ∀ {A B g₁ g₂}
+in/c : ∀ {A B g₁ g₂}
   → Cast Ref A of g₁ ⇒ Ref B of g₂
   → Cast B ⇒ A
-in-c (cast (Ref A of g₁) (Ref B of g₂) p (~-ty _ (~-ref A~B))) =
+in/c (cast (Ref A of g₁) (Ref B of g₂) p (~-ty _ (~-ref A~B))) =
   cast B A p (~-sym A~B)
 
-out-c : ∀ {A B g₁ g₂}
+out/c : ∀ {A B g₁ g₂}
   → Cast Ref A of g₁ ⇒ Ref B of g₂
   → Cast stamp A g₁ ⇒ stamp B g₂
-out-c (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ (~-ref A~B))) =
+out/c (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ (~-ref A~B))) =
   cast (stamp A g₁) (stamp B g₂) p (stamp-~ A~B g₁~g₂)
 
--- the input cast is only for blame propagation, its signature could be more general
-stamp-c : ∀ {g} A ℓ
+branch/c : ∀ {g} A ℓ
   → Cast ` Bool of g ⇒ ` Bool of ⋆
   → Cast stamp A (l ℓ) ⇒ stamp A ⋆
-stamp-c A ℓ (cast _ _ p _) =
+branch/c A ℓ (cast _ _ p _) =
   cast (stamp A (l ℓ)) (stamp A ⋆) p (stamp-~ ~-refl ~⋆)

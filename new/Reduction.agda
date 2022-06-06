@@ -156,12 +156,12 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
   if-cast-true : ∀ {M N μ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
       --------------------------------------------------------------------------------------------- IfCastTrue
-    → if ($ true of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] (cast-pc ⋆ M) ⟨ stamp-c A ℓ c ⟩ ∣ μ
+    → if ($ true of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] (cast-pc ⋆ M) ⟨ branch/c A ℓ c ⟩ ∣ μ
 
   if-cast-false : ∀ {M N μ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
       --------------------------------------------------------------------------------------------- IfCastFalse
-    → if ($ false of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] (cast-pc ⋆ N) ⟨ stamp-c A ℓ c ⟩ ∣ μ
+    → if ($ false of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot[ ℓ ] (cast-pc ⋆ N) ⟨ branch/c A ℓ c ⟩ ∣ μ
 
   fun-cast : ∀ {V W μ pc A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
     → Value V → Value W
@@ -173,7 +173,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → Value V
     → Inert c
       ------------------------------------------------------ DerefCast
-    → ! (V ⟨ c ⟩) ∣ μ ∣ pc —→ ! V ⟨ out-c c ⟩ ∣ μ
+    → ! (V ⟨ c ⟩) ∣ μ ∣ pc —→ ! V ⟨ out/c c ⟩ ∣ μ
 
   assign?-cast : ∀ {V M μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → Value V
@@ -185,7 +185,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → Value V → Value W
     → (i : Inert c)
       --------------------------------------------------------------------------------------------- AssignCast
-    → (V ⟨ c ⟩) :=✓ W ∣ μ ∣ pc —→ elim-ref-proxy V W i _:=✓_ {- V := (W ⟨ in-c c ⟩) -} ∣ μ
+    → (V ⟨ c ⟩) :=✓ W ∣ μ ∣ pc —→ elim-ref-proxy V W i _:=✓_ {- V := (W ⟨ in/c c ⟩) -} ∣ μ
 
   β-cast-pc : ∀ {V μ pc g}
     → Value V
