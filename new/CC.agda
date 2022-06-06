@@ -27,25 +27,6 @@ data Value : Term → Set where
 data Err : Term → Set where
   E-error : ∀ {e : Error} → Err (error e)
 
--- The labels on a constant and its type are related by subtyping.
-const-label-≼ : ∀ {Γ Σ gc pc ι} {k : rep ι} {ℓ g}
-  → Γ ; Σ ; gc ; pc ⊢ $ k of ℓ ⦂ ` ι of g
-  → ∃[ ℓ′ ] (g ≡ l ℓ′) × (ℓ ≼ ℓ′)
-const-label-≼ {ℓ = ℓ} ⊢const = ⟨ ℓ , refl , ≼-refl ⟩
-const-label-≼ (⊢sub ⊢M (<:-ty ℓ′<:g <:-ι)) =
-  case ⟨ const-label-≼ ⊢M , ℓ′<:g ⟩ of λ where
-    ⟨ ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ , <:-l ℓ′≼ℓ″ ⟩ →
-      ⟨ _ , refl , ≼-trans ℓ≼ℓ′ ℓ′≼ℓ″ ⟩
-const-label-≼ (⊢sub-pc ⊢M gc<:gc′) = const-label-≼ ⊢M
-
--- The type on a cast and its type are related by subtyping.
-cast-<: : ∀ {Γ Σ gc pc A B B′ M} {c : Cast A ⇒ B}
-  → Γ ; Σ ; gc ; pc ⊢ M ⟨ c ⟩ ⦂ B′
-  → B <: B′
-cast-<: (⊢cast ⊢Mc) = <:-refl
-cast-<: (⊢sub ⊢Mc B″<:B′) = let B<:B″ = cast-<: ⊢Mc in <:-trans B<:B″ B″<:B′
-cast-<: (⊢sub-pc ⊢Mc gc<:gc″) = cast-<: ⊢Mc
-
 data Fun : Term → HeapContext → Type → Set where
   Fun-ƛ : ∀ {Σ gc pc′ A A′ B B′ g N ℓ}
     → (∀ {pc} → A′ ∷ [] ; Σ ; l pc′ ; pc ⊢ N ⦂ B′)
@@ -141,6 +122,17 @@ data Constant : Term → Type → Set where
     → ℓ ≼ ℓ′
       ------------------------------- Injected constant
     → Constant ($ k of ℓ ⟨ c ⟩) (` ι of ⋆)
+
+-- The labels on a constant and its type are related by subtyping.
+const-label-≼ : ∀ {Γ Σ gc pc ι} {k : rep ι} {ℓ g}
+  → Γ ; Σ ; gc ; pc ⊢ $ k of ℓ ⦂ ` ι of g
+  → ∃[ ℓ′ ] (g ≡ l ℓ′) × (ℓ ≼ ℓ′)
+const-label-≼ {ℓ = ℓ} ⊢const = ⟨ ℓ , refl , ≼-refl ⟩
+const-label-≼ (⊢sub ⊢M (<:-ty ℓ′<:g <:-ι)) =
+  case ⟨ const-label-≼ ⊢M , ℓ′<:g ⟩ of λ where
+    ⟨ ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ , <:-l ℓ′≼ℓ″ ⟩ →
+      ⟨ _ , refl , ≼-trans ℓ≼ℓ′ ℓ′≼ℓ″ ⟩
+const-label-≼ (⊢sub-pc ⊢M gc<:gc′) = const-label-≼ ⊢M
 
 canonical-const : ∀ {Σ gc pc ι g V}
   → [] ; Σ ; gc ; pc ⊢ V ⦂ ` ι of g
