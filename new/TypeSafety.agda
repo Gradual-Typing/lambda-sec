@@ -290,10 +290,10 @@ preserve {Σ} (⊢deref {A = A′} ⊢M) ⊢μ pc≾gc (deref-cast v i) =
         ⊢sub (⊢cast (⊢deref (ref-wt r))) (stamp-<: <:-refl g₂<:g) , ⊢μ ⟩
 preserve {Σ} {gc} (⊢assign✓ ⊢L ⊢M {- V ⟨ c ⟩ :=✓ W -} pc≼ℓ) ⊢μ pc≾gc (assign-cast v w i) =
   case canonical-ref ⊢L (V-cast v i) of λ where
-  (Ref-proxy r (I-ref (cast _ _ _ c~) (I-label {ℓ₁}) (I-label {ℓ})) (<:-ty g₂<:gc (<:-ref Tg₂₁<:Sgc Sgc<:Tg₂₁))) →
-    case <:-antisym Tg₂₁<:Sgc Sgc<:Tg₂₁ of λ where
-    refl → {- we know gc ≡ gc₂₁ -}
-      ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ {!ref-wt r!} {!⊢cast!} pc≼ℓ , ⊢μ ⟩
+  (Ref-proxy r (I-ref (cast _ _ _ (~-ty l~ (~-ref c~))) I-label I-label) (<:-ty ℓ<:ℓ₁ (<:-ref A<:B B<:A))) →
+    case ⟨ c~ , <:-antisym A<:B B<:A ⟩ of λ where
+    ⟨ ~-ty l~ _ , refl ⟩ →
+      ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ (⊢sub (ref-wt r) (<:-ty ℓ<:ℓ₁ <:ᵣ-refl)) (⊢cast ⊢M) pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢cast-pc ⊢V _) ⊢μ pc≾gc (β-cast-pc v) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢value-pc ⊢V v , ⊢μ ⟩
 preserve (⊢sub ⊢M A<:B) ⊢μ pc≾gc M→M′ =

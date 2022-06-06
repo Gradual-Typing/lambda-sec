@@ -323,11 +323,6 @@ elim-fun-cast {c = c} V W pc (I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ �
     (yes _) → cast-pc (l pc) (V · (W ⟨ dom c ⟩)) ⟨ cod c ⟩
     (no _)  → error (blame p)
 
--- Adjust PC to g₂ according to g₁
-adjust-pc : (g₁ g₂ : Label) → Term → Term
-adjust-pc ⋆     g M = cast-pc g M
-adjust-pc (l ℓ) g M = M
-
 
 stamp-inert : ∀ {A B} → (c : Cast A ⇒ B) → Inert c → ∀ ℓ
                       → (Cast (stamp A (l ℓ)) ⇒ (stamp B (l ℓ)))

@@ -136,7 +136,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
   assign?-fail : ∀ {V M μ pc a ℓ ℓ₁}
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
     → ¬ pc ≼ ℓ₁
-      ----------------------------------------------------------------------------- NSUIndirectFail
+      ----------------------------------------------------------------------------- AssignNSUFail
     → (addr a of ℓ) :=? M ∣ μ ∣ pc —→ error nsu-error ∣ μ
 
   assign : ∀ {V V₁ μ pc a ℓ ℓ₁}
@@ -175,10 +175,10 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
       ------------------------------------------------------ DerefCast
     → ! (V ⟨ c ⟩) ∣ μ ∣ pc —→ ! V ⟨ out-c c ⟩ ∣ μ
 
-  assign?-cast : ∀ {W M μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
-    → Value W → Inert c
+  assign?-cast : ∀ {V M μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
+    → Value V → Inert c
       ----------------------------------------------------------------------------- AssignNSUCast
-    → (W ⟨ c ⟩) :=? M ∣ μ ∣ pc —→ W :=? (M ⟨ in-c c ⟩) ∣ μ
+    → (V ⟨ c ⟩) :=? M ∣ μ ∣ pc —→ V :=? (M ⟨ in-c c ⟩) ∣ μ
 
   assign-cast : ∀ {V W μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → Value V → Value W
