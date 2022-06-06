@@ -179,13 +179,13 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → Value V
     → (i : Inert c)
       ----------------------------------------------------------------------------- AssignNSUCast
-    → (V ⟨ c ⟩) :=? M ∣ μ ∣ pc —→ elim-ref-proxy V M i ∣ μ
+    → (V ⟨ c ⟩) :=? M ∣ μ ∣ pc —→ elim-ref-proxy V M i _:=?_ ∣ μ
 
   assign-cast : ∀ {V W μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → Value V → Value W
-    → Inert c
-      ------------------------------------------------------ AssignCast
-    → (V ⟨ c ⟩) :=✓ W ∣ μ ∣ pc —→ V :=✓ (W ⟨ in-c c ⟩) ∣ μ
+    → (i : Inert c)
+      --------------------------------------------------------------------------------------------- AssignCast
+    → (V ⟨ c ⟩) :=✓ W ∣ μ ∣ pc —→ elim-ref-proxy V W i _:=✓_ {- V := (W ⟨ in-c c ⟩) -} ∣ μ
 
   β-cast-pc : ∀ {V μ pc g}
     → Value V
