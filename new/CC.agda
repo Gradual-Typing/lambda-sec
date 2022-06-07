@@ -390,14 +390,3 @@ stamp-val-value (V-cast v i) =
 ⊢value-pc (⊢cast ⊢V) (V-cast v i) = ⊢cast (⊢value-pc ⊢V v)
 ⊢value-pc (⊢sub ⊢V A<:B) v = ⊢sub (⊢value-pc ⊢V v) A<:B
 ⊢value-pc (⊢sub-pc ⊢V gc<:gc′) v = ⊢value-pc ⊢V v
-
--- If an address is well-typed, the heap context lookup is successful.
--- (inversion on the typing derivation of an address)
-⊢addr-inv : ∀ {Σ gc pc a ℓ A g}
-  → [] ; Σ ; gc ; pc ⊢ addr a of ℓ ⦂ Ref A of g
-  → ∃[ T ] ∃[ ℓ₁ ] (A ≡ T of l ℓ₁) × (key _≟_ Σ a ≡ just ⟨ T , ℓ₁ ⟩)
-⊢addr-inv ⊢a =
- case canonical-ref ⊢a V-addr of λ where
-    (Ref-addr eq (<:-ty _ (<:-ref A′<:A A<:A′))) →
-      case <:-antisym A′<:A A<:A′ of λ where
-        refl → ⟨ _ , _ , refl , eq ⟩
