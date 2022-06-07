@@ -74,17 +74,33 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
 ⊢μ-nil : [] ⊢ []
 ⊢μ-nil = λ a ()
 
-⊢μ-ext : ∀ {Σ V a T ℓ μ}
+⊢μ-new : ∀ {Σ V a T ℓ μ}
   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
   → Value V
   → Σ ⊢ μ
   → a ≡ length μ  {- a is fresh in μ -}
-    --------------------------------------------
+    -----------------------------------------------
   → ⟨ a , T , ℓ ⟩ ∷ Σ ⊢ ⟨ a , V , ℓ ⟩ ∷ μ
-⊢μ-ext {Σ} {V₁} {a₁} {T₁} {ℓ₁} {μ} ⊢V₁ v₁ ⊢μ fresh a eq with a ≟ a₁
+⊢μ-new {Σ} {V₁} {a₁} {T₁} {ℓ₁} {μ} ⊢V₁ v₁ ⊢μ fresh a eq with a ≟ a₁
 ... | yes refl =
   case ⟨ eq , fresh ⟩ of λ where
     ⟨ refl , refl ⟩ → ⟨ ≤-refl , V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-fresh {μ = μ} ⊢μ fresh) ⟩
 ... | no _ =
   let ⟨ a<len , V , v , eq′ , ⊢V ⟩ = ⊢μ a eq in
     ⟨ <-trans a<len (n<1+n _) , V , v , eq′ , relax-Σ ⊢V (⊇-fresh {μ = μ} ⊢μ fresh) ⟩
+
+⊢μ-update : ∀ {Σ V a T ℓ μ}
+  → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
+  → Value V
+  → Σ ⊢ μ
+  → key _≟_ Σ a ≡ just ⟨ T , ℓ ⟩  {- updating a -}
+    -----------------------------------------------
+  → Σ ⊢ ⟨ a , V , ℓ ⟩ ∷ μ
+⊢μ-update {Σ} {V₁} {a₁} {T₁} {ℓ₁} {μ} ⊢V₁ v₁ ⊢μ eq₁ a eq with a ≟ a₁
+... | yes refl =
+  let ⟨ a<len , _ ⟩ = ⊢μ a eq in
+  case trans (sym eq) eq₁ of λ where
+    refl → ⟨ <-trans a<len (n<1+n _) , V₁ , v₁ , refl , ⊢V₁ ⟩
+... | no  _ =
+  let ⟨ a<len , wf ⟩ = ⊢μ a eq in
+    ⟨ <-trans a<len (n<1+n _) , wf ⟩

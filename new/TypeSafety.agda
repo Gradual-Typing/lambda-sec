@@ -211,10 +211,10 @@ preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-false {ℓ = ℓ}) =
 preserve ⊢M ⊢μ pc≾gc (β-let x) = {!!}
 preserve {Σ} (⊢ref ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) ref-static =
   ⟨ Σ , ⊇-refl {Σ} , ⊢ref✓ ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
-preserve {Σ} {μ = μ} (⊢ref✓ {T = T} {ℓ} ⊢V pc≼ℓ) ⊢μ pc≾gc (ref {a = a} v fresh {- `a` is fresh -}) =
+preserve {Σ} {μ = μ} (⊢ref✓ {T = T} {ℓ} ⊢V pc≼ℓ) ⊢μ pc≾gc (ref {a = a} v fresh) =
   let is-here = here {Addr} {RawType × StaticLabel} {_≟_} {a} in
   ⟨ ⟨ a , T , ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh ,
-    ⊢addr is-here , ⊢μ-ext (⊢value-pc ⊢V v) v ⊢μ fresh ⟩
+    ⊢addr is-here , ⊢μ-new (⊢value-pc ⊢V v) v ⊢μ fresh ⟩
 preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-ok pc≼ℓ) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢ref✓ ⊢M pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-fail pc⋠ℓ) =
@@ -234,7 +234,15 @@ preserve {Σ} (⊢deref ⊢a) ⊢μ pc≾gc (deref {ℓ = ℓ} {ℓ₁} eq) =
           ⊢sub (⊢prot (⊢value-pc ⊢V₁ v₁)) (<:-ty (<:-l leq) <:ᵣ-refl) , ⊢μ ⟩
 preserve {Σ} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) assign-static =
   ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ ⊢L ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
-preserve ⊢M ⊢μ pc≾gc (assign x x₁) = {!!}
+preserve {Σ} (⊢assign✓ {ℓ = ℓ′} ⊢a ⊢V pc≼ℓ′) ⊢μ pc≾gc (assign {ℓ = ℓ} {ℓ₁} v eq) =
+ case canonical-ref ⊢a V-addr of λ where
+ (Ref-addr eq₁ (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
+   case <:-antisym A′<:A A<:A′ of λ where
+   refl →
+    let ⟨ a<len , _ , _ , eq′ , _ ⟩ = ⊢μ _ eq₁ in
+    case trans (sym eq) eq′ of λ where
+    refl →
+      ⟨ Σ , ⊇-refl {Σ} , ⊢const , ⊢μ-update (⊢value-pc ⊢V v) v ⊢μ eq₁ ⟩
 preserve {Σ} (⊢assign? ⊢a ⊢M) ⊢μ pc≾gc (assign?-ok eq pc≼ℓ₁) =
  case canonical-ref ⊢a V-addr of λ where
  (Ref-addr eq₁ (<:-ty _ (<:-ref A′<:A A<:A′))) →
