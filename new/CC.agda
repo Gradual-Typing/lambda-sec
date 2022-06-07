@@ -154,14 +154,17 @@ canonical⋆ : ∀ {Γ Σ gc pc V T}
   → Γ ; Σ ; gc ; pc ⊢ V ⦂ T of ⋆
   → Value V
   → ∃[ A ] ∃[ B ] Σ[ c ∈ Cast A ⇒ B ] ∃[ W ]
-       (V ≡ W ⟨ c ⟩) × (Inert c) × (B <: T of ⋆)
+       (V ≡ W ⟨ c ⟩) × (Inert c) × (Γ ; Σ ; gc ; pc ⊢ W ⦂ A) × (B <: T of ⋆)
 canonical⋆ (⊢cast ⊢W) (V-cast {V = W} {c} w i) =
-  ⟨ _ , _ , c , W , refl , i , <:-ty <:-⋆ <:ᵣ-refl ⟩
+  ⟨ _ , _ , c , W , refl , i , ⊢W , <:-ty <:-⋆ <:ᵣ-refl ⟩
 canonical⋆ (⊢sub ⊢V (<:-ty {S = T′} <:-⋆ T′<:T)) v =
   case canonical⋆ ⊢V v of λ where
-    ⟨ A , B , c , W , refl , i , B<:T′⋆ ⟩ →
-      ⟨ A , B , c , W , refl , i , <:-trans B<:T′⋆ (<:-ty <:-⋆ T′<:T) ⟩
-canonical⋆ (⊢sub-pc ⊢V gc<:gc′) v = canonical⋆ ⊢V v
+    ⟨ A , B , c , W , refl , i , ⊢W , B<:T′⋆ ⟩ →
+      ⟨ A , B , c , W , refl , i , ⊢W , <:-trans B<:T′⋆ (<:-ty <:-⋆ T′<:T) ⟩
+canonical⋆ (⊢sub-pc ⊢V gc<:gc′) v =
+  case canonical⋆ ⊢V v of λ where
+    ⟨ A , B , c , W , refl , i , ⊢W , B<:T⋆ ⟩ →
+      ⟨ A , B , c , W , refl , i , ⊢sub-pc ⊢W gc<:gc′ , B<:T⋆ ⟩
 
 canonical-pc⋆ : ∀ {Γ Σ gc pc V A B g}
   → Γ ; Σ ; gc ; pc ⊢ V ⦂ [ ⋆ ] A ⇒ B of g
@@ -200,10 +203,10 @@ apply-cast V ⊢V v c (A-base-id .c) = V
 apply-cast V ⊢V v c (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty ⋆~ ~-ι))) =
   case canonical⋆ ⊢V v of λ where
     ⟨ _ , _ , cast (` ι of l ℓ′) (` ι of ⋆) q (~-ty ~⋆ ~-ι) ,
-      W , refl , I-base-inj _ , <:-ty <:-⋆ <:-ι ⟩ →
+      W , refl , I-base-inj _ , _ , <:-ty <:-⋆ <:-ι ⟩ →
       case ℓ′ ≼? ℓ of λ where
-        (yes _) → V
-        (no _) → error (blame p)
+        (yes _) → W
+        (no  _) → error (blame p)
 {- Order of reduction: propagate label first and then the security effect
         V ⟨ [ pc′ ] A₁ → A₂ of ℓ′ ⇒ [ ⋆ ] B₁ → B₂ of ⋆ ⟩ ⟨ [ ⋆ ] C₁ → C₂ of ⋆ ⇒ [ pc ] D₁ → D₂ of ℓ ⟩
    —→ V ⟨ [ pc′ ] A₁ → A₂ of ℓ  ⇒ [ ⋆ ] B₁ → B₂ of ℓ ⟩ ⟨ [ ⋆ ] C₁ → C₂ of ℓ ⇒ [ pc ] D₁ → D₂ of ℓ ⟩   , if ℓ′ ≼ ℓ
@@ -212,7 +215,7 @@ apply-cast V ⊢V v c (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty �
 apply-cast V ⊢V v c (A-fun (cast ([ gc₁ ] C₁ ⇒ C₂ of ⋆) ([ gc₂ ] D₁ ⇒ D₂ of g) p (~-ty _ C~D)) a) =
   case canonical⋆ ⊢V v of λ where
     ⟨ _ , _ , cast ([ gc₁′ ] A₁ ⇒ A₂ of l ℓ′) ([ gc₂′ ] B₁ ⇒ B₂ of ⋆) q (~-ty ~⋆ A~B) ,
-      W , refl , I-fun _ I-label I-label , <:-ty <:-⋆ (<:-fun gc₁<:gc₂′ C₁<:B₁ B₂<:C₂) ⟩ →
+      W , refl , I-fun _ I-label I-label , _ , <:-ty <:-⋆ (<:-fun gc₁<:gc₂′ C₁<:B₁ B₂<:C₂) ⟩ →
       case a of λ where
         --      W ⟨ [ gc₁′ ] A₁ → A₂ of ℓ′ ⇒ [ gc₂′ ] B₁ → B₂ of ⋆  ⟩ ⟨ [ gc₁ ] C₁ → C₂ of ⋆  ⇒ [ gc₂ ] D₁ → D₂ of ⋆ ⟩
         -- —→ W ⟨ [ gc₁′ ] A₁ → A₂ of ℓ′ ⇒ [ gc₂′ ] B₁ → B₂ of ℓ′ ⟩ ⟨ [ gc₁ ] C₁ → C₂ of ℓ′ ⇒ [ gc₂ ] D₁ → D₂ of ⋆ ⟩
@@ -258,7 +261,7 @@ apply-cast V ⊢V v c (A-fun-pc (cast ([ ⋆ ] C₁ ⇒ C₂ of g₁) ([ gc ] D�
 apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~RefD)) a) =
   case canonical⋆ ⊢V v of λ where
     ⟨ _ , _ , cast (Ref A of l ℓ′) (Ref B of ⋆) q (~-ty ~⋆ RefA~RefB) ,
-      W , refl , I-ref _ I-label I-label , <:-ty <:-⋆ (<:-ref B<:C C<:B) ⟩ →
+      W , refl , I-ref _ I-label I-label , _ , <:-ty <:-⋆ (<:-ref B<:C C<:B) ⟩ →
       case a of λ where
         --      W ⟨ Ref A of ℓ′ ⇒ Ref B of ⋆  ⟩ ⟨ Ref C of ⋆  ⇒ Ref D of ⋆ ⟩
         -- —→ W ⟨ Ref A of ℓ′ ⇒ Ref B of ℓ′ ⟩ ⟨ Ref C of ℓ′ ⇒ Ref D of ⋆ ⟩
