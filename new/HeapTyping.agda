@@ -29,7 +29,7 @@ _⊢_ : HeapContext → Heap → Set
 Σ ⊢ μ = ∀ a {T ℓ}
   → key _≟_ Σ a ≡ just ⟨ T , ℓ ⟩
   → (a < length μ) ×
-     (∃[ V ] (key _≟_ μ a ≡ just ⟨ V , ℓ ⟩) × ([] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ))
+     (∃[ V ] Value V × (key _≟_ μ a ≡ just ⟨ V , ℓ ⟩) × ([] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ))
 
 
 {- Properties about Σ′ ⊇ Σ : -}
@@ -76,14 +76,15 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
 
 ⊢μ-ext : ∀ {Σ V a T ℓ μ}
   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
+  → Value V
   → Σ ⊢ μ
   → a ≡ length μ  {- a is fresh in μ -}
     --------------------------------------------
   → ⟨ a , T , ℓ ⟩ ∷ Σ ⊢ ⟨ a , V , ℓ ⟩ ∷ μ
-⊢μ-ext {Σ} {V₁} {a₁} {T₁} {ℓ₁} {μ} ⊢V₁ ⊢μ fresh a eq with a ≟ a₁
+⊢μ-ext {Σ} {V₁} {a₁} {T₁} {ℓ₁} {μ} ⊢V₁ v₁ ⊢μ fresh a eq with a ≟ a₁
 ... | yes refl =
   case ⟨ eq , fresh ⟩ of λ where
-    ⟨ refl , refl ⟩ → ⟨ ≤-refl , V₁ , refl , relax-Σ ⊢V₁ (⊇-fresh {μ = μ} ⊢μ fresh) ⟩
+    ⟨ refl , refl ⟩ → ⟨ ≤-refl , V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-fresh {μ = μ} ⊢μ fresh) ⟩
 ... | no _ =
-  let ⟨ a<len , V , eq′ , ⊢V ⟩ = ⊢μ a eq in
-    ⟨ <-trans a<len (n<1+n _) , V , eq′ , relax-Σ ⊢V (⊇-fresh {μ = μ} ⊢μ fresh) ⟩
+  let ⟨ a<len , V , v , eq′ , ⊢V ⟩ = ⊢μ a eq in
+    ⟨ <-trans a<len (n<1+n _) , V , v , eq′ , relax-Σ ⊢V (⊇-fresh {μ = μ} ⊢μ fresh) ⟩

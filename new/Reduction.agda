@@ -121,7 +121,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
   deref : ∀ {V μ pc a ℓ ℓ₁}
     → key _≟_ μ a ≡ just ⟨ V , ℓ₁ ⟩
       ------------------------------------------------------- Deref
-    → ! (addr a of ℓ) ∣ μ ∣ pc —→ prot[ ℓ ⋎ ℓ₁ ] V ∣ μ
+    → ! (addr a of ℓ) ∣ μ ∣ pc —→ prot[ ℓ₁ ⋎ ℓ ] V ∣ μ
 
   assign-static : ∀ {L M μ pc}
       ----------------------------------------- AssignStatic

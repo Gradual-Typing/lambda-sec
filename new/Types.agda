@@ -205,9 +205,20 @@ _        ⋏̃ ⋆      = ⋆
 -- ⋆        ⋏̃ l low  = l low
 ⋆        ⋏̃ _      = ⋆
 
+⋎-assoc : ∀ {ℓ₁ ℓ₂ ℓ₃} → (ℓ₁ ⋎ ℓ₂) ⋎ ℓ₃ ≡ ℓ₁ ⋎ (ℓ₂ ⋎ ℓ₃)
+⋎-assoc {high} = refl
+⋎-assoc {low} {high} = refl
+⋎-assoc {low} {low} {high} = refl
+⋎-assoc {low} {low} {low} = refl
+
 ℓ⋎ℓ≡ℓ : ∀ {ℓ} → ℓ ⋎ ℓ ≡ ℓ
 ℓ⋎ℓ≡ℓ {high} = refl
 ℓ⋎ℓ≡ℓ {low} = refl
+
+ℓ₁⋎[ℓ₁⋎ℓ]≡ℓ₁⋎ℓ : ∀ {ℓ ℓ₁} → ℓ₁ ⋎ (ℓ₁ ⋎ ℓ) ≡ ℓ₁ ⋎ ℓ
+ℓ₁⋎[ℓ₁⋎ℓ]≡ℓ₁⋎ℓ {ℓ} {ℓ₁}
+  rewrite sym (⋎-assoc {ℓ₁} {ℓ₁} {ℓ})
+  rewrite (ℓ⋎ℓ≡ℓ {ℓ₁}) = refl
 
 g⋎̃g≡g : ∀ {g} → g ⋎̃ g ≡ g
 g⋎̃g≡g {⋆} = refl

@@ -83,7 +83,7 @@ progress pc (! M) (⊢deref ⊢M) μ ⊢μ =
   (done v) →
     case canonical-ref ⊢M v of λ where
     (Ref-addr eq _) →
-      let ⟨ _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ _ eq in
+      let ⟨ _ , V₁ , v₁ , eq , ⊢V₁ ⟩ = ⊢μ _ eq in
       step (deref eq)
     (Ref-proxy r i _) → step (deref-cast (ref-is-value r) i)
   (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
@@ -95,7 +95,7 @@ progress pc (L :=? M) (⊢assign? ⊢L ⊢M) μ ⊢μ =
   (done v) →
     case canonical-ref ⊢L v of λ where
     (Ref-addr {ℓ₁ = ℓ₁} eq sub) →
-      let ⟨ _ , V₁ , eq₁ , ⊢V₁ ⟩ = ⊢μ _ eq in
+      let ⟨ _ , V₁ , v₁ , eq₁ , ⊢V₁ ⟩ = ⊢μ _ eq in
       case pc ≼? ℓ₁ of λ where
       (yes pc≼ℓ₁) → step (assign?-ok eq₁ pc≼ℓ₁)
       (no  pc⋠ℓ₁) → step (assign?-fail eq₁ pc⋠ℓ₁)
@@ -111,7 +111,7 @@ progress pc (L :=✓ M) (⊢assign✓ ⊢L ⊢M pc≼ℓ) μ ⊢μ =
     (done w) →
       case canonical-ref ⊢L v of λ where
       (Ref-addr eq _) →
-        let ⟨ _ , V₁ , eq , ⊢V₁ ⟩ = ⊢μ _ eq in
+        let ⟨ _ , V₁ , v₁ , eq , ⊢V₁ ⟩ = ⊢μ _ eq in
         step (assign w eq)
       (Ref-proxy r i _) →
         case i of λ where
@@ -214,21 +214,35 @@ preserve {Σ} (⊢ref ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) ref-static =
 preserve {Σ} {μ = μ} (⊢ref✓ {T = T} {ℓ} ⊢V pc≼ℓ) ⊢μ pc≾gc (ref {a = a} v fresh {- `a` is fresh -}) =
   let is-here = here {Addr} {RawType × StaticLabel} {_≟_} {a} in
   ⟨ ⟨ a , T , ℓ ⟩ ∷ Σ , ⊇-fresh {μ = μ} ⊢μ fresh ,
-    ⊢addr is-here , ⊢μ-ext (⊢value-pc ⊢V v) ⊢μ fresh ⟩
+    ⊢addr is-here , ⊢μ-ext (⊢value-pc ⊢V v) v ⊢μ fresh ⟩
 preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-ok pc≼ℓ) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢ref✓ ⊢M pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-fail pc⋠ℓ) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
-preserve ⊢M ⊢μ pc≾gc (deref x) = {!!}
+preserve {Σ} (⊢deref ⊢a) ⊢μ pc≾gc (deref {ℓ = ℓ} {ℓ₁} eq) =
+  case canonical-ref ⊢a V-addr of λ where
+  (Ref-addr {g = l ℓ′} eq₁ (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
+    case <:-antisym A′<:A A<:A′ of λ where
+    refl →
+      let ⟨ _ , V₁ , v₁ , eq′ , ⊢V₁ ⟩ = ⊢μ _ eq₁ in
+      case trans (sym eq) eq′ of λ where
+      refl →
+        let leq : ℓ₁ ⋎ (ℓ₁ ⋎ ℓ) ≼ ℓ₁ ⋎ ℓ′
+            leq = subst (λ □ → □ ≼ _) (sym ℓ₁⋎[ℓ₁⋎ℓ]≡ℓ₁⋎ℓ) (join-≼′ ≼-refl ℓ≼ℓ′)
+            in
+        ⟨ Σ , ⊇-refl {Σ} ,
+          ⊢sub (⊢prot (⊢value-pc ⊢V₁ v₁)) (<:-ty (<:-l leq) <:ᵣ-refl) , ⊢μ ⟩
 preserve {Σ} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) assign-static =
   ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ ⊢L ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (assign x x₁) = {!!}
-preserve {Σ} (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (assign?-ok eq pc≼ℓ₁) =
-  case ⊢addr-inv ⊢L of λ where
-  ⟨ T , ℓ₁′ , refl , eq₁ ⟩ →
-    let ⟨ _ , _ , eq′ , _ ⟩ = ⊢μ _ eq₁ in
+preserve {Σ} (⊢assign? ⊢a ⊢M) ⊢μ pc≾gc (assign?-ok eq pc≼ℓ₁) =
+ case canonical-ref ⊢a V-addr of λ where
+ (Ref-addr eq₁ (<:-ty _ (<:-ref A′<:A A<:A′))) →
+   case <:-antisym A′<:A A<:A′ of λ where
+   refl →
+    let ⟨ _ , _ , _ , eq′ , _ ⟩ = ⊢μ _ eq₁ in
     case trans (sym eq) eq′ of λ where
-    refl → ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ ⊢L ⊢M pc≼ℓ₁ , ⊢μ ⟩
+    refl → ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ ⊢a ⊢M pc≼ℓ₁ , ⊢μ ⟩
 preserve {Σ} ⊢M ⊢μ pc≾gc (assign?-fail eq pc⋠ℓ₁) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve ⊢M ⊢μ pc≾gc (cast ⊢V v a) = {!!}
