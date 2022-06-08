@@ -31,7 +31,13 @@ apply-cast-wt ⊢V v (A-base-proj (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty �
   with ℓ′ ≼? ℓ
 ...   | yes ℓ′≼ℓ = ⊢sub ⊢W (<:-ty (<:-l ℓ′≼ℓ) <:-ι)
 ...   | no  _ = ⊢err
-apply-cast-wt ⊢V v (A-fun _ x) = {!!}
+apply-cast-wt ⊢V v (A-fun (cast ([ gc₁ ] C₁ ⇒ C₂ of ⋆) ([ gc₂ ] D₁ ⇒ D₂ of g) p (~-ty _ _)) a)
+  with canonical⋆ ⊢V v
+... | ⟨ _ , _ , cast ([ gc₁′ ] A₁ ⇒ A₂ of l ℓ′) ([ gc₂′ ] B₁ ⇒ B₂ of ⋆) q (~-ty ~⋆ A~B) ,
+        W , refl , I-fun _ I-label I-label , ⊢W , <:-ty <:-⋆ (<:-fun gc₁<:gc₂′ C₁<:B₁ B₂<:C₂) ⟩
+  with a
+...   | A-id⋆ = ⊢cast (⊢sub (⊢cast ⊢W) (<:-ty <:ₗ-refl (<:-fun gc₁<:gc₂′ C₁<:B₁ B₂<:C₂)))
+...   | A-proj {ℓ} = {!!}
 apply-cast-wt ⊢V v (A-fun-pc _ x x₁) = {!!}
 apply-cast-wt ⊢V v (A-ref _ x) = {!!}
 apply-cast-wt ⊢V v (A-ref-ref _ x x₁) = {!!}
