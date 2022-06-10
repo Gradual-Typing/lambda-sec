@@ -196,7 +196,10 @@ preserve (⊢prot ⊢M) ⊢μ pc≾gc (prot-ctx M→M′) =
   let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ (consis-join-≾ pc≾gc ≾-refl) M→M′ in
   ⟨ Σ′ , Σ′⊇Σ , ⊢prot ⊢M′ , ⊢μ′ ⟩
 preserve {Σ} ⊢M ⊢μ pc≾gc prot-err = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
-preserve (⊢app ⊢V ⊢M) ⊢μ pc≾gc (β v) = {!!}
+preserve {Σ} (⊢app ⊢V ⊢M) ⊢μ pc≾gc (β v) =
+  case canonical-fun ⊢V V-ƛ of λ where
+  (Fun-ƛ ⊢N (<:-ty ℓ<:g (<:-fun _ _ _))) →
+    ⟨ Σ , ⊇-refl {Σ} , ⊢sub (⊢prot {!!}) (stamp-<: <:-refl ℓ<:g) , ⊢μ ⟩
 preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-true {ℓ = ℓ}) =
   case const-label-≼ ⊢L of λ where
   ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ →
