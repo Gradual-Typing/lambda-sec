@@ -1,12 +1,9 @@
 module Values where
 
 open import Data.Nat
-open import Data.Bool renaming (Bool to 𝔹; _≟_ to _≟ᵇ_)
 open import Data.List
 open import Data.Maybe
-open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax) renaming (_,_ to ⟨_,_⟩)
-open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 open import Function using (case_of_)
 
@@ -50,12 +47,6 @@ fun-is-value : ∀ {Σ V gc A B g}
 fun-is-value (Fun-ƛ _ sub) = V-ƛ
 fun-is-value (Fun-proxy fun i _) = V-cast (fun-is-value fun) i
 
-fun-wt : ∀ {Σ V gc gc′ pc A B g}
-  → Fun V Σ ([ gc′ ] A ⇒ B of g)
-  → [] ; Σ ; gc ; pc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
-fun-wt (Fun-ƛ {Σ} ⊢N sub) = ⊢sub (⊢lam ⊢N) sub
-fun-wt (Fun-proxy fun i sub) = ⊢sub (⊢cast (fun-wt fun)) sub
-
 -- Canonical form of value of function type
 canonical-fun : ∀ {Σ gc gc′ pc A B g V}
   → [] ; Σ ; gc ; pc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
@@ -91,12 +82,6 @@ ref-is-value : ∀ {Σ V A g}
   → Value V
 ref-is-value (Ref-addr _ _) = V-addr
 ref-is-value (Ref-proxy ref i _) = V-cast (ref-is-value ref) i
-
-ref-wt : ∀ {Σ V gc pc A g}
-  → Reference V Σ (Ref A of g)
-  → [] ; Σ ; gc ; pc ⊢ V ⦂ Ref A of g
-ref-wt (Ref-addr eq sub) = ⊢sub (⊢addr eq) sub
-ref-wt (Ref-proxy ref i sub) = ⊢sub (⊢cast (ref-wt ref)) sub
 
 canonical-ref : ∀ {Σ gc pc A g V}
   → [] ; Σ ; gc ; pc ⊢ V ⦂ Ref A of g
@@ -220,25 +205,6 @@ stamp-inert (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ RefA~RefB))
   let c~ = ~-ty (consis-join-~ₗ g₁~g₂ ~ₗ-refl) RefA~RefB in
     cast (Ref A of (g₁ ⋎̃ l ℓ)) (Ref B of (g₂ ⋎̃ l ℓ)) p c~
 
-stamp-val : ∀ V → Value V → StaticLabel → Term
-stamp-val (addr a of ℓ₁) V-addr ℓ = addr a of (ℓ₁ ⋎ ℓ)
-stamp-val (ƛ[ gc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ gc ] A ˙ N of (ℓ₁ ⋎ ℓ)
-stamp-val ($ k of ℓ₁) V-const ℓ = $ k of (ℓ₁ ⋎ ℓ)
-stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = stamp-val V v ℓ ⟨ stamp-inert c i ℓ ⟩
-
--- Value stamping is well-typed
-stamp-val-wt : ∀ {Γ Σ gc pc V A ℓ}
-  → Γ ; Σ ; gc ; pc ⊢ V ⦂ A
-  → (v : Value V)
-  → Γ ; Σ ; gc ; pc ⊢ stamp-val V v ℓ ⦂ stamp A (l ℓ)
-stamp-val-wt (⊢addr eq) V-addr = ⊢addr eq
-stamp-val-wt (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
-stamp-val-wt ⊢const V-const = ⊢const
-stamp-val-wt (⊢cast ⊢V) (V-cast v i) = ⊢cast (stamp-val-wt ⊢V v)
-stamp-val-wt (⊢sub ⊢V A<:B) v = ⊢sub (stamp-val-wt ⊢V v) (stamp-<: A<:B <:ₗ-refl)
-stamp-val-wt (⊢sub-pc ⊢V gc<:gc′) v = ⊢sub-pc (stamp-val-wt ⊢V v) gc<:gc′
-
--- A stamped value is value
 stamp-inert-inert : ∀ {A B} {c : Cast A ⇒ B} {ℓ}
   → (i : Inert c)
   → Inert (stamp-inert c i ℓ)
@@ -248,6 +214,13 @@ stamp-inert-inert (I-fun c I-label I-label) =
 stamp-inert-inert (I-ref c I-label I-label) =
   I-ref (stamp-inert c _ _) I-label I-label
 
+stamp-val : ∀ V → Value V → StaticLabel → Term
+stamp-val (addr a of ℓ₁) V-addr ℓ = addr a of (ℓ₁ ⋎ ℓ)
+stamp-val (ƛ[ gc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ gc ] A ˙ N of (ℓ₁ ⋎ ℓ)
+stamp-val ($ k of ℓ₁) V-const ℓ = $ k of (ℓ₁ ⋎ ℓ)
+stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = stamp-val V v ℓ ⟨ stamp-inert c i ℓ ⟩
+
+-- A stamped value is value
 stamp-val-value : ∀ {V ℓ}
   → (v : Value V)
   → Value (stamp-val V v ℓ)

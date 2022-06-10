@@ -1,14 +1,9 @@
-module ApplyCastWT where
+module WellTyped where
 
-open import Data.Nat
-open import Data.Unit using (⊤; tt)
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.List hiding ([_])
-open import Data.Product using (_×_; ∃-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Maybe
+open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Relation.Nullary using (¬_; Dec; yes; no)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; subst; sym)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Function using (case_of_)
 
 open import Utils
@@ -21,6 +16,34 @@ open import ApplyCast
 
 
 
+{- Function and reference predicates respect type -}
+fun-wt : ∀ {Σ V gc gc′ pc A B g}
+  → Fun V Σ ([ gc′ ] A ⇒ B of g)
+  → [] ; Σ ; gc ; pc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
+fun-wt (Fun-ƛ {Σ} ⊢N sub)    = ⊢sub (⊢lam ⊢N) sub
+fun-wt (Fun-proxy fun i sub) = ⊢sub (⊢cast (fun-wt fun)) sub
+
+ref-wt : ∀ {Σ V gc pc A g}
+  → Reference V Σ (Ref A of g)
+  → [] ; Σ ; gc ; pc ⊢ V ⦂ Ref A of g
+ref-wt (Ref-addr eq sub)     = ⊢sub (⊢addr eq) sub
+ref-wt (Ref-proxy ref i sub) = ⊢sub (⊢cast (ref-wt ref)) sub
+
+
+{- Value stamping is well-typed -}
+stamp-val-wt : ∀ {Σ gc pc V A ℓ}
+  → [] ; Σ ; gc ; pc ⊢ V ⦂ A
+  → (v : Value V)
+  → [] ; Σ ; gc ; pc ⊢ stamp-val V v ℓ ⦂ stamp A (l ℓ)
+stamp-val-wt (⊢addr eq) V-addr = ⊢addr eq
+stamp-val-wt (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
+stamp-val-wt ⊢const V-const = ⊢const
+stamp-val-wt (⊢cast ⊢V) (V-cast v i) = ⊢cast (stamp-val-wt ⊢V v)
+stamp-val-wt (⊢sub ⊢V A<:B) v = ⊢sub (stamp-val-wt ⊢V v) (stamp-<: A<:B <:ₗ-refl)
+stamp-val-wt (⊢sub-pc ⊢V gc<:gc′) v = ⊢sub-pc (stamp-val-wt ⊢V v) gc<:gc′
+
+
+{- Applying cast is well-typed -}
 apply-cast-wt : ∀ {Σ gc pc A B V} {c : Cast A ⇒ B}
   → (⊢V : [] ; Σ ; l low ; low ⊢ V ⦂ A)
   → (v : Value V)

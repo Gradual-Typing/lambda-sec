@@ -14,9 +14,10 @@ open import Heap
 open import Types
 open import TypeBasedCast
 open import CC
-open import ApplyCastWT
 open import HeapTyping
 open import Reduction
+
+open import WellTyped
 
 
 module TypeSafety where

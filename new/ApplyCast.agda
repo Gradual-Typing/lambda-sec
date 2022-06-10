@@ -1,11 +1,6 @@
 module ApplyCast where
 
-open import Data.Nat
-open import Data.Bool renaming (Bool to 𝔹; _≟_ to _≟ᵇ_)
-open import Data.List
-open import Data.Maybe
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax) renaming (_,_ to ⟨_,_⟩)
+open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 open import Function using (case_of_)
