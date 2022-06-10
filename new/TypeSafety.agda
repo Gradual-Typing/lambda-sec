@@ -14,27 +14,28 @@ open import Heap
 open import Types
 open import TypeBasedCast
 open import CC
+open import ApplyCastWT
 open import HeapTyping
 open import Reduction
 
 
 module TypeSafety where
 
-data Progress (M : Term) (μ : Heap) (pc : StaticLabel) : Set where
+data Progress (M : Term) (μ : Heap) (Σ : HeapContext) (pc : StaticLabel) : Set where
   step : ∀ {N μ′}
-    → M ∣ μ ∣ pc —→ N ∣ μ′
-      ------------------------- Step
-    → Progress M μ pc
+    → M ∣ μ ∣ Σ ∣ pc —→ N ∣ μ′
+      ----------------------------- Step
+    → Progress M μ Σ pc
 
   done : Value M
-      ------------- Done
-    → Progress M μ pc
+      ----------------------- Done
+    → Progress M μ Σ pc
 
   err : Err M
-      ------------- Error
-    → Progress M μ pc
+      ----------------------- Error
+    → Progress M μ Σ pc
 
-progress : ∀ {Σ gc A} pc M → [] ; Σ ; gc ; pc ⊢ M ⦂ A → ∀ μ → Σ ⊢ μ → Progress M μ pc
+progress : ∀ {Σ gc A} pc M → [] ; Σ ; gc ; pc ⊢ M ⦂ A → ∀ μ → Σ ⊢ μ → Progress M μ Σ pc
 progress pc ($ k of ℓ) ⊢const μ ⊢μ = done V-const
 progress pc (addr a of ℓ) (⊢addr _) μ ⊢μ = done V-addr
 progress pc (` x) (⊢var ())
@@ -128,7 +129,7 @@ progress pc (M ⟨ c ⟩) (⊢cast ⊢M) μ ⊢μ =
   (step M→M′) → step (ξ {F = □⟨ c ⟩} M→M′)
   (done v) →
     case active-or-inert c of λ where
-    (inj₁ a) → step (cast ⊢M v a)
+    (inj₁ a) → step (cast (⊢value-pc ⊢M v) v a)
     (inj₂ i) → done (V-cast v i)
   (err (E-error {e})) → step (ξ-err {F = □⟨ c ⟩} {e = e})
 progress pc (cast-pc g M) (⊢cast-pc ⊢M pc~g) μ ⊢μ =
@@ -181,7 +182,7 @@ preserve : ∀ {Σ gc pc M M′ A μ μ′}
   → [] ; Σ ; gc ; pc ⊢ M ⦂ A
   → Σ ⊢ μ
   → l pc ≾ gc
-  → M ∣ μ ∣ pc —→ M′ ∣ μ′
+  → M ∣ μ ∣ Σ ∣ pc —→ M′ ∣ μ′
     ----------------------------------------------------------
   → ∃[ Σ′ ] (Σ′ ⊇ Σ) × ([] ; Σ′ ; gc ; pc ⊢ M′ ⦂ A) × (Σ′ ⊢ μ′)
 preserve ⊢plug ⊢μ pc≾gc (ξ {F = F} M→M′) =
@@ -253,7 +254,8 @@ preserve {Σ} (⊢assign? ⊢a ⊢M) ⊢μ pc≾gc (assign?-ok eq pc≼ℓ₁) =
     refl → ⟨ Σ , ⊇-refl {Σ} , ⊢assign✓ ⊢a ⊢M pc≼ℓ₁ , ⊢μ ⟩
 preserve {Σ} ⊢M ⊢μ pc≾gc (assign?-fail eq pc⋠ℓ₁) =
   ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
-preserve ⊢M ⊢μ pc≾gc (cast ⊢V v a) = {!!}
+preserve {Σ} (⊢cast ⊢V) ⊢μ pc≾gc (cast ⊢V† v a) =
+  ⟨ Σ , ⊇-refl {Σ} , apply-cast-wt ⊢V† v a , ⊢μ ⟩
 preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) with i
 ... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
   case canonical-const ⊢L (V-cast V-const i) of λ where

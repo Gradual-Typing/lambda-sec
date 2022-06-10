@@ -16,6 +16,11 @@ open import CCSyntax Cast_⇒_
 open import CCTyping Cast_⇒_
 open import Utils
 
+
+
+data Err : Term → Set where
+  E-error : ∀ {e : Error} → Err (error e)
+
 data Value : Term → Set where
   V-addr : ∀ {a ℓ} → Value (addr a of ℓ)
   V-ƛ : ∀ {gc A N ℓ} → Value (ƛ[ gc ] A ˙ N of ℓ)
@@ -185,16 +190,19 @@ canonical-ref⋆ : ∀ {Γ Σ gc pc V T g}
   → Γ ; Σ ; gc ; pc ⊢ V ⦂ Ref (T of ⋆) of g
   → Value V
   → ∃[ A ] ∃[ B ] Σ[ c ∈ Cast A ⇒ B ] ∃[ W ]
-       (V ≡ W ⟨ c ⟩) × (Inert c) × (B <: Ref (T of ⋆) of g)
+       (V ≡ W ⟨ c ⟩) × (Inert c) × (Γ ; Σ ; gc ; pc ⊢ W ⦂ A) × (B <: Ref (T of ⋆) of g)
 canonical-ref⋆ (⊢cast ⊢W) (V-cast {V = W} {c} w i) =
-  ⟨ _ , _ , c , W , refl , i , <:-refl ⟩
+  ⟨ _ , _ , c , W , refl , i , ⊢W , <:-refl ⟩
 canonical-ref⋆ (⊢sub ⊢V sub) v =
   case sub of λ where
     (<:-ty _ (<:-ref (<:-ty <:-⋆ S<:T) (<:-ty <:-⋆ T<:S))) →
       case canonical-ref⋆ ⊢V v of λ where
-        ⟨ A , B , c , W , refl , i , B<:RefS ⟩ →
-          ⟨ A , B , c , W , refl , i , <:-trans B<:RefS sub ⟩
-canonical-ref⋆ (⊢sub-pc ⊢V gc<:gc′) v = canonical-ref⋆ ⊢V v
+        ⟨ A , B , c , W , refl , i , ⊢W , B<:RefS ⟩ →
+          ⟨ A , B , c , W , refl , i , ⊢W , <:-trans B<:RefS sub ⟩
+canonical-ref⋆ (⊢sub-pc ⊢V gc<:gc′) v =
+  case canonical-ref⋆ ⊢V v of λ where
+  ⟨ A , B , c , W , refl , i , ⊢W , B<:RefT ⟩ →
+    ⟨ A , B , c , W , refl , i , ⊢sub-pc ⊢W gc<:gc′ , B<:RefT ⟩
 
 
 

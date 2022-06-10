@@ -105,7 +105,7 @@ apply-cast V ⊢V v c (A-ref (cast (Ref C of ⋆) (Ref D of g) p (~-ty _ RefC~Re
 apply-cast V ⊢V v c (A-ref-ref (cast (Ref (S of ⋆) of g₁) (Ref (T of g₂₁) of g₂) p (~-ty g₁~g₂ (~-ref (~-ty _ S~T)))) a I-label) =
   case canonical-ref⋆ ⊢V v of λ where
     ⟨ _ , _ , cast (Ref (S′ of l ℓ₁′) of g₁′) (Ref (T′ of ⋆) of g₂′) q (~-ty g₁′~g₂′ (~-ref (~-ty _ S′~T′))) ,
-      W , refl , I-ref _ I-label I-label , <:-ty _ (<:-ref (<:-ty <:-⋆ _) (<:-ty <:-⋆ _)) ⟩ →
+      W , refl , I-ref _ I-label I-label , _ , <:-ty _ (<:-ref (<:-ty <:-⋆ _) (<:-ty <:-⋆ _)) ⟩ →
       case a of λ where
         --      W ⟨ Ref (S′ of ℓ₁′) of g₁′ ⇒ Ref (T′ of  ⋆ ) of g₂′ ⟩ ⟨ Ref (S of  ⋆ ) of g₁ ⇒ Ref (T of ⋆) of g₂ ⟩
         -- —→ W ⟨ Ref (S′ of ℓ₁′) of g₁′ ⇒ Ref (T′ of ℓ₁′) of g₂′ ⟩ ⟨ Ref (S of ℓ₁′) of g₁ ⇒ Ref (T of ⋆) of g₂ ⟩

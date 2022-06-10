@@ -20,9 +20,6 @@ open import Values public
 open import ApplyCast public
 
 
-data Err : Term → Set where
-  E-error : ∀ {e : Error} → Err (error e)
-
 
 {- NOTE:
    Categorizing by PC, there are two types of _inert_ function casts:
