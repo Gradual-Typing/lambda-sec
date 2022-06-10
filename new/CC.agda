@@ -22,7 +22,7 @@ open import ApplyCast public
 
 
 {- NOTE:
-   Categorizing by PC, there are two types of _inert_ function casts:
+   There are two types of inert function casts categorizing by gc₂:
      1) [ pc ] A → B of ℓ₁ ⇒ [ pc ] C → D of g₂
      2) [ pc ] A → B of ℓ₁ ⇒ [ ⋆  ] C → D of g₂
    -}
@@ -37,6 +37,11 @@ elim-fun-proxy V W (I-fun c I-label I-label) pc =
     (yes _) → cast-pc (l pc) (V · (W ⟨ dom/c c ⟩)) ⟨ cod/c c ⟩
     (no  _) → error (blame p)
 
+{-
+  Two types of inert reference casts categorizing by g₁:
+    1) (S of ℓ₁) of ℓ ⇒ (T of ℓ₂) of g
+    2) (S of ℓ₁) of ℓ ⇒ (T of ⋆ ) of g
+-}
 elim-ref-proxy : ∀ {A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
   → (V M : Term) → Inert c → (_⦂=_ : Term → Term → Term) → Term
 elim-ref-proxy V M (I-ref c I-label I-label) _⦂=_ =
