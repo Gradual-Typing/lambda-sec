@@ -18,6 +18,7 @@ open import HeapTyping
 open import Reduction
 
 open import WellTyped
+open import Preservation
 
 
 module TypeSafety where
@@ -199,8 +200,12 @@ preserve (⊢prot ⊢M) ⊢μ pc≾gc (prot-ctx M→M′) =
 preserve {Σ} ⊢M ⊢μ pc≾gc prot-err = ⟨ Σ , ⊇-refl {Σ} , ⊢err , ⊢μ ⟩
 preserve {Σ} (⊢app ⊢V ⊢M) ⊢μ pc≾gc (β v) =
   case canonical-fun ⊢V V-ƛ of λ where
-  (Fun-ƛ ⊢N (<:-ty ℓ<:g (<:-fun _ _ _))) →
-    ⟨ Σ , ⊇-refl {Σ} , ⊢sub (⊢prot {!!}) (stamp-<: <:-refl ℓ<:g) , ⊢μ ⟩
+  (Fun-ƛ ⊢N (<:-ty ℓ<:g (<:-fun gc⋎g<:gc′ A<:A′ B′<:B))) →
+    let gc⋎ℓ<:gc⋎g = consis-join-<:ₗ <:ₗ-refl ℓ<:g
+        gc⋎ℓ<:gc′  = <:ₗ-trans gc⋎ℓ<:gc⋎g gc⋎g<:gc′ in
+    ⟨ Σ , ⊇-refl {Σ} ,
+      ⊢sub (⊢prot (substitution-pres (⊢sub-pc ⊢N gc⋎ℓ<:gc′) (⊢value-pc (⊢sub ⊢M A<:A′) v) v))
+           (stamp-<: B′<:B ℓ<:g) , ⊢μ ⟩
 preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-true {ℓ = ℓ}) =
   case const-label-≼ ⊢L of λ where
   ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ →

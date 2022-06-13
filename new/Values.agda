@@ -230,10 +230,10 @@ stamp-val-value V-const = V-const
 stamp-val-value (V-cast v i) =
   V-cast (stamp-val-value v) (stamp-inert-inert i)
 
-⊢value-pc : ∀ {Σ gc gc′ pc pc′ V A}
-  → [] ; Σ ; gc  ; pc ⊢ V ⦂ A
+⊢value-pc : ∀ {Γ Σ gc gc′ pc pc′ V A}
+  → Γ ; Σ ; gc  ; pc ⊢ V ⦂ A
   → Value V
-  → [] ; Σ ; gc′ ; pc′ ⊢ V ⦂ A
+  → Γ ; Σ ; gc′ ; pc′ ⊢ V ⦂ A
 ⊢value-pc (⊢addr eq) V-addr = ⊢addr eq
 ⊢value-pc (⊢lam ⊢N) V-ƛ = ⊢lam ⊢N
 ⊢value-pc ⊢const V-const = ⊢const

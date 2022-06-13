@@ -1,6 +1,7 @@
 open import Data.Nat
-open import Data.List
+open import Data.List hiding ([_])
 open import Function using (case_of_)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; subst; sym)
 
 open import Syntax
 
@@ -9,18 +10,18 @@ open import CC
 
 module Preservation where
 
-Rename_⦂_⇒_ : Rename → List Type → List Type → Set
-Rename ρ ⦂ Γ ⇒ Δ = ∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ ρ x ⦂ A
+_⦂_⇒_ : Rename → List Type → List Type → Set
+ρ ⦂ Γ ⇒ Δ = ∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ ρ x ⦂ A
 
 ext-pres : ∀ {Γ Δ ρ A}
-  → Rename ρ ⦂ Γ ⇒ Δ
-  → Rename ext ρ ⦂ (A ∷ Γ) ⇒ (A ∷ Δ)
+  → ρ ⦂ Γ ⇒ Δ
+  → ext ρ ⦂ (A ∷ Γ) ⇒ (A ∷ Δ)
 ext-pres ⊢ρ {0} eq = eq
 ext-pres ⊢ρ {suc x} Γ∋x = ⊢ρ Γ∋x
 
 rename-pres : ∀ {Γ Δ : Context} {Σ gc pc A M ρ}
   → Γ ; Σ ; gc ; pc ⊢ M ⦂ A
-  → Rename ρ ⦂ Γ ⇒ Δ
+  → ρ ⦂ Γ ⇒ Δ
     -----------------------------
   → Δ ; Σ ; gc ; pc ⊢ rename ρ M ⦂ A
 rename-pres ⊢const ⊢ρ = ⊢const
@@ -52,18 +53,18 @@ rename-↑1-pres : ∀ {Γ Σ gc pc M A B}
   → (A ∷ Γ) ; Σ ; gc ; pc ⊢ rename (↑ 1) M ⦂ B
 rename-↑1-pres ⊢M = rename-pres ⊢M (λ {x} {A} Γ∋x → Γ∋x)
 
-Subst_⦂_⇒_ : Subst → List Type → List Type → Set
-Subst σ ⦂ Γ ⇒ Δ = ∀ {x A} → Γ ∋ x ⦂ A → (∀ {Σ gc pc} → Δ ; Σ ; gc ; pc ⊢ σ x ⦂ A)
+_⊢_⦂_⇒_ : HeapContext → Subst → List Type → List Type → Set
+Σ ⊢ σ ⦂ Γ ⇒ Δ = ∀ {x A} → Γ ∋ x ⦂ A → (∀ {gc pc} → Δ ; Σ ; gc ; pc ⊢ σ x ⦂ A)
 
-exts-pres : ∀ {Γ Δ σ A}
-  → Subst σ ⦂ Γ ⇒ Δ
-  → Subst ext σ ⦂ (A ∷ Γ) ⇒ (A ∷ Δ)
+exts-pres : ∀ {Σ Γ Δ σ A}
+  → Σ ⊢ σ ⦂ Γ ⇒ Δ
+  → Σ ⊢ ext σ ⦂ (A ∷ Γ) ⇒ (A ∷ Δ)
 exts-pres ⊢σ {0} eq = (⊢var eq)
 exts-pres ⊢σ {suc x} Γ∋x = rename-↑1-pres (⊢σ Γ∋x)
 
-subst-pres : ∀ {Γ Δ : Context} {Σ gc pc A M σ}
+subst-pres : ∀ {Σ} {Γ Δ : Context} {gc pc A M σ}
   → Γ ; Σ ; gc ; pc ⊢ M ⦂ A
-  → Subst σ ⦂ Γ ⇒ Δ
+  → Σ ⊢ σ ⦂ Γ ⇒ Δ
     -----------------------------
   → Δ ; Σ ; gc ; pc ⊢ ⟪ σ ⟫ M ⦂ A
 subst-pres ⊢const ⊢σ = ⊢const
@@ -89,3 +90,11 @@ subst-pres (⊢cast-pc ⊢M pc~g) ⊢ρ = ⊢cast-pc (subst-pres ⊢M ⊢ρ) pc~
 subst-pres ⊢err ⊢ρ = ⊢err
 subst-pres (⊢sub ⊢M A<:B) ⊢ρ = ⊢sub (subst-pres ⊢M ⊢ρ) A<:B
 subst-pres (⊢sub-pc ⊢M gc<:gc′) ⊢ρ = ⊢sub-pc (subst-pres ⊢M ⊢ρ) gc<:gc′
+
+substitution-pres : ∀ {Γ Σ gc pc N V A B}
+  → A ∷ Γ ; Σ ; gc ; pc ⊢ N ⦂ B
+  → Γ ; Σ ; l low ; low ⊢ V ⦂ A
+  → Value V  {- need to be a value because well-typed ∀ pc -}
+  → Γ ; Σ ; gc ; pc ⊢ N [ V ] ⦂ B
+substitution-pres ⊢N ⊢V v =
+  subst-pres ⊢N (λ { {0} refl → ⊢value-pc ⊢V v ; {suc x} ∋x → ⊢var ∋x })
