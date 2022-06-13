@@ -93,8 +93,7 @@ subst-pres (⊢sub-pc ⊢M gc<:gc′) ⊢ρ = ⊢sub-pc (subst-pres ⊢M ⊢ρ) 
 
 substitution-pres : ∀ {Γ Σ gc pc N V A B}
   → A ∷ Γ ; Σ ; gc ; pc ⊢ N ⦂ B
-  → Γ ; Σ ; l low ; low ⊢ V ⦂ A
-  → Value V  {- need to be a value because well-typed ∀ pc -}
+  → (∀ {gc′ pc′} → Γ ; Σ ; gc′ ; pc′ ⊢ V ⦂ A)
   → Γ ; Σ ; gc ; pc ⊢ N [ V ] ⦂ B
-substitution-pres ⊢N ⊢V v =
-  subst-pres ⊢N (λ { {0} refl → ⊢value-pc ⊢V v ; {suc x} ∋x → ⊢var ∋x })
+substitution-pres ⊢N ⊢V =
+  subst-pres ⊢N (λ { {0} refl → ⊢V ; {suc x} ∋x → ⊢var ∋x })

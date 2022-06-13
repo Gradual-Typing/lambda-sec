@@ -204,7 +204,7 @@ preserve {Σ} (⊢app ⊢V ⊢M) ⊢μ pc≾gc (β v) =
     let gc⋎ℓ<:gc⋎g = consis-join-<:ₗ <:ₗ-refl ℓ<:g
         gc⋎ℓ<:gc′  = <:ₗ-trans gc⋎ℓ<:gc⋎g gc⋎g<:gc′ in
     ⟨ Σ , ⊇-refl {Σ} ,
-      ⊢sub (⊢prot (substitution-pres (⊢sub-pc ⊢N gc⋎ℓ<:gc′) (⊢value-pc (⊢sub ⊢M A<:A′) v) v))
+      ⊢sub (⊢prot (substitution-pres (⊢sub-pc ⊢N gc⋎ℓ<:gc′) (⊢value-pc (⊢sub ⊢M A<:A′) v)))
            (stamp-<: B′<:B ℓ<:g) , ⊢μ ⟩
 preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-true {ℓ = ℓ}) =
   case const-label-≼ ⊢L of λ where
@@ -218,7 +218,8 @@ preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-false {ℓ = ℓ}) =
     let gc⋎ℓ<:gc⋎ℓ′ = consis-join-<:ₗ <:ₗ-refl (<:-l ℓ≼ℓ′)
         A⋎ℓ<:A⋎ℓ′   = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
     ⟨ Σ , ⊇-refl {Σ} , ⊢sub (⊢prot (⊢sub-pc ⊢N gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
-preserve ⊢M ⊢μ pc≾gc (β-let x) = {!!}
+preserve {Σ} (⊢let ⊢V ⊢N) ⊢μ pc≾gc (β-let v) =
+  ⟨ Σ , ⊇-refl {Σ} , substitution-pres ⊢N (⊢value-pc ⊢V v) , ⊢μ ⟩
 preserve {Σ} (⊢ref ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) ref-static =
   ⟨ Σ , ⊇-refl {Σ} , ⊢ref✓ ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
 preserve {Σ} {μ = μ} (⊢ref✓ {T = T} {ℓ} ⊢V pc≼ℓ) ⊢μ pc≾gc (ref {a = a} v fresh) =
