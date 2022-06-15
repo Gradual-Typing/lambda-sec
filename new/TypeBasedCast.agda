@@ -88,8 +88,7 @@ active-or-inert : ∀ {A B} → (c : Cast A ⇒ B) → Active c ⊎ Inert c
 active-or-inert (cast (` ι of ⋆) (` ι of ⋆) p (~-ty _ ~-ι)) = inj₁ (A-base-id _)
 active-or-inert (cast (` ι of ⋆) (` ι of l ℓ) p (~-ty _ ~-ι)) = inj₁ (A-base-proj _)
 active-or-inert (cast (` ι of l ℓ) (` ι of ⋆) p (~-ty _ ~-ι)) = inj₂ (I-base-inj _)
-active-or-inert (cast (` ι of l low) (` ι of l low) p (~-ty l~l ~-ι)) = inj₁ (A-base-id _)
-active-or-inert (cast (` ι of l high) (` ι of l high) p (~-ty h~h ~-ι)) = inj₁ (A-base-id _)
+active-or-inert (cast (` ι of l ℓ) (` ι of l ℓ) p (~-ty l~ ~-ι)) = inj₁ (A-base-id _)
 {- Ref -}
 active-or-inert (cast (Ref A of ⋆) (Ref B of g) p (~-ty _ (~-ref _))) =
   inj₁ (A-ref _ active-⋆)
