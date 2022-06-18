@@ -4,8 +4,8 @@ open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 open import Data.Nat using (ℕ; zero; suc; _≤_; _>_; z≤n; s≤s; _≤?_) renaming (_⊔_ to _⊔ₙ_; _⊓_ to _⊓ₙ_; _≟_ to _≟ₙ_)
 open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; ≤-antisym; m≤m⊔n; m≤n⇒m≤n⊔o; m≤n⇒n⊔m≡n; m≤n⇒m⊔n≡n; ≰⇒>; ⊔-mono-≤)
-  renaming (⊔-comm to ⊔ₙ-comm)
+  using (≤-refl; ≤-trans; ≤-antisym; m≤m⊔n; m≤n⇒m≤n⊔o; m≤n⇒n⊔m≡n; m≤n⇒m⊔n≡n; ≰⇒>)
+  renaming (⊔-comm to ⊔ₙ-comm; ⊔-monoˡ-≤ to ⊔ₙ-monoˡ-≤; ⊔-mono-≤ to ⊔ₙ-mono-≤)
 open import Data.Product using (_×_; ∃; ∃-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl; sym; cong; cong₂)
@@ -97,7 +97,7 @@ just-≡-inv refl = refl
   → 𝓁₃ ≼ 𝓁₄
     ------------------
   → 𝓁₁ ⊔ 𝓁₃ ≼ 𝓁₂ ⊔ 𝓁₄
-⊔-mono-≼ (≼-l n₁≤n₂) (≼-l n₃≤n₄) = ≼-l (⊔-mono-≤ n₁≤n₂ n₃≤n₄)
+⊔-mono-≼ (≼-l n₁≤n₂) (≼-l n₃≤n₄) = ≼-l (⊔ₙ-mono-≤ n₁≤n₂ n₃≤n₄)
 
 m≤n⇒m≤sn : ∀ {m n} → m ≤ n → m ≤ suc n
 m≤n⇒m≤sn z≤n = z≤n
@@ -106,29 +106,19 @@ m≤n⇒m≤sn (s≤s leq) = s≤s (m≤n⇒m≤sn leq)
 m>n⇒n≤m : ∀ {m n} → m > n → n ≤ m
 m>n⇒n≤m {suc m} (s≤s m>n) = m≤n⇒m≤sn m>n
 
-m≤n⇒m⊔o≤n⊔o : ∀ {m n} o
-  → m ≤ n
-    ----------------
-  → m ⊔ₙ o ≤ n ⊔ₙ o
-m≤n⇒m⊔o≤n⊔o {m} {n} o m≤n with o ≤? m
-... | yes o≤m rewrite (m≤n⇒n⊔m≡n o≤m) | (m≤n⇒n⊔m≡n (≤-trans o≤m m≤n)) = m≤n
-... | no  o≰m with o ≤? n
-...   | yes o≤n rewrite (m≤n⇒m⊔n≡n (m>n⇒n≤m (≰⇒> o≰m))) | (m≤n⇒n⊔m≡n o≤n) = o≤n
-...   | no  o≰n rewrite (m≤n⇒m⊔n≡n (m>n⇒n≤m (≰⇒> o≰m))) | (m≤n⇒m⊔n≡n (m>n⇒n≤m (≰⇒> o≰n))) = ≤-refl
-
-𝓁₁≼𝓁₂→𝓁₁⊔𝓁≼𝓁₂⊔𝓁 : ∀ {𝓁₁ 𝓁₂}
+⊔-monoˡ-≤ : ∀ {𝓁₁ 𝓁₂}
   → (𝓁 : ℒ)
   → 𝓁₁ ≼ 𝓁₂
     ----------------
   → 𝓁₁ ⊔ 𝓁 ≼ 𝓁₂ ⊔ 𝓁
-𝓁₁≼𝓁₂→𝓁₁⊔𝓁≼𝓁₂⊔𝓁 (l n) (≼-l n₁≤n₂) = ≼-l (m≤n⇒m⊔o≤n⊔o n n₁≤n₂)
+⊔-monoˡ-≤ (l n) (≼-l {n₁} {n₂} n₁≤n₂) = ≼-l (⊔ₙ-monoˡ-≤ n n₁≤n₂)
 
 𝓁₁≾𝓁̂→𝓁₁⊔𝓁₂≾𝓁̂⋎𝓁₂ : ∀ {𝓁̂ 𝓁₁ 𝓁₂}
   → (l̂ 𝓁₁) ≾ 𝓁̂
     -------------------------
   → l̂ (𝓁₁ ⊔ 𝓁₂) ≾ 𝓁̂ ⋎ (l̂ 𝓁₂)
 𝓁₁≾𝓁̂→𝓁₁⊔𝓁₂≾𝓁̂⋎𝓁₂ ≾-¿-r = ≾-¿-r
-𝓁₁≾𝓁̂→𝓁₁⊔𝓁₂≾𝓁̂⋎𝓁₂ {l̂ 𝓁} {𝓁₁} {𝓁₂} (≾-l 𝓁₁≼𝓁) = ≾-l (𝓁₁≼𝓁₂→𝓁₁⊔𝓁≼𝓁₂⊔𝓁 𝓁₂ 𝓁₁≼𝓁)
+𝓁₁≾𝓁̂→𝓁₁⊔𝓁₂≾𝓁̂⋎𝓁₂ {l̂ 𝓁} {𝓁₁} {𝓁₂} (≾-l 𝓁₁≼𝓁) = ≾-l (⊔-monoˡ-≤ 𝓁₂ 𝓁₁≼𝓁)
 
 𝓁≾𝓁̂→𝓁₁≼𝓁₂→𝓁⊔𝓁₁≾𝓁̂⋎𝓁₂ : ∀ {𝓁 𝓁̂ 𝓁₁ 𝓁₂}
   → l̂ 𝓁 ≾ 𝓁̂
