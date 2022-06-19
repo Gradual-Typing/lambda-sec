@@ -18,34 +18,34 @@ open import Lemmas
 Location = ℕ × ℒ × ℒ
 
 _≟ₗ_ : (loc loc′ : Location) → Dec (loc ≡ loc′)
-⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≟ₗ ⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩
-  with n ≟ₙ n′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
-... | yes n≡n′ | yes 𝓁₁≡𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
-  let p≡ = cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) 𝓁₁≡𝓁₁′ 𝓁₂≡𝓁₂′ in
+⟨ n , ℓ₁ , ℓ₂ ⟩ ≟ₗ ⟨ n′ , ℓ₁′ , ℓ₂′ ⟩
+  with n ≟ₙ n′ | ℓ₁ ≟ ℓ₁′ | ℓ₂ ≟ ℓ₂′
+... | yes n≡n′ | yes ℓ₁≡ℓ₁′ | yes ℓ₂≡ℓ₂′ =
+  let p≡ = cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) ℓ₁≡ℓ₁′ ℓ₂≡ℓ₂′ in
     yes (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) n≡n′ p≡)
-... | yes n≡n′ | yes 𝓁₁≡𝓁₁′ | no 𝓁₂≢𝓁₂′ =
-  no λ p≡ → let 𝓁₂≡𝓁₂′ = proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₂≢𝓁₂′ 𝓁₂≡𝓁₂′
-... | yes n≡n′ | no 𝓁₁≢𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
-  no λ p≡ → let 𝓁₁≡𝓁₁′ = proj₁ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₁≢𝓁₁′ 𝓁₁≡𝓁₁′
-... | no n≢n′ | yes 𝓁₁≡𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
+... | yes n≡n′ | yes ℓ₁≡ℓ₁′ | no ℓ₂≢ℓ₂′ =
+  no λ p≡ → let ℓ₂≡ℓ₂′ = proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))) in ℓ₂≢ℓ₂′ ℓ₂≡ℓ₂′
+... | yes n≡n′ | no ℓ₁≢ℓ₁′ | yes ℓ₂≡ℓ₂′ =
+  no λ p≡ → let ℓ₁≡ℓ₁′ = proj₁ (×-≡-inv (proj₂ (×-≡-inv p≡))) in ℓ₁≢ℓ₁′ ℓ₁≡ℓ₁′
+... | no n≢n′ | yes ℓ₁≡ℓ₁′ | yes ℓ₂≡ℓ₂′ =
   no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
-... | no n≢n′ | no 𝓁₁≢𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
+... | no n≢n′ | no ℓ₁≢ℓ₁′ | yes ℓ₂≡ℓ₂′ =
   no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
-... | no n≢n′ | yes 𝓁₁≡𝓁₁′ | no 𝓁₂≢𝓁₂′ =
+... | no n≢n′ | yes ℓ₁≡ℓ₁′ | no ℓ₂≢ℓ₂′ =
   no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
-... | yes n≡n′ | no 𝓁₁≢𝓁₁′ | no 𝓁₂≢𝓁₂′ =
-  no λ p≡ → let 𝓁₂≡𝓁₂′ = proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))) in 𝓁₂≢𝓁₂′ 𝓁₂≡𝓁₂′
-... | no n≢n′ | no 𝓁₁≢𝓁₁′ | no 𝓁₂≢𝓁₂′ =
+... | yes n≡n′ | no ℓ₁≢ℓ₁′ | no ℓ₂≢ℓ₂′ =
+  no λ p≡ → let ℓ₂≡ℓ₂′ = proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))) in ℓ₂≢ℓ₂′ ℓ₂≡ℓ₂′
+... | no n≢n′ | no ℓ₁≢ℓ₁′ | no ℓ₂≢ℓ₂′ =
   no λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
 
--- n≢n′→loc≢loc′ : ∀ {n n′ : ℕ} {𝓁₁ 𝓁₁′ 𝓁₂ 𝓁₂′ : ℒ}
+-- n≢n′→loc≢loc′ : ∀ {n n′ : ℕ} {ℓ₁ ℓ₁′ ℓ₂ ℓ₂′ : ℒ}
 --   → n ≢ n′
---   → ⟨ n , 𝓁₁ , 𝓁₂ ⟩ ≢ ⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩
+--   → ⟨ n , ℓ₁ , ℓ₂ ⟩ ≢ ⟨ n′ , ℓ₁′ , ℓ₂′ ⟩
 -- n≢n′→loc≢loc′ n≢n′ = λ p≡ → let n≡n′ = proj₁ (×-≡-inv p≡) in n≢n′ n≡n′
 
 ≟ₗ-≡-normal : ∀ {loc} → ∃[ eq ] (loc ≟ₗ loc ≡ yes eq)
-≟ₗ-≡-normal {⟨ n , 𝓁₁ , 𝓁₂ ⟩}
-  with n ≟ₙ n | 𝓁₁ ≟ 𝓁₁ | 𝓁₂ ≟ 𝓁₂
+≟ₗ-≡-normal {⟨ n , ℓ₁ , ℓ₂ ⟩}
+  with n ≟ₙ n | ℓ₁ ≟ ℓ₁ | ℓ₂ ≟ ℓ₂
 ... | yes eq₁ | yes eq₂ | yes eq₃ =
   ⟨ cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) eq₁ (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) eq₂ eq₃) , refl ⟩
 ... | yes _   | yes _   | no neq  = ⊥-elim (neq refl)
@@ -57,18 +57,18 @@ _≟ₗ_ : (loc loc′ : Location) → Dec (loc ≡ loc′)
 ... | no neq  | no _    | no _    = ⊥-elim (neq refl)
 
 ≟ₗ-≢-normal : ∀ {loc loc′} → (neq : loc ≢ loc′) → ∃[ neq′ ] (loc ≟ₗ loc′ ≡ no neq′)
-≟ₗ-≢-normal {⟨ n , 𝓁₁ , 𝓁₂ ⟩} {⟨ n′ , 𝓁₁′ , 𝓁₂′ ⟩} neq
-  with n ≟ₙ n′ | 𝓁₁ ≟ 𝓁₁′ | 𝓁₂ ≟ 𝓁₂′
-... | yes n≡n′ | yes 𝓁₁≡𝓁₁′ | yes 𝓁₂≡𝓁₂′ =
-  ⊥-elim (neq (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) n≡n′ (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) 𝓁₁≡𝓁₁′ 𝓁₂≡𝓁₂′)))
-... | yes _ | yes _ | no 𝓁₂≢𝓁₂′ =
-  ⟨ (λ p≡ → 𝓁₂≢𝓁₂′ (proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))))) , refl ⟩
-... | yes _ | no 𝓁₁≢𝓁₁′ | yes _ =
-  ⟨ (λ p≡ → 𝓁₁≢𝓁₁′ (proj₁ (×-≡-inv (proj₂ (×-≡-inv p≡))))) , refl ⟩
+≟ₗ-≢-normal {⟨ n , ℓ₁ , ℓ₂ ⟩} {⟨ n′ , ℓ₁′ , ℓ₂′ ⟩} neq
+  with n ≟ₙ n′ | ℓ₁ ≟ ℓ₁′ | ℓ₂ ≟ ℓ₂′
+... | yes n≡n′ | yes ℓ₁≡ℓ₁′ | yes ℓ₂≡ℓ₂′ =
+  ⊥-elim (neq (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) n≡n′ (cong₂ (λ □₁ □₂ → ⟨ □₁ , □₂ ⟩) ℓ₁≡ℓ₁′ ℓ₂≡ℓ₂′)))
+... | yes _ | yes _ | no ℓ₂≢ℓ₂′ =
+  ⟨ (λ p≡ → ℓ₂≢ℓ₂′ (proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))))) , refl ⟩
+... | yes _ | no ℓ₁≢ℓ₁′ | yes _ =
+  ⟨ (λ p≡ → ℓ₁≢ℓ₁′ (proj₁ (×-≡-inv (proj₂ (×-≡-inv p≡))))) , refl ⟩
 ... | no n≢n′ | yes _ | yes _ =
   ⟨ (λ p≡ → n≢n′ (proj₁ (×-≡-inv p≡))) , refl ⟩
-... | yes _ | no _ | no 𝓁₂≢𝓁₂′ =
-  ⟨ (λ p≡ → 𝓁₂≢𝓁₂′ (proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))))) , refl ⟩
+... | yes _ | no _ | no ℓ₂≢ℓ₂′ =
+  ⟨ (λ p≡ → ℓ₂≢ℓ₂′ (proj₂ (×-≡-inv (proj₂ (×-≡-inv p≡))))) , refl ⟩
 ... | no n≢n′ | yes _ | no _ =
   ⟨ (λ p≡ → n≢n′ (proj₁ (×-≡-inv p≡))) , refl ⟩
 ... | no n≢n′ | no _ | yes _ =
@@ -79,7 +79,7 @@ _≟ₗ_ : (loc loc′ : Location) → Dec (loc ≡ loc′)
 mutual
   -- A closure is a term with an env
   data Clos : Set where
-    <_,_,_> : ∀ {Δ T S 𝓁̂₁ 𝓁̂₂} → (M : Term) → Env → T ∷ Δ [ 𝓁̂₁ , 𝓁̂₂ ]⊢ M ⦂ S → Clos
+    <_,_,_> : ∀ {Δ T S ℓ̂₁ ℓ̂₂} → (M : Term) → Env → T ∷ Δ [ ℓ̂₁ , ℓ̂₂ ]⊢ M ⦂ S → Clos
 
   data Value : Set where
     V-tt : Value
@@ -91,10 +91,10 @@ mutual
 
     V-clos : Clos → Value
 
-    {- V-proxy casts from (S ⇒ T) to (S′ ⇒ T′) , (𝓁̂₁ 𝓁̂₂) to (𝓁̂₁′ 𝓁̂₂′) -}
-    V-proxy : (S T S′ T′  : 𝕋) → (𝓁̂₁ 𝓁̂₂ 𝓁̂₁′ 𝓁̂₂′ : ℒ̂)
+    {- V-proxy casts from (S ⇒ T) to (S′ ⇒ T′) , (ℓ̂₁ ℓ̂₂) to (ℓ̂₁′ ℓ̂₂′) -}
+    V-proxy : (S T S′ T′  : 𝕋) → (ℓ̂₁ ℓ̂₂ ℓ̂₁′ ℓ̂₂′ : ℒ̂)
             → S′ ≲ S → T ≲ T′
-            → 𝓁̂₁′ ≾ 𝓁̂₁ → 𝓁̂₂ ≾ 𝓁̂₂′
+            → ℓ̂₁′ ≾ ℓ̂₁ → ℓ̂₂ ≾ ℓ̂₂′
             → Value
             → Value
 

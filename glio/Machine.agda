@@ -53,7 +53,7 @@ _⊔_ : ℒ → ℒ → ℒ
 
 -- label stamping
 _⊔ₛ_ : 𝕊 → ℒ → 𝕊
-(s / 𝓁₁) ⊔ₛ 𝓁₂ = s / (𝓁₁ ⊔ 𝓁₂)
+(s / ℓ₁) ⊔ₛ ℓ₂ = s / (ℓ₁ ⊔ ℓ₂)
 
 -- partial ordering of labels
 data _⊑_ : ℒ → ℒ → Set where
@@ -65,7 +65,7 @@ data _⊑_ : ℒ → ℒ → Set where
 𝐿⊑𝐻 : 𝐿 ⊑ 𝐻
 𝐿⊑𝐻 = ⊑-l {0} {1} z≤n
 
-⊑-refl : ∀ {𝓁} → 𝓁 ⊑ 𝓁
+⊑-refl : ∀ {ℓ} → ℓ ⊑ ℓ
 ⊑-refl {label n} = ⊑-l {n} {n} ≤-refl
 
 ≤-dec : (n : ℕ) → (n′ : ℕ) → Dec (n ≤ n′)
@@ -77,7 +77,7 @@ data _⊑_ : ℒ → ℒ → Set where
 ... | no ¬n≤n′ = no λ {(s≤s n≤n′) → ¬n≤n′ n≤n′}
 
 -- label comparison is decidable:
-⊑-dec : (𝓁 : ℒ) → (𝓁′ : ℒ) → Dec (𝓁 ⊑ 𝓁′)
+⊑-dec : (ℓ : ℒ) → (ℓ′ : ℒ) → Dec (ℓ ⊑ ℓ′)
 ⊑-dec (label n) (label n′) with ≤-dec n n′
 ... | yes n≤n′ = yes (⊑-l {n} {n′} n≤n′)
 ... | no ¬n≤n′ = no λ {(⊑-l n≤n′) → ¬n≤n′ n≤n′ }
@@ -103,11 +103,11 @@ mutual
 
   data _<:ₛ_ : 𝕊 → 𝕊 → Set where
 
-    <:-lab : ∀ {t t′ 𝓁 𝓁′}
+    <:-lab : ∀ {t t′ ℓ ℓ′}
       → t <:ₜ t′
-      → 𝓁 ⊑ 𝓁′
+      → ℓ ⊑ ℓ′
         ------------------
-      → (t / 𝓁) <:ₛ (t′ / 𝓁′)
+      → (t / ℓ) <:ₛ (t′ / ℓ′)
 
 -- Typing context
 Context : Set
@@ -149,7 +149,7 @@ sig op-or              = ■ ∷ ■ ∷ []
 sig (op-ref s)         = ■ ∷ []
 sig op-deref           = ■ ∷ []
 sig op-assign          = ■ ∷ ■ ∷ []
-sig (op-label 𝓁)       = ■ ∷ []
+sig (op-label ℓ)       = ■ ∷ []
 
 open Syntax.OpSig Op sig
   using (`_; _⦅_⦆; cons; nil; bind; ast; _[_]; Subst; ⟪_⟫)
@@ -168,7 +168,7 @@ pattern _`∨_ M N      = op-or ⦅ cons (ast M) (cons (ast N) nil) ⦆         
 pattern `ref[_]_ s M  = (op-ref s) ⦅ cons (ast M) nil ⦆                                  -- `ref[ s ] M
 pattern ! M           = op-deref ⦅ cons (ast M) nil ⦆                                    -- ! M
 pattern _:=_ L M      = op-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆                    -- L := M
-pattern _`/_ V 𝓁      = (op-label 𝓁) ⦅ cons (ast V) nil ⦆                                -- V `/ 𝓁
+pattern _`/_ V ℓ      = (op-label ℓ) ⦅ cons (ast V) nil ⦆                                -- V `/ ℓ
 
 data Cell : Set where
   _↦_ : 𝕊 → Term → Cell

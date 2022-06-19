@@ -12,10 +12,10 @@ open import Interp
 open import Store
 open import WellTypedness
 
-Refl≼ : ∀ {𝓁} → 𝓁 ≼ 𝓁
+Refl≼ : ∀ {ℓ} → ℓ ≼ ℓ
 Refl≼ {l x} = ≼-l ≤-refl
 
-Refl≾ : ∀ {𝓁̂} → 𝓁̂ ≾ 𝓁̂
+Refl≾ : ∀ {ℓ̂} → ℓ̂ ≾ ℓ̂
 Refl≾ {¿} = ≾-¿-r
 Refl≾ {l̂ _} = ≾-l Refl≼
 
@@ -24,9 +24,9 @@ Refl≲ : ∀ {T} → T ≲ T
 Refl≲ {`⊤} = ≲-⊤
 Refl≲ {`𝔹} = ≲-𝔹
 Refl≲ {`ℒ} = ≲-ℒ
-Refl≲ {Ref 𝓁̂ T} = ≲-Ref Refl≾ Refl≾ Refl≲ Refl≲
-Refl≲ {Lab 𝓁̂ T} = ≲-Lab Refl≾ Refl≲
-Refl≲ {S [ 𝓁̂₁ ]⇒[ 𝓁̂₂ ] T} = ≲-⇒ Refl≾ Refl≾ Refl≲ Refl≲
+Refl≲ {Ref ℓ̂ T} = ≲-Ref Refl≾ Refl≾ Refl≲ Refl≲
+Refl≲ {Lab ℓ̂ T} = ≲-Lab Refl≾ Refl≲
+Refl≲ {S [ ℓ̂₁ ]⇒[ ℓ̂₂ ] T} = ≲-⇒ Refl≾ Refl≾ Refl≲ Refl≲
 
 Low≼High : 𝐿 ≼ 𝐻
 Low≼High = ≼-l z≤n
@@ -85,8 +85,8 @@ module FunExample where
                         (` 1 · ` 0)))
 
   ⊢e : [] [ 𝐿̂ , 𝐿̂ ]⊢ e ⦂ `⊤
-  ⊢e = ⊢let {T = Lab 𝐿̂ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] `⊤} (⊢ƛ {T = Lab 𝐿̂ `𝔹} {𝓁̂₁ = 𝐿̂} ⊢tt)
-            (⊢let {T = Lab ¿ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] `⊤} (⊢ƛ {T = Lab ¿ `𝔹} {𝓁̂₁ = 𝐿̂} (⊢· refl refl (≲-Lab ≾-¿-l ≲-𝔹) Refl≾))
+  ⊢e = ⊢let {T = Lab 𝐿̂ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] `⊤} (⊢ƛ {T = Lab 𝐿̂ `𝔹} {ℓ̂₁ = 𝐿̂} ⊢tt)
+            (⊢let {T = Lab ¿ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] `⊤} (⊢ƛ {T = Lab ¿ `𝔹} {ℓ̂₁ = 𝐿̂} (⊢· refl refl (≲-Lab ≾-¿-l ≲-𝔹) Refl≾))
                   (⊢let {T = Lab 𝐻̂ `𝔹} (⊢to-label ⊢true Low≾High) (⊢· refl refl (≲-Lab ≾-¿-r ≲-𝔹) Refl≾) Refl≲) Refl≲) Refl≲
 
   run-unsafe : 𝒱 [] e ⊢e [] 𝐿 42 ≡ error castError
@@ -99,9 +99,9 @@ module FunExample where
     let v = (to-label High true) : (Lab High Bool) in
       f v
 
-  let 𝓁 = (user-input) : Label in
+  let ℓ = (user-input) : Label in
     let f = (λ x : (Lab Low Bool) . x) : (Lab Low Bool → Lab Low Bool) in
-      let v = (to-label-dyn 𝓁 true) : (Lab ¿ Bool) in
+      let v = (to-label-dyn ℓ true) : (Lab ¿ Bool) in
         f v
 -}
 module LabExample where
@@ -120,12 +120,12 @@ module LabExample where
 
   -- The 1st program, e is rejected statically because nothing inhabits 𝐻 ≼ 𝐿
   ⊢e : [] [ 𝐿̂ , 𝐿̂ ]⊢ e ⦂ Lab 𝐿̂ `𝔹
-  ⊢e = ⊢let {T = Lab 𝐿̂ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] Lab 𝐿̂ `𝔹} (⊢ƛ {T = Lab 𝐿̂ `𝔹} {𝓁̂₁ = 𝐿̂} (⊢` refl))
+  ⊢e = ⊢let {T = Lab 𝐿̂ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] Lab 𝐿̂ `𝔹} (⊢ƛ {T = Lab 𝐿̂ `𝔹} {ℓ̂₁ = 𝐿̂} (⊢` refl))
             (⊢let {T = Lab 𝐻̂ `𝔹} (⊢to-label ⊢true Low≾High) (⊢· refl refl {!!} Refl≾) Refl≲) Refl≲
 
   -- The 2nd program, ê typechecks but errors at runtime due to a castError
   ⊢ê : `ℒ ∷ [] [ 𝐿̂ , 𝐿̂ ]⊢ ê ⦂ Lab 𝐿̂ `𝔹
-  ⊢ê = ⊢let {T = Lab 𝐿̂ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] Lab 𝐿̂ `𝔹} (⊢ƛ {T = Lab 𝐿̂ `𝔹} {𝓁̂₁ = 𝐿̂} (⊢` refl))
+  ⊢ê = ⊢let {T = Lab 𝐿̂ `𝔹 [ 𝐿̂ ]⇒[ 𝐿̂ ] Lab 𝐿̂ `𝔹} (⊢ƛ {T = Lab 𝐿̂ `𝔹} {ℓ̂₁ = 𝐿̂} (⊢` refl))
             (⊢let {T = Lab ¿ `𝔹} (⊢to-label-dyn refl ⊢true) (⊢· refl refl (≲-Lab ≾-¿-l ≲-𝔹) Refl≾) Refl≲) Refl≲
 
   run-unsafe : 𝒱 (V-label 𝐻 ∷ []) ê ⊢ê [] 𝐿 42 ≡ error castError
@@ -139,10 +139,10 @@ module LabExample where
     let y = (unlabel x) : Bool in
       new Low y
 
-  let 𝓁 = (user-input) : Label in
+  let ℓ = (user-input) : Label in
     let x = (to-label High true) : (Lab High Bool) in
       let y = (unlabel x) : Bool in
-        new-dyn 𝓁 y
+        new-dyn ℓ y
 -}
 module RefExample where
 
