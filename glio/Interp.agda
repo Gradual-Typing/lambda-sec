@@ -8,6 +8,7 @@ open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax; proj₁; p
 open import Data.List using (List; []; _∷_; length)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
+open import Function using (case_of_)
 
 open import StaticsGLIO
 open import Store
@@ -38,78 +39,79 @@ error err >>= _ = error err
 result x >>= f = f x
 
 
--- Cast ℓ̂₁ ⇛ ℓ̂₂
---   This can only happen where ℓ̂₁ ≾ ℓ̂₂
+-- Cast ℓ̂₁ ⇛ ℓ̂₂. This can only happen where ℓ̂₁ ≾ ℓ̂₂
 castL : (μ : Store) → (pc : ℒ) → (ℓ̂₁ ℓ̂₂ : ℒ̂) → ℓ̂₁ ≾ ℓ̂₂ → Result Conf
-castL μ pc ℓ̂₁ ℓ̂₂ ℓ̂₁≾ℓ̂₂ with (l̂ pc) ≾? ℓ̂₂
-... | yes _ = result ⟨ μ , V-tt , pc ⟩
-... | no  _ = error castError
+castL μ pc ℓ̂₁ ℓ̂₂ ℓ̂₁≾ℓ̂₂ =
+  case l̂ pc ≾? ℓ̂₂ of λ where
+  (yes _) → result ⟨ μ , V-tt , pc ⟩
+  (no  _) → error castError
 
--- Cast T ⇛ S
---   This can only happen when T₁ ≲ T₂
+-- Cast T ⇛ S. This can only happen when T₁ ≲ T₂
 castT′ : (μ : Store) → (pc : ℒ) → (T₁ T₂ : 𝕋) → T₁ ≲ T₂ → (v : Value) → Result Conf
 -- Unit ⇛ Unit
-castT′ μ pc `⊤ `⊤ ≲-⊤ V-tt         = result ⟨ μ , V-tt , pc ⟩  -- just return
-castT′ μ pc `⊤ `⊤ ≲-⊤ _            = error stuck                   -- stuck if the value is not well-typed
+castT′ μ pc `⊤ `⊤ ≲-⊤ V-tt         = result ⟨ μ , V-tt , pc ⟩    -- just return
+castT′ μ pc `⊤ `⊤ ≲-⊤ _            = error stuck                 -- stuck if the value is not well-typed
 -- 𝔹 ⇛ 𝔹
-castT′ μ pc `𝔹 `𝔹 ≲-𝔹 V-true      = result ⟨ μ , V-true , pc ⟩
-castT′ μ pc `𝔹 `𝔹 ≲-𝔹 V-false     = result ⟨ μ , V-false , pc ⟩
-castT′ μ pc `𝔹 `𝔹 ≲-𝔹 _           = error stuck
+castT′ μ pc `𝔹 `𝔹 ≲-𝔹 V-true       = result ⟨ μ , V-true , pc ⟩
+castT′ μ pc `𝔹 `𝔹 ≲-𝔹 V-false      = result ⟨ μ , V-false , pc ⟩
+castT′ μ pc `𝔹 `𝔹 ≲-𝔹 _            = error stuck
 -- ℒ ⇛ ℒ
-castT′ μ pc `ℒ `ℒ ≲-ℒ (V-label ℓ) = result ⟨ μ , V-label ℓ , pc ⟩
+castT′ μ pc `ℒ `ℒ ≲-ℒ (V-label ℓ)  = result ⟨ μ , V-label ℓ , pc ⟩
 castT′ μ pc `ℒ `ℒ ≲-ℒ _            = error stuck
 -- Ref ⇛ Ref
-castT′ μ pc (Ref ℓ̂₁ T₁′) (Ref ℓ̂₂ T₂′) (≲-Ref _ _ _ _) (V-ref ⟨ n , ℓ₁ , ℓ₂ ⟩) with ℓ̂₂
-... | ¿ = result ⟨ μ , V-ref ⟨ n , ℓ₁ , ℓ₂ ⟩ , pc ⟩
-... | (l̂ ℓ₂′) with ℓ₂ ≟ ℓ₂′
-...   | no _ = error castError
-...   | yes _ = result ⟨ μ , V-ref ⟨ n , ℓ₁ , ℓ₂ ⟩ , pc ⟩
+castT′ μ pc (Ref ℓ̂₁ T₁′) (Ref ℓ̂₂ T₂′) (≲-Ref _ _ _ _) (V-ref ⟨ n , ℓ₁ , ℓ₂ ⟩) =
+  case ℓ̂₂ of λ where
+  ¿ → result ⟨ μ , V-ref ⟨ n , ℓ₁ , ℓ₂ ⟩ , pc ⟩
+  (l̂ ℓ₂′) →
+    case ℓ₂ ≟ ℓ₂′ of λ where
+    (yes _) → result ⟨ μ , V-ref ⟨ n , ℓ₁ , ℓ₂ ⟩ , pc ⟩
+    (no _)  → error castError
 castT′ μ pc (Ref ℓ₁ T₁′) (Ref ℓ₂ T₂′) (≲-Ref _ _ _ _) _ = error stuck
 -- Labeled ⇛ Labeled
-castT′ μ pc (Lab ℓ̂₁ T₁′) (Lab ℓ̂₂ T₂′) (≲-Lab _ T₁′≲T₂′) (V-lab ℓ v) with (l̂ ℓ) ≾? ℓ̂₂
-... | no _ = error castError
-... | yes _ =
-  do
-  ⟨ μ′ , v′ , pc′ ⟩ ← castT′ μ pc T₁′ T₂′ T₁′≲T₂′ v
-  result ⟨ μ′ , V-lab ℓ v′ , pc′ ⟩
+castT′ μ pc (Lab ℓ̂₁ T₁′) (Lab ℓ̂₂ T₂′) (≲-Lab _ T₁′≲T₂′) (V-lab ℓ v) =
+  case (l̂ ℓ) ≾? ℓ̂₂ of λ where
+  (yes _) →
+    do
+    ⟨ μ′ , v′ , pc′ ⟩ ← castT′ μ pc T₁′ T₂′ T₁′≲T₂′ v
+    result ⟨ μ′ , V-lab ℓ v′ , pc′ ⟩
+  (no _)  → error castError
 castT′ μ pc (Lab ℓ̂₁ T₁′) (Lab ℓ̂₂ T₂′) (≲-Lab _ _) _ = error stuck
--- Closure ⇛ Proxied closure
---   NOTE: We need to build proxy here.
-castT′ μ pc (S [ ℓ̂₁ ]⇒[ ℓ̂₂ ] T) (S′ [ ℓ̂₁′ ]⇒[ ℓ̂₂′ ] T′) (≲-⇒ ℓ̂₁′≾ℓ̂₁ ℓ̂₂≾ℓ̂₂′ S′≲S T≲T′) v with v
-... | (V-clos _) =
+-- Closure ⇛ Proxied closure. We need to build proxy here.
+castT′ μ pc (S [ ℓ̂₁ ]⇒[ ℓ̂₂ ] T) (S′ [ ℓ̂₁′ ]⇒[ ℓ̂₂′ ] T′) (≲-⇒ ℓ̂₁′≾ℓ̂₁ ℓ̂₂≾ℓ̂₂′ S′≲S T≲T′) v
+  with v
+... | V-clos _ =
       result ⟨ μ , V-proxy S T S′ T′ ℓ̂₁ ℓ̂₂ ℓ̂₁′ ℓ̂₂′ S′≲S T≲T′  ℓ̂₁′≾ℓ̂₁ ℓ̂₂≾ℓ̂₂′ v , pc ⟩
-... | (V-proxy _ _ _ _ _ _ _ _ _ _ _ _ _) =
+... | V-proxy _ _ _ _ _ _ _ _ _ _ _ _ _ =
       result ⟨ μ , V-proxy S T S′ T′ ℓ̂₁ ℓ̂₂ ℓ̂₁′ ℓ̂₂′ S′≲S T≲T′ ℓ̂₁′≾ℓ̂₁ ℓ̂₂≾ℓ̂₂′  v , pc ⟩
 ... | _ = error stuck
 
--- Tests:
+castT : (μ : Store) → (pc : ℒ) → (T₁ T₂ : 𝕋) → (v : Value) → Result Conf
+castT μ pc T₁ T₂ v =
+  case T₁ ≲? T₂ of λ where
+  (yes T₁≲T₂) → castT′ μ pc T₁ T₂ T₁≲T₂ v
+  (no  _)     → error castError
 
---   Get stuck when casting a bool value to a reference
+-- Example: get stuck when casting a bool value to a reference
 _ : castT′ [] (l 0) (Ref ¿ `𝔹) (Ref ¿ `𝔹) (≲-Ref ≾-¿-r ≾-¿-r ≲-𝔹 ≲-𝔹) V-true ≡ error stuck
 _ = refl
 
-castT : (μ : Store) → (pc : ℒ) → (T₁ T₂ : 𝕋) → (v : Value) → Result Conf
-castT μ pc T₁ T₂ v with T₁ ≲? T₂
-... | no  _     = error castError
-... | yes T₁≲T₂ = castT′ μ pc T₁ T₂ T₁≲T₂ v -- proceed
 
-
--- NOTE that pc must not be ¿ in run time!
+-- NOTE: PC must be concrete at runtime
 𝒱 : ∀ {Γ T ℓ̂₁ ℓ̂₂} → (γ : Env) → (M : Term) → Γ [ ℓ̂₁ , ℓ̂₂ ]⊢ M ⦂ T → (μ : Store) → (pc : ℒ) → (k : ℕ) → Result Conf
 apply : Env → Value → Value → Store → (pc : ℒ) → (k : ℕ) → Result Conf
 
--- Running out of gas
+-- Out of gas. Ooops
 𝒱 _ _ _ _ _ 0 = timeout
-
+-- Values
 𝒱 γ `tt _       μ pc (suc k) = result ⟨ μ , V-tt , pc ⟩
 𝒱 γ `true _     μ pc (suc k) = result ⟨ μ , V-true , pc ⟩
 𝒱 γ `false _    μ pc (suc k) = result ⟨ μ , V-false , pc ⟩
 𝒱 γ (label ℓ) _ μ pc (suc k) = result ⟨ μ , V-label ℓ , pc ⟩
-
+-- Variables
 𝒱 γ (` x) _ μ pc (suc k) with nth γ x
 ... | nothing = error stuck
 ... | just v = result ⟨ μ , v , pc ⟩
-
+-- If
 𝒱 γ (if `x M N) (⊢if {x = x} {T} {T′} {T″} {M} {N} {ℓ̂₁} {ℓ̂₂} {ℓ̂₂′} _ ⊢M ⊢N _) μ pc (suc k) with nth γ x
 --   : goes to the M branch
 ... | just V-true = do
