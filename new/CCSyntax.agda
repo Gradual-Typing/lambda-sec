@@ -32,6 +32,7 @@ data Op : Set where
   op-prot         : StaticLabel → Op
   op-cast-pc      : Label → Op
   op-error        : Error → Op
+  op-opaque       : Op
 
 sig : Op → List Sig
 sig (op-addr a ℓ)      = []
@@ -51,6 +52,7 @@ sig (op-cast c)        = ■ ∷ []
 sig (op-prot ℓ)        = ■ ∷ []
 sig (op-cast-pc g)     = ■ ∷ []
 sig (op-error e)       = []
+sig op-opaque          = []
 
 open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug) public
 
@@ -74,3 +76,4 @@ pattern _⟨_⟩ M c                 = (op-cast c) ⦅ cons (ast M) nil ⦆
 pattern prot[_]_ ℓ M             = (op-prot ℓ) ⦅ cons (ast M) nil ⦆      {- protection term -}
 pattern cast-pc g M              = (op-cast-pc g) ⦅ cons (ast M) nil ⦆
 pattern error e                  = (op-error e) ⦅ nil ⦆                  {- blame / nsu error -}
+pattern ●                       = op-opaque ⦅ nil ⦆                     {- opaque value -}
