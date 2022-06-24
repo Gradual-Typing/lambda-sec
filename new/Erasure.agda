@@ -1,10 +1,13 @@
 module Erasure where
 
+open import Data.List using (List; _∷_; [])
 open import Function using (case_of_)
 
 open import Types
 open import TypeBasedCast
+open import Heap
 open import CC
+open import Utils
 
 -- Replace every label by low
 ⌈_⌉ : Type → Type
@@ -55,3 +58,8 @@ erase (prot[ ℓ ] M) =
 erase (cast-pc g M) = erase M
 erase (error e) = error e
 erase ● = ●
+
+erase-μ : Heap → Heap
+erase-μ [] = []
+erase-μ (⟨ a , V , low  ⟩ ∷ μ) = ⟨ a , V , low ⟩ ∷ erase-μ μ
+erase-μ (⟨ a , V , high ⟩ ∷ μ) = erase-μ μ
