@@ -62,4 +62,4 @@ erase ● = ●
 erase-μ : Heap → Heap
 erase-μ [] = []
 erase-μ (⟨ a , V , low  ⟩ ∷ μ) = ⟨ a , erase V {- TODO: check this -} , low ⟩ ∷ erase-μ μ
-erase-μ (⟨ a , V , high ⟩ ∷ μ) = erase-μ μ
+erase-μ (⟨ a , V , high ⟩ ∷ μ) = ⟨ a , ● , high ⟩ ∷ erase-μ μ
