@@ -24,6 +24,7 @@ data Value : Term → Set where
   V-const : ∀ {ι} {k : rep ι} {ℓ} → Value ($ k of ℓ)
   V-cast : ∀ {A B V} {c : Cast A ⇒ B}
     → Value V → Inert c → Value (V ⟨ c ⟩)
+  V-● : Value ●
 
 data Fun : Term → HeapContext → Type → Set where
   Fun-ƛ : ∀ {Σ gc pc′ A A′ B B′ g N ℓ}
@@ -219,6 +220,7 @@ stamp-val (addr a of ℓ₁) V-addr ℓ = addr a of (ℓ₁ ⋎ ℓ)
 stamp-val (ƛ[ gc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ gc ] A ˙ N of (ℓ₁ ⋎ ℓ)
 stamp-val ($ k of ℓ₁) V-const ℓ = $ k of (ℓ₁ ⋎ ℓ)
 stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = stamp-val V v ℓ ⟨ stamp-inert c i ℓ ⟩
+stamp-val ● V-● ℓ = ●
 
 -- A stamped value is value
 stamp-val-value : ∀ {V ℓ}
@@ -229,6 +231,7 @@ stamp-val-value V-ƛ = V-ƛ
 stamp-val-value V-const = V-const
 stamp-val-value (V-cast v i) =
   V-cast (stamp-val-value v) (stamp-inert-inert i)
+stamp-val-value V-● = V-●
 
 ⊢value-pc : ∀ {Γ Σ gc gc′ pc pc′ V A}
   → Γ ; Σ ; gc  ; pc ⊢ V ⦂ A
