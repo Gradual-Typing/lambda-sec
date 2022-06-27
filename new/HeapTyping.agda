@@ -18,31 +18,13 @@ open import Utils
 open import Heap
 open import CC
 
-infix 4 _⊇_
-
-_⊇_ : HeapContext → HeapContext → Set
-Σ′ ⊇ Σ = ∀ a {T ℓ} → key _≟_ Σ a ≡ just ⟨ T , ℓ ⟩ → key _≟_ Σ′ a ≡ just ⟨ T , ℓ ⟩
-
 infix 4 _⊢_
 
 _⊢_ : HeapContext → Heap → Set
 Σ ⊢ μ = ∀ a {T ℓ}
-  → key _≟_ Σ a ≡ just ⟨ T , ℓ ⟩
-  → (a < length μ) ×
-     (∃[ V ] Value V × (key _≟_ μ a ≡ just ⟨ V , ℓ ⟩) × ([] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ))
+  → nth Σ a ≡ just ⟨ T , ℓ ⟩
+  → ∃[ V ] Value V × (key _≟_ μ a ≡ just ⟨ V , ℓ ⟩) × ([] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ)
 
-
-{- Properties about Σ′ ⊇ Σ : -}
-⊇-refl : ∀ {Σ} → Σ ⊇ Σ
-⊇-refl {Σ} a eq = eq
-
-⊇-fresh : ∀ {Σ μ a₁ T ℓ} → Σ ⊢ μ → a₁ ≡ length μ → ⟨ a₁ , T , ℓ ⟩ ∷ Σ ⊇ Σ
-⊇-fresh {Σ} {μ} {a₁} ⊢μ fresh a eq with a ≟ a₁
-... | yes refl =
-  let a<len   = proj₁ (⊢μ a eq)
-      len<len = subst (λ □ → □ < length μ) fresh a<len in
-    contradiction len<len (n≮n _)
-... | no  _ = eq
 
 relax-Σ : ∀ {Γ Σ Σ′ gc pc M A}
   → Γ ; Σ ; gc ; pc ⊢ M ⦂ A
@@ -78,29 +60,27 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
   → Value V
   → Σ ⊢ μ
-  → a ≡ length μ  {- a is fresh in μ -}
+  → a ≡ length Σ  {- a is fresh -}
     -----------------------------------------------
-  → ⟨ a , T , ℓ ⟩ ∷ Σ ⊢ ⟨ a , V , ℓ ⟩ ∷ μ
-⊢μ-new {Σ} {V₁} {a₁} {T₁} {ℓ₁} {μ} ⊢V₁ v₁ ⊢μ fresh a eq with a ≟ a₁
+  → Σ ∷ʳ ⟨ T , ℓ ⟩ ⊢ ⟨ a , V , ℓ ⟩ ∷ μ
+⊢μ-new {Σ} {V₁} {a₁} {T₁} {ℓ₁} {μ} ⊢V₁ v₁ ⊢μ refl a {T} {ℓ} eq
+  with a ≟ length Σ
 ... | yes refl =
-  case ⟨ eq , fresh ⟩ of λ where
-    ⟨ refl , refl ⟩ → ⟨ ≤-refl , V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-fresh {μ = μ} ⊢μ fresh) ⟩
-... | no _ =
-  let ⟨ a<len , V , v , eq′ , ⊢V ⟩ = ⊢μ a eq in
-    ⟨ <-trans a<len (n<1+n _) , V , v , eq′ , relax-Σ ⊢V (⊇-fresh {μ = μ} ⊢μ fresh) ⟩
+  case trans (sym eq) (snoc-here ⟨ T₁ , ℓ₁ ⟩ Σ) of λ where
+  refl → ⟨ V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-snoc Σ ⟨ T₁ , ℓ₁ ⟩) ⟩
+... | no neq =
+  let ⟨ V , v , eq′ , ⊢V ⟩ = ⊢μ a (snoc-there ⟨ T , ℓ ⟩ Σ eq neq) in
+    ⟨ V , v , eq′ , relax-Σ ⊢V (⊇-snoc Σ ⟨ T₁ , ℓ₁ ⟩) ⟩
 
 ⊢μ-update : ∀ {Σ V a T ℓ μ}
   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
   → Value V
   → Σ ⊢ μ
-  → key _≟_ Σ a ≡ just ⟨ T , ℓ ⟩  {- updating a -}
+  → nth Σ a ≡ just ⟨ T , ℓ ⟩  {- updating a -}
     -----------------------------------------------
   → Σ ⊢ ⟨ a , V , ℓ ⟩ ∷ μ
 ⊢μ-update {Σ} {V₁} {a₁} {T₁} {ℓ₁} {μ} ⊢V₁ v₁ ⊢μ eq₁ a eq with a ≟ a₁
 ... | yes refl =
-  let ⟨ a<len , _ ⟩ = ⊢μ a eq in
   case trans (sym eq) eq₁ of λ where
-    refl → ⟨ <-trans a<len (n<1+n _) , V₁ , v₁ , refl , ⊢V₁ ⟩
-... | no  _ =
-  let ⟨ a<len , wf ⟩ = ⊢μ a eq in
-    ⟨ <-trans a<len (n<1+n _) , wf ⟩
+    refl → ⟨ V₁ , v₁ , refl , ⊢V₁ ⟩
+... | no  _ = ⊢μ a eq

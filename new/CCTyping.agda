@@ -24,7 +24,7 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
     → Γ ; Σ ; gc ; pc ⊢ $ k of ℓ ⦂ ` ι of l ℓ
 
   ⊢addr : ∀ {Γ Σ gc pc a T ℓ ℓ₁}
-    → key _≟_ Σ a ≡ just ⟨ T , ℓ₁ ⟩
+    → nth Σ a ≡ just ⟨ T , ℓ₁ ⟩
       ------------------------------------------------ CCAddr
     → Γ ; Σ ; gc ; pc ⊢ addr a of ℓ ⦂ Ref (T of l ℓ₁) of l ℓ
 

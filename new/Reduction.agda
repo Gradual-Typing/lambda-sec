@@ -114,7 +114,7 @@ data _∣_∣_∣_—→_∣_ : Term → Heap → HeapContext → StaticLabel �
 
   ref : ∀ {V μ Σ pc a ℓ}
     → Value V
-    → a ≡ length μ  {- address a is fresh -}
+    → a ≡ length Σ  {- address a is fresh -}
       ----------------------------------------------------------------- Ref
     → ref✓[ ℓ ] V ∣ μ ∣ Σ ∣ pc —→ addr a of low ∣ ⟨ a , V , ℓ ⟩ ∷ μ
 

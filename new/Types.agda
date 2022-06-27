@@ -782,7 +782,5 @@ high =? high = yes refl
 low =? high = no λ ()
 high =? low = no λ ()
 
-Context = List Type
-{- a ↦ T , ℓ -}
-HeapContext = List (Addr × RawType × StaticLabel)
-
+Context     = List Type
+HeapContext = List (RawType × StaticLabel)

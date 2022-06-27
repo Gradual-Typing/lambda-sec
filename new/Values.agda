@@ -66,7 +66,7 @@ canonical-fun (⊢sub-pc ⊢V gc<:gc′) v = canonical-fun ⊢V v
 
 data Reference : Term → HeapContext → Type → Set where
   Ref-addr : ∀ {Σ A a T g ℓ ℓ₁}
-    → key _≟_ Σ a ≡ just ⟨ T , ℓ₁ ⟩
+    → nth Σ a ≡ just ⟨ T , ℓ₁ ⟩
     → Ref (T of l ℓ₁) of l ℓ <: Ref A of g
       ---------------------------------------- Reference
     → Reference (addr a of ℓ) Σ (Ref A of g)
