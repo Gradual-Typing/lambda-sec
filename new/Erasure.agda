@@ -1,6 +1,10 @@
 module Erasure where
 
+open import Data.Nat
 open import Data.List using (List; _∷_; [])
+open import Data.Product renaming (_,_ to ⟨_,_⟩)
+open import Data.Maybe
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; sym; subst; cong)
 open import Function using (case_of_)
 
 open import Types
@@ -63,3 +67,9 @@ erase-μ : Heap → Heap
 erase-μ [] = []
 erase-μ (⟨ a , V , low  ⟩ ∷ μ) = ⟨ a , erase V {- TODO: check this -} , low ⟩ ∷ erase-μ μ
 erase-μ (⟨ a , V , high ⟩ ∷ μ) = ⟨ a , ● , high ⟩ ∷ erase-μ μ
+
+{- Related heaps -}
+_≈_ : ∀ (μ μ′ : Heap) → Set
+μ ≈ μ′ = ∀ a {V}
+  → key _≟_ μ a ≡ just ⟨ V , low ⟩
+  → ∃[ V′ ] (key _≟_ μ′ a ≡ just ⟨ V′ , low ⟩) × (V′ ≡ erase V)
