@@ -28,12 +28,6 @@ key _≟_ (⟨ k₀ , v₀ ⟩ ∷ l) k =
     (yes _) → just v₀
     (no  _) → key _≟_ l k
 
-here : ∀ {K V : Set} {_≟_} {k : K} {v : V} {kvs}
-  → key _≟_ (⟨ k , v ⟩ ∷ kvs) k ≡ just v
-here {_≟_ = _≟_} {k} with k ≟ k
-... | yes refl = refl
-... | no ¬k≡k = contradiction refl ¬k≡k
-
 
 snoc-here : ∀ {X} (x : X) → ∀ xs → nth (xs ∷ʳ x) (length xs) ≡ just x
 snoc-here x [] = refl
