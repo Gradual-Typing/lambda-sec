@@ -3,6 +3,7 @@ module WellTyped where
 open import Data.List hiding ([_])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Relation.Nullary using (¬_; Dec; yes; no)
+open import Relation.Nullary.Negation using (contradiction)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Function using (case_of_)
 
@@ -29,6 +30,14 @@ ref-wt : ∀ {Σ V gc pc A g}
 ref-wt (Ref-addr eq sub)     = ⊢sub (⊢addr eq) sub
 ref-wt (Ref-proxy ref i sub) = ⊢sub (⊢cast (ref-wt ref)) sub
 
+{- "Opaque" is not well-typed -}
+●-nwt : ∀ {Σ gc pc A} → ¬ ([] ; Σ ; gc ; pc ⊢ ● ⦂ A)
+●-nwt {A = ` ι of g} ⊢● =
+  case canonical-const ⊢● V-● of λ ()
+●-nwt {A = (Ref A) of g} ⊢● =
+  case canonical-ref ⊢● V-● of λ ()
+●-nwt {A = [ gc ] A ⇒ B of g} ⊢● =
+  case canonical-fun ⊢● V-● of λ ()
 
 {- Value stamping is well-typed -}
 stamp-val-wt : ∀ {Σ gc pc V A ℓ}

@@ -6,6 +6,7 @@ open import Data.Product using (_×_; ∃-syntax; proj₁; proj₂) renaming (_,
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
+open import Relation.Nullary.Negation using (contradiction)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; subst; sym)
 open import Function using (case_of_)
 
@@ -338,6 +339,10 @@ preserve {Σ} {gc} (⊢assign✓ ⊢L ⊢M pc≼ℓ) ⊢μ pc≾gc (assign-cast 
         ⊢assign✓ (⊢sub (ref-wt r) (<:-ty ℓ<:ℓ′ <:ᵣ-refl)) (⊢cast ⊢M) pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢cast-pc ⊢V _) ⊢μ pc≾gc (β-cast-pc v) =
   ⟨ Σ , ⊇-refl Σ , ⊢value-pc ⊢V v , ⊢μ ⟩
+preserve (⊢app ⊢● _) ⊢μ pc≾gc (app-● v) = contradiction ⊢● ●-nwt
+preserve (⊢if ⊢● _ _) ⊢μ pc≾gc if-● = contradiction ⊢● ●-nwt
+preserve (⊢deref ⊢●) ⊢μ pc≾gc deref-● = contradiction ⊢● ●-nwt
+preserve (⊢assign✓ ⊢● _ _) ⊢μ pc≾gc (assign-● v) = contradiction ⊢● ●-nwt
 preserve (⊢sub ⊢M A<:B) ⊢μ pc≾gc M→M′ =
   let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ pc≾gc M→M′ in
   ⟨ Σ′ , Σ′⊇Σ , ⊢sub ⊢M′ A<:B , ⊢μ′ ⟩
