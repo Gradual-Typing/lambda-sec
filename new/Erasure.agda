@@ -11,6 +11,7 @@ open import Types
 open import TypeBasedCast
 open import Heap
 open import CC
+open import Reduction
 open import Utils
 
 -- Replace every label by low
@@ -65,11 +66,5 @@ erase ● = ●
 
 erase-μ : Heap → Heap
 erase-μ [] = []
-erase-μ (⟨ a , V , low  ⟩ ∷ μ) = ⟨ a , erase V {- TODO: check this -} , low ⟩ ∷ erase-μ μ
+erase-μ (⟨ a , V , low  ⟩ ∷ μ) = ⟨ a , erase V , low ⟩ ∷ erase-μ μ
 erase-μ (⟨ a , V , high ⟩ ∷ μ) = ⟨ a , ● , high ⟩ ∷ erase-μ μ
-
-{- Related heaps -}
-_≈_ : ∀ (μ μ′ : Heap) → Set
-μ ≈ μ′ = ∀ a {V}
-  → key _≟_ μ a ≡ just ⟨ V , low ⟩
-  → ∃[ V′ ] (key _≟_ μ′ a ≡ just ⟨ V′ , low ⟩) × (V′ ≡ erase V)
