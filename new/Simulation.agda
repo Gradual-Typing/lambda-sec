@@ -19,7 +19,7 @@ erase-stamp-high : ∀ {V} (v : Value V) → erase (stamp-val V v high) ≡ ●
 erase-stamp-high (V-addr {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
 erase-stamp-high (V-ƛ {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
 erase-stamp-high (V-const {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
-erase-stamp-high (V-cast v i) = {!!}
+erase-stamp-high (V-cast v i) = erase-stamp-high v
 erase-stamp-high V-● = refl
 
 
