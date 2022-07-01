@@ -4,7 +4,7 @@ open import Data.Nat
 open import Data.List
 open import Data.Maybe
 open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax) renaming (_,_ to ⟨_,_⟩)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; subst; subst₂; cong; cong₂; sym)
 open import Function using (case_of_)
 
 open import Types
@@ -206,9 +206,7 @@ stamp-inert (cast (Ref A of g₁) (Ref B of g₂) p (~-ty g₁~g₂ RefA~RefB))
   let c~ = ~-ty (consis-join-~ₗ g₁~g₂ ~ₗ-refl) RefA~RefB in
     cast (Ref A of (g₁ ⋎̃ l ℓ)) (Ref B of (g₂ ⋎̃ l ℓ)) p c~
 
-stamp-inert-inert : ∀ {A B} {c : Cast A ⇒ B} {ℓ}
-  → (i : Inert c)
-  → Inert (stamp-inert c i ℓ)
+stamp-inert-inert : ∀ {A B ℓ} {c : Cast A ⇒ B} (i : Inert c) → Inert (stamp-inert c i ℓ)
 stamp-inert-inert (I-base-inj c) = I-base-inj _
 stamp-inert-inert (I-fun c I-label I-label) =
   I-fun (stamp-inert c _ _) I-label I-label
@@ -223,15 +221,44 @@ stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = stamp-val V v ℓ ⟨ stamp-inert c i
 stamp-val ● V-● ℓ = ●
 
 -- A stamped value is value
-stamp-val-value : ∀ {V ℓ}
-  → (v : Value V)
-  → Value (stamp-val V v ℓ)
+stamp-val-value : ∀ {V ℓ} (v : Value V) → Value (stamp-val V v ℓ)
 stamp-val-value V-addr = V-addr
 stamp-val-value V-ƛ = V-ƛ
 stamp-val-value V-const = V-const
 stamp-val-value (V-cast v i) =
   V-cast (stamp-val-value v) (stamp-inert-inert i)
 stamp-val-value V-● = V-●
+
+stamp-val-low : ∀ {V} (v : Value V) → stamp-val V v low ≡ V
+stamp-val-low (V-addr {ℓ = ℓ}) with ℓ
+... | low  = refl
+... | high = refl
+stamp-val-low (V-ƛ {ℓ = ℓ}) with ℓ
+... | low  = refl
+... | high = refl
+stamp-val-low (V-const {ℓ = ℓ}) with ℓ
+... | low  = refl
+... | high = refl
+stamp-val-low (V-cast v (I-base-inj (cast (` ι of l ℓ) (` ι of ⋆) p (~-ty ℓ~⋆ ~-ι))))
+  rewrite stamp-val-low v
+  with ℓ   | ℓ~⋆
+... | low  | ~⋆ = refl
+... | high | ~⋆ = refl
+stamp-val-low (V-cast v (I-fun (cast (_ of l ℓ₁) (_ of g₂) p (~-ty ℓ₁~g₂ _)) I-label I-label))
+  rewrite stamp-val-low v
+  with ℓ₁  | g₂     | ℓ₁~g₂
+... | high | ⋆      | ~⋆ = refl
+... | high | l high | l~ = refl
+... | low  | ⋆      | ~⋆ = refl
+... | low  | l low  | l~ = refl
+stamp-val-low (V-cast v (I-ref (cast (_ of l ℓ₁) (_ of g₂) p (~-ty ℓ₁~g₂ _)) I-label I-label))
+  rewrite stamp-val-low v
+  with ℓ₁  | g₂     | ℓ₁~g₂
+... | high | ⋆      | ~⋆ = refl
+... | high | l high | l~ = refl
+... | low  | ⋆      | ~⋆ = refl
+... | low  | l low  | l~ = refl
+stamp-val-low V-● = refl
 
 ⊢value-pc : ∀ {Γ Σ gc gc′ pc pc′ V A}
   → Γ ; Σ ; gc  ; pc ⊢ V ⦂ A

@@ -101,3 +101,24 @@ erase-μ : Heap → Heap
 erase-μ [] = []
 erase-μ (⟨ a , V , low  ⟩ ∷ μ) = ⟨ a , erase V , low ⟩ ∷ erase-μ μ
 erase-μ (⟨ a , V , high ⟩ ∷ μ) = ⟨ a , ● , high ⟩ ∷ erase-μ μ
+
+
+erase-val-value : ∀ {V} (v : Value V) → Value (erase V)
+erase-val-value (V-addr {ℓ = ℓ}) with ℓ
+... | low  = V-addr
+... | high = V-●
+erase-val-value (V-ƛ {ℓ = ℓ}) with ℓ
+... | low  = V-ƛ
+... | high = V-●
+erase-val-value (V-const {ℓ = ℓ}) with ℓ
+... | low  = V-const
+... | high = V-●
+erase-val-value (V-cast v i) = erase-val-value v
+erase-val-value V-● = V-●
+
+erase-stamp-high : ∀ {V} (v : Value V) → erase (stamp-val V v high) ≡ ●
+erase-stamp-high (V-addr {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
+erase-stamp-high (V-ƛ {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
+erase-stamp-high (V-const {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
+erase-stamp-high (V-cast v i) = erase-stamp-high v
+erase-stamp-high V-● = refl

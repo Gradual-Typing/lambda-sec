@@ -4,7 +4,9 @@ open import Data.Nat
 open import Data.List using (List; _∷_; [])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; sym; subst; cong)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl; trans; sym; subst; cong)
+open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 open import Function using (case_of_)
 
 open import Types
@@ -14,13 +16,6 @@ open import CC
 open import Reduction
 open import Erasure
 open import Utils
-
-erase-stamp-high : ∀ {V} (v : Value V) → erase (stamp-val V v high) ≡ ●
-erase-stamp-high (V-addr {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
-erase-stamp-high (V-ƛ {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
-erase-stamp-high (V-const {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
-erase-stamp-high (V-cast v i) = erase-stamp-high v
-erase-stamp-high V-● = refl
 
 
 {- Related heaps -}
@@ -35,10 +30,21 @@ sim : ∀ {M₁ M₂ μ₁ μ₂ μ₁′ Σ}
     -----------------------------------------------------------------------
   → ∃[ μ₂′ ] (erase M₁ ∣ μ₁′ ∣ Σ ∣ low —↠ erase M₂ ∣ μ₂′) × (μ₂ ≈ μ₂′)
 sim (ξ R) μ≈ = {!!}
-sim ξ-err μ≈ = {!!}
-sim {μ₁′ = μ₁′} (prot-val {ℓ = ℓ} v) μ≈ with ℓ
-... | high = ⟨ μ₁′ , {!!} , μ≈ ⟩
-... | low  = {!!}
+sim {μ₁′ = μ₁′} ξ-err μ≈ = ⟨ μ₁′ , {!!} , μ≈ ⟩
+sim {μ₁′ = μ₁′} {Σ} (prot-val {V} {ℓ = ℓ} v) μ≈ with ℓ
+... | high rewrite erase-stamp-high v = ⟨ μ₁′ , ● ∣ μ₁′ ∣ _ ∣ low ∎ , μ≈ ⟩
+... | low  =
+  ⟨ μ₁′ ,
+    prot[ low ] erase V ∣ μ₁′ ∣ Σ ∣ low —→⟨ prot-val (erase-val-value v) ⟩ eq ∣ μ₁′ ∣ Σ ∣ low ≡∎ , μ≈ ⟩
+  where
+  eq =
+    begin
+     stamp-val (erase V) (erase-val-value v) low
+     ≡⟨ stamp-val-low (erase-val-value v) ⟩
+     erase V
+     ≡⟨ cong erase (sym (stamp-val-low v)) ⟩
+     erase (stamp-val V v low)
+     ∎
 sim (prot-ctx R) μ≈ = {!!}
 sim prot-err μ≈ = {!!}
 sim (β x) μ≈ = {!!}

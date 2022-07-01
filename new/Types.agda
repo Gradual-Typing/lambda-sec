@@ -488,6 +488,11 @@ stamp-<: : ∀ {A B g₁ g₂}
   → stamp A g₁ <: stamp B g₂
 stamp-<: (<:-ty g₁′<:g₂′ S<:T) g₁<:g₂ = <:-ty (consis-join-<:ₗ g₁′<:g₂′ g₁<:g₂) S<:T
 
+stamp-low : ∀ A → stamp A (l low) ≡ A
+stamp-low (T of ⋆)      = refl
+stamp-low (T of l low)  = refl
+stamp-low (T of l high) = refl
+
 
 {- **** Typing contexts **** -}
 Context     = List Type

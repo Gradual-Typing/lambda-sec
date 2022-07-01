@@ -188,6 +188,10 @@ _    ⋏ _    = low
 ℓ⋎high≡high {low}  = refl
 ℓ⋎high≡high {high} = refl
 
+ℓ⋎low≡ℓ : ∀ {ℓ} → ℓ ⋎ low ≡ ℓ
+ℓ⋎low≡ℓ {low}  = refl
+ℓ⋎low≡ℓ {high} = refl
+
 -- TODO: better names
 join-≼ : ∀ {ℓ₁ ℓ₂ ℓ}
   → ℓ₁ ⋎ ℓ₂ ≼ ℓ
