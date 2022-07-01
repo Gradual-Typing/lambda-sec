@@ -78,11 +78,17 @@ sim {μ₁′ = μ₁′} {Σ = Σ} (prot-val {V} {ℓ = ℓ} v) μ≈ with ℓ
      ∎
 sim (prot-ctx R) μ≈ = {!!}
 sim prot-err μ≈ = {!!}
-sim (β x) μ≈ = {!!}
+sim {μ₁′ = μ₁′} {Σ = Σ} (β {V} {N} {ℓ = ℓ} v) μ≈ with ℓ
+... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ β (erase-val-value v) ⟩ cong prot[ low ]_ eq ∣ _ ∣ Σ ∣ _ ≡∎ , μ≈ ⟩
+  where
+  eq : erase N [ erase V ] ≡ erase (N [ V ])
+  eq = {!!}
+... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ app-● (erase-val-value v) ⟩ ● ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
 sim β-if-true μ≈ = {!!}
 sim β-if-false μ≈ = {!!}
 sim (β-let x) μ≈ = {!!}
-sim ref-static μ≈ = {!!}
+sim {μ₁′ = μ₁′} {Σ = Σ} ref-static μ≈ =
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ ref-static ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
 sim (ref?-ok x) _ = {!!}
 sim (ref?-fail x) _ = {!!}
 sim (ref x x₁) = {!!}
@@ -98,9 +104,11 @@ sim (fun-cast x x₁ i) = {!!}
 sim (deref-cast x x₁) = {!!}
 sim (assign?-cast x i) = {!!}
 sim (assign-cast x x₁ i) = {!!}
-sim (β-cast-pc x) _ = {!!}
-sim (app-● x) _ = {!!}
-sim if-● _ = {!!}
-sim deref-● _ = {!!}
-sim (assign-● x) _ = {!!}
+sim {μ₁′ = μ₁′} (β-cast-pc v) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+sim {μ₁′ = μ₁′} {Σ = Σ} (app-● v) μ≈ =
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ app-● (erase-val-value v) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
+sim {μ₁′ = μ₁′} {Σ = Σ} if-● μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ if-● ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
+sim {μ₁′ = μ₁′} {Σ = Σ} deref-● μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ deref-● ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
+sim {μ₁′ = μ₁′} {Σ = Σ} (assign-● v) μ≈ =
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign-● (erase-val-value v) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
 
