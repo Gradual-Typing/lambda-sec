@@ -238,6 +238,13 @@ plug-mult F (_ ∣ _ ∣ _ ∣ _ ∎) = _ ∣ _ ∣ _ ∣ _ ∎
 plug-mult F (_ ∣ _ ∣ _ ∣ _ —→⟨ R ⟩ R*) =
   _ ∣ _ ∣ _ ∣ _ —→⟨ ξ {F = F} R ⟩ plug-mult F R*
 
+prot-ctx-mult : ∀ {M M′ μ μ′ Σ pc ℓ}
+  → M ∣ μ ∣ Σ ∣ pc ⋎ ℓ —↠ M′ ∣ μ′
+  → prot[ ℓ ] M ∣ μ ∣ Σ ∣ pc —↠ prot[ ℓ ] M′ ∣ μ′
+prot-ctx-mult (_ ∣ _ ∣ _ ∣ .(_ ⋎ _) ∎) = _ ∣ _ ∣ _ ∣ _ ∎
+prot-ctx-mult (_ ∣ _ ∣ _ ∣ .(_ ⋎ _) —→⟨ R ⟩ R*) =
+  _ ∣ _ ∣ _ ∣ _ —→⟨ prot-ctx R ⟩ prot-ctx-mult R*
+
 plug-error-mult : ∀ {μ Σ pc e} (F : Frame)
   → plug (error e) F ∣ μ ∣ Σ ∣ pc —↠ error e ∣ μ
 plug-error-mult {Σ = Σ} F = _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err ⟩ _ ∣ _ ∣ Σ ∣ _ ∎

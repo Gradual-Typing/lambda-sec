@@ -24,9 +24,9 @@ _≈_ : ∀ (μ μ′ : Heap) → Set
   → key _≟_ μ a ≡ just ⟨ V , low ⟩
   → ∃[ V′ ] (key _≟_ μ′ a ≡ just ⟨ V′ , low ⟩) × (V′ ≡ erase V)
 
-erase-plug : ∀ {M₁ M₂ μ₁ μ₂ Σ} (F : Frame)
-  → erase M₁ ∣ μ₁ ∣ Σ ∣ low —↠ erase M₂ ∣ μ₂
-  → erase (plug M₁ F) ∣ μ₁ ∣ Σ ∣ low —↠ erase (plug M₂ F) ∣ μ₂
+erase-plug : ∀ {M₁ M₂ μ₁ μ₂ Σ pc} (F : Frame)
+  → erase M₁ ∣ μ₁ ∣ Σ ∣ pc —↠ erase M₂ ∣ μ₂
+  → erase (plug M₁ F) ∣ μ₁ ∣ Σ ∣ pc —↠ erase (plug M₂ F) ∣ μ₂
 erase-plug (□· M) R* = plug-mult (□· erase M) R*
 erase-plug ((V ·□) v) R* = plug-mult ((erase V ·□) (erase-val-value v)) R*
 erase-plug (ref✓[ ℓ ]□) R* = plug-mult ref✓[ ℓ ]□ R*
@@ -39,8 +39,8 @@ erase-plug (if□ A M N) R* = plug-mult (if□ A (erase M) (erase N)) R*
 erase-plug □⟨ c ⟩ R* = R*
 erase-plug cast-pc g □ R* = R*
 
-erase-plug-error : ∀ {e μ Σ} (F : Frame)
-  → erase (plug (error e) F) ∣ μ ∣ Σ ∣ low —↠ error e ∣ μ
+erase-plug-error : ∀ {e μ Σ pc} (F : Frame)
+  → erase (plug (error e) F) ∣ μ ∣ Σ ∣ pc —↠ error e ∣ μ
 erase-plug-error (□· M) = plug-error-mult (□· erase M)
 erase-plug-error ((V ·□) v) = plug-error-mult ((erase V ·□) (erase-val-value v))
 erase-plug-error (ref✓[ ℓ ]□) = plug-error-mult ref✓[ ℓ ]□
@@ -53,20 +53,19 @@ erase-plug-error (if□ A M N) = plug-error-mult (if□ A (erase M) (erase N))
 erase-plug-error □⟨ c ⟩ = _ ∣ _ ∣ _ ∣ _ ∎
 erase-plug-error cast-pc g □ = _ ∣ _ ∣ _ ∣ _ ∎
 
-sim : ∀ {M₁ M₂ μ₁ μ₁′ μ₂ Σ}
-  → M₁ ∣ μ₁ ∣ Σ ∣ low —→ M₂ ∣ μ₂
+sim : ∀ {M₁ M₂ μ₁ μ₁′ μ₂ Σ pc}
+  → M₁ ∣ μ₁ ∣ Σ ∣ pc —→ M₂ ∣ μ₂
   → μ₁ ≈ μ₁′
     -----------------------------------------------------------------------
-  → ∃[ μ₂′ ] (erase M₁ ∣ μ₁′ ∣ Σ ∣ low —↠ erase M₂ ∣ μ₂′) × (μ₂ ≈ μ₂′)
+  → ∃[ μ₂′ ] (erase M₁ ∣ μ₁′ ∣ Σ ∣ pc —↠ erase M₂ ∣ μ₂′) × (μ₂ ≈ μ₂′)
 sim {M₁} {M₂} {μ₁} {μ₁′} (ξ {F = F} M₁→M₂) μ₁≈ =
-  case sim {μ₁ = μ₁} {μ₁′} M₁→M₂ μ₁≈ of λ where
-  ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ →
+  let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim {μ₁ = μ₁} {μ₁′} M₁→M₂ μ₁≈ in
     ⟨ μ₂′ , erase-plug F eraseM₁↠eraseM₂ , μ₂≈ ⟩
 sim {μ₁′ = μ₁′} (ξ-err {F}) μ≈ = ⟨ μ₁′ , erase-plug-error F , μ≈ ⟩
 sim {μ₁′ = μ₁′} {Σ = Σ} (prot-val {V} {ℓ = ℓ} v) μ≈ with ℓ
-... | high rewrite erase-stamp-high v = ⟨ μ₁′ , ● ∣ μ₁′ ∣ _ ∣ low ∎ , μ≈ ⟩
+... | high rewrite erase-stamp-high v = ⟨ μ₁′ , ● ∣ μ₁′ ∣ _ ∣ _ ∎ , μ≈ ⟩
 ... | low  =
-  ⟨ μ₁′ , prot[ low ] erase V ∣ μ₁′ ∣ Σ ∣ low —→⟨ prot-val (erase-val-value v) ⟩ eq ∣ μ₁′ ∣ Σ ∣ low ≡∎ , μ≈ ⟩
+  ⟨ μ₁′ , prot[ low ] erase V ∣ μ₁′ ∣ Σ ∣ _ —→⟨ prot-val (erase-val-value v) ⟩ eq ∣ μ₁′ ∣ Σ ∣ _ ≡∎ , μ≈ ⟩
   where
   eq =
     begin
@@ -76,7 +75,13 @@ sim {μ₁′ = μ₁′} {Σ = Σ} (prot-val {V} {ℓ = ℓ} v) μ≈ with ℓ
      ≡⟨ cong erase (sym (stamp-val-low v)) ⟩
      erase (stamp-val V v low)
      ∎
-sim (prot-ctx R) μ≈ = {!!}
+sim {M₁} {M₂} {μ₁} {μ₁′} {Σ = Σ} (prot-ctx {ℓ = ℓ} M₁→M₂) μ₁≈ with ℓ
+... | low  =
+  let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim {μ₁ = μ₁} {μ₁′} M₁→M₂ μ₁≈ in
+  ⟨ μ₂′ , prot-ctx-mult eraseM₁↠eraseM₂ , μ₂≈ ⟩
+... | high =
+  let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim {μ₁ = μ₁} {μ₁′} M₁→M₂ μ₁≈ in
+  ⟨ μ₂′ , {!!} , μ₂≈ ⟩
 sim prot-err μ≈ = {!!}
 sim {μ₁′ = μ₁′} {Σ = Σ} (β {V} {N} {ℓ = ℓ} v) μ≈ with ℓ
 ... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ β (erase-val-value v) ⟩ cong prot[ low ]_ eq ∣ _ ∣ Σ ∣ _ ≡∎ , μ≈ ⟩
