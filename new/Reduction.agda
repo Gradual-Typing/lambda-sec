@@ -30,7 +30,7 @@ data Frame : Set where
 
   _:=✓□ : (V : Term) → Value V → Frame
 
-  let□ : Term → Frame
+  let□_ : Term → Frame
 
   if□ : Type → Term → Term → Frame
 
@@ -230,3 +230,10 @@ data _∣_∣_∣_—↠_∣_ : Term → Heap → HeapContext → StaticLabel �
 
 _∣_∣_∣_≡∎ : ∀ {M M′} → M ≡ M′ → ∀ μ Σ pc → M ∣ μ ∣ Σ ∣ pc —↠ M′ ∣ μ
 M≡M′ ∣ μ ∣ Σ ∣ pc ≡∎ rewrite M≡M′ = _ ∣ _ ∣ _ ∣ _ ∎
+
+plug-mult : ∀ {M M′ μ μ′ Σ pc} (F : Frame)
+  → M ∣ μ ∣ Σ ∣ pc —↠ M′ ∣ μ′
+  → plug M F ∣ μ ∣ Σ ∣ pc —↠ plug M′ F ∣ μ′
+plug-mult F (_ ∣ _ ∣ _ ∣ _ ∎) = _ ∣ _ ∣ _ ∣ _ ∎
+plug-mult F (_ ∣ _ ∣ _ ∣ _ —→⟨ R ⟩ R*) =
+  _ ∣ _ ∣ _ ∣ _ —→⟨ ξ {F = F} R ⟩ plug-mult F R*

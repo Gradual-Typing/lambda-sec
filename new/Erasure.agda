@@ -14,6 +14,8 @@ open import CC
 open import Reduction
 open import Utils
 
+
+{- **** Type erasure **** -}
 -- Replace every label by low
 ⌈_⌉ : Type → Type
 ⌈ ` ι of g ⌉           = ` ι of l low
@@ -30,6 +32,8 @@ erasure-consis (~-ty _ (~-fun _ A~C B~D)) =
 
 erase/c : ∀ {A B} → Cast A ⇒ B → Cast ⌈ A ⌉ ⇒ ⌈ B ⌉
 erase/c (cast A B p A~B) = cast ⌈ A ⌉ ⌈ B ⌉ p (erasure-consis A~B)
+
+{- **** Term erasure **** -}
 
 -- erase : Term → Term
 -- erase (addr a of ℓ) =
@@ -97,12 +101,6 @@ erase (cast-pc g M) = erase M
 erase (error e) = error e
 erase ● = ●
 
-erase-μ : Heap → Heap
-erase-μ [] = []
-erase-μ (⟨ a , V , low  ⟩ ∷ μ) = ⟨ a , erase V , low ⟩ ∷ erase-μ μ
-erase-μ (⟨ a , V , high ⟩ ∷ μ) = ⟨ a , ● , high ⟩ ∷ erase-μ μ
-
-
 erase-val-value : ∀ {V} (v : Value V) → Value (erase V)
 erase-val-value (V-addr {ℓ = ℓ}) with ℓ
 ... | low  = V-addr
@@ -122,3 +120,10 @@ erase-stamp-high (V-ƛ {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
 erase-stamp-high (V-const {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
 erase-stamp-high (V-cast v i) = erase-stamp-high v
 erase-stamp-high V-● = refl
+
+
+{- **** Heap erasure **** -}
+erase-μ : Heap → Heap
+erase-μ [] = []
+erase-μ (⟨ a , V , low  ⟩ ∷ μ) = ⟨ a , erase V , low ⟩ ∷ erase-μ μ
+erase-μ (⟨ a , V , high ⟩ ∷ μ) = ⟨ a , ● , high ⟩ ∷ erase-μ μ
