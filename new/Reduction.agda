@@ -237,3 +237,7 @@ plug-mult : ∀ {M M′ μ μ′ Σ pc} (F : Frame)
 plug-mult F (_ ∣ _ ∣ _ ∣ _ ∎) = _ ∣ _ ∣ _ ∣ _ ∎
 plug-mult F (_ ∣ _ ∣ _ ∣ _ —→⟨ R ⟩ R*) =
   _ ∣ _ ∣ _ ∣ _ —→⟨ ξ {F = F} R ⟩ plug-mult F R*
+
+plug-error-mult : ∀ {μ Σ pc e} (F : Frame)
+  → plug (error e) F ∣ μ ∣ Σ ∣ pc —↠ error e ∣ μ
+plug-error-mult {Σ = Σ} F = _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err ⟩ _ ∣ _ ∣ Σ ∣ _ ∎
