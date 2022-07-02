@@ -14,44 +14,11 @@ open import TypeBasedCast
 open import Heap
 open import CC
 open import Reduction
-open import Erasure
 open import Utils
 
+open import Erasure
+open import RelatedHeaps
 
-{- Related heaps -}
-_≈_ : ∀ (μ μ′ : Heap) → Set
-μ ≈ μ′ = ∀ a {V}
-  → key _≟_ μ a ≡ just ⟨ V , low ⟩
-  → ∃[ V′ ] (key _≟_ μ′ a ≡ just ⟨ V′ , low ⟩) × (V′ ≡ erase V)
-
-erase-plug : ∀ {M₁ M₂ μ₁ μ₂ Σ pc} (F : Frame)
-  → erase M₁ ∣ μ₁ ∣ Σ ∣ pc —↠ erase M₂ ∣ μ₂
-  → erase (plug M₁ F) ∣ μ₁ ∣ Σ ∣ pc —↠ erase (plug M₂ F) ∣ μ₂
-erase-plug (□· M) R* = plug-mult (□· erase M) R*
-erase-plug ((V ·□) v) R* = plug-mult ((erase V ·□) (erase-val-value v)) R*
-erase-plug (ref✓[ ℓ ]□) R* = plug-mult ref✓[ ℓ ]□ R*
-erase-plug !□ R* = plug-mult !□ R*
-erase-plug (□:=? M) R* = plug-mult (□:=? erase M) R*
-erase-plug (□:=✓ M) R* = plug-mult (□:=✓ erase M) R*
-erase-plug ((V :=✓□) v) R* = plug-mult ((erase V :=✓□) (erase-val-value v)) R*
-erase-plug (let□ N) R* = plug-mult (let□ erase N) R*
-erase-plug (if□ A M N) R* = plug-mult (if□ A (erase M) (erase N)) R*
-erase-plug □⟨ c ⟩ R* = R*
-erase-plug cast-pc g □ R* = R*
-
-erase-plug-error : ∀ {e μ Σ pc} (F : Frame)
-  → erase (plug (error e) F) ∣ μ ∣ Σ ∣ pc —↠ error e ∣ μ
-erase-plug-error (□· M) = plug-error-mult (□· erase M)
-erase-plug-error ((V ·□) v) = plug-error-mult ((erase V ·□) (erase-val-value v))
-erase-plug-error (ref✓[ ℓ ]□) = plug-error-mult ref✓[ ℓ ]□
-erase-plug-error !□ = plug-error-mult !□
-erase-plug-error (□:=? M) = plug-error-mult (□:=? erase M)
-erase-plug-error (□:=✓ M) = plug-error-mult (□:=✓ erase M)
-erase-plug-error ((V :=✓□) v) = plug-error-mult ((erase V :=✓□) (erase-val-value v))
-erase-plug-error (let□ N) = plug-error-mult (let□ erase N)
-erase-plug-error (if□ A M N) = plug-error-mult (if□ A (erase M) (erase N))
-erase-plug-error □⟨ c ⟩ = _ ∣ _ ∣ _ ∣ _ ∎
-erase-plug-error cast-pc g □ = _ ∣ _ ∣ _ ∣ _ ∎
 
 sim : ∀ {M₁ M₂ μ₁ μ₁′ μ₂ Σ pc}
   → M₁ ∣ μ₁ ∣ Σ ∣ pc —→ M₂ ∣ μ₂
