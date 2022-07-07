@@ -40,9 +40,14 @@ _≋_ : ∀ (μ μ′ : Heap) → Set
 ≋-refl : ∀ μ → μ ≋ μ
 ≋-refl μ = ⟨ (λ a eq → ⟨ _ , eq , refl ⟩) , (λ a eq → ⟨ _ , eq , refl ⟩) ⟩
 
+-- μ≋-update : ∀ {μ a V} → μ ≋ (⟨ a , V , high ⟩ ∷ μ)
+-- μ≋-update {μ} {a₁} {V₁} = ?
+
+
 ref✓-erase-inv : ∀ {Γ Σ gc pc A M N′ ℓ}
   → Γ ; Σ ; gc ; pc ⊢ M ⦂ A
   → ref✓[ ℓ ] N′ ≡ erase M
+    --------------------------------------
   → pc ≼ ℓ
 ref✓-erase-inv (⊢const {ℓ = ℓ}) with ℓ
 ... | low  = λ ()
@@ -53,7 +58,7 @@ ref✓-erase-inv (⊢addr {ℓ = ℓ} _) with ℓ
 ref✓-erase-inv (⊢lam {ℓ = ℓ} ⊢N) with ℓ
 ... | low  = λ ()
 ... | high = λ ()
-ref✓-erase-inv (⊢ref✓ ⊢M x) eq = {!!}
+ref✓-erase-inv (⊢ref✓ ⊢M pc≼ℓ) refl = pc≼ℓ
 ref✓-erase-inv (⊢prot {ℓ = ℓ} ⊢M) with ℓ
 ... | low  = λ ()
 ... | high = λ ()
@@ -61,9 +66,6 @@ ref✓-erase-inv {M = M ⟨ c ⟩} (⊢cast ⊢M) eq = ref✓-erase-inv ⊢M eq
 ref✓-erase-inv (⊢cast-pc ⊢M pc~g) eq = ref✓-erase-inv ⊢M eq
 ref✓-erase-inv (⊢sub ⊢M A<:B) eq = ref✓-erase-inv ⊢M eq
 ref✓-erase-inv (⊢sub-pc ⊢M gc<:gc′) eq = ref✓-erase-inv ⊢M eq
-
--- μ≋-update : ∀ {μ a V} → μ ≋ (⟨ a , V , high ⟩ ∷ μ)
--- μ≋-update {μ} {a₁} {V₁} = ?
 
 high-pc-≋ : ∀ {Σ gc A M M₁ M₂ μ₁ μ₂}
   → M₁ ∣ μ₁ ∣ Σ ∣ high —→ M₂ ∣ μ₂
