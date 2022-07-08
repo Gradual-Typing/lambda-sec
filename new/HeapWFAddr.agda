@@ -1,4 +1,4 @@
-module WFAddr where
+module HeapWFAddr where
 
 open import Data.Nat
 open import Data.List
