@@ -42,13 +42,11 @@ sim {μ₁′ = μ₁′} {Σ = Σ} (prot-val {V} {ℓ = ℓ} v) μ≈ with ℓ
      ≡⟨ cong erase (sym (stamp-val-low v)) ⟩
      erase (stamp-val V v low)
      ∎
-sim {M₁} {M₂} {μ₁} {μ₁′} {Σ = Σ} (prot-ctx {ℓ = ℓ} M₁→M₂) μ₁≈ with ℓ
-... | low  =
+sim {M₁} {M₂} {μ₁} {μ₁′} {μ₂} {Σ = Σ} (prot-ctx {ℓ = ℓ} M₁→M₂) μ₁≈ with ℓ
+... | low  = {- This case is like ξ because pc ⋎ low = pc -}
   let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim {μ₁ = μ₁} {μ₁′} M₁→M₂ μ₁≈ in
   ⟨ μ₂′ , prot-ctx-mult eraseM₁↠eraseM₂ , μ₂≈ ⟩
-... | high =
-  let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim {μ₁ = μ₁} {μ₁′} M₁→M₂ μ₁≈ in
-  ⟨ μ₂′ , {!!} , μ₂≈ ⟩
+... | high = {!!}
 sim prot-err μ≈ = {!!}
 sim {μ₁′ = μ₁′} {Σ = Σ} (β {V} {N} {ℓ = ℓ} v) μ≈ with ℓ
 ... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ β (erase-val-value v) ⟩ cong prot[ low ]_ eq ∣ _ ∣ Σ ∣ _ ≡∎ , μ≈ ⟩
@@ -72,7 +70,17 @@ sim (deref x) = {!!}
 sim assign-static = {!!}
 sim (assign?-ok x x₁) = {!!}
 sim (assign?-fail x x₁) = {!!}
-sim (assign x x₁) = {!!}
+sim {μ₁ = μ₁} {μ₁′} {Σ = Σ} (assign {V} {a = a} {ℓ} {ℓ₁} v eq) μ₁≈
+  with ℓ₁ | ℓ
+... | low  | low  =
+  ⟨ ⟨ a , erase V , low ⟩ ∷ μ₁′ ,
+     _ ∣ _ ∣ Σ ∣ _ —→⟨ assign (erase-val-value v) (μ₁≈ a eq) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈-low μ₁≈ ⟩
+... | low  | high = {!!} {- Need to discriminate this case -}
+... | high | low  =
+  ⟨ {!!} , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign (erase-val-value v) {!!} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , {!!} ⟩
+... | high | high =
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign-● (erase-val-value v) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ ,
+    {!!} ⟩
 sim (cast ⊢V v a) = {!!}
 sim (if-cast-true x) = {!!}
 sim (if-cast-false x) = {!!}
