@@ -6,7 +6,7 @@ open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; trans; sym; subst; cong; cong₂)
+open Eq using (_≡_; refl; trans; sym; subst; cong)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 open import Function using (case_of_)
 
@@ -43,6 +43,19 @@ _≈_ : ∀ (μ μ′ : Heap) → Set
 ... | yes _ = λ ()
 ... | no _  = λ eq → μ≈ a eq
 
+≈-trans : ∀ {μ₁ μ₂ μ₃} → μ₁ ≈ μ₂ → μ₂ ≈ μ₃ → μ₁ ≈ μ₃
+≈-trans {μ₁} {μ₂} {μ₃} μ₁≈μ₂ μ₂≈μ₃ a {V} {low} eq =
+  begin
+    key _≟_ μ₃ a
+    ≡⟨ μ₂≈μ₃ a (μ₁≈μ₂ a eq) ⟩
+    just ⟨ erase (erase V) , low ⟩
+    ≡⟨ cong (λ □ → just ⟨ □ , low ⟩) (sym (erase-idem V)) ⟩
+    just ⟨ erase V , low ⟩
+    ∎
+≈-trans μ₁≈μ₂ μ₂≈μ₃ a {V} {high} eq = μ₂≈μ₃ a (μ₁≈μ₂ a eq)
+
+postulate
+  erase-≈ : ∀ μ → μ ≈ erase-μ μ
+
 erase-pres-≈ : ∀ {μ μ′} → μ ≈ μ′ → μ ≈ erase-μ μ′
-erase-pres-≈ μ≈μ′ a {V} {low} eq = let eq₁ = μ≈μ′ a eq in {!!}
-erase-pres-≈ μ≈μ′ a {V} {high} = {!!}
+erase-pres-≈ {μ} {μ′} μ≈μ′ = ≈-trans {μ} {μ′} {erase-μ μ′} μ≈μ′ (erase-≈ μ′)
