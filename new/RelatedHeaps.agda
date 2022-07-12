@@ -43,37 +43,6 @@ _≈_ : ∀ (μ μ′ : Heap) → Set
 ... | yes _ = λ ()
 ... | no _  = λ eq → μ≈ a eq
 
-
-erase-idem : ∀ M → erase M ≡ erase (erase M)
-erase-idem (addr a of ℓ) with ℓ
-... | low  = refl
-... | high = refl
-erase-idem ($ k of ℓ) with ℓ
-... | low  = refl
-... | high = refl
-erase-idem (` x) = refl
-erase-idem (ƛ[ pc ] A ˙ N of ℓ) with ℓ
-... | low  = cong (ƛ[ pc ] A ˙_of low) (erase-idem N)
-... | high = refl
-erase-idem (L · M) = cong₂ _·_ (erase-idem L) (erase-idem M)
-erase-idem (if L A M N) rewrite sym (erase-idem L) =
-  cong₂ (if _ A) (erase-idem M) (erase-idem N)
-erase-idem (`let M N) = cong₂ `let (erase-idem M) (erase-idem N)
-erase-idem (ref[ ℓ ]  M) = cong ref[ ℓ ]_ (erase-idem M)
-erase-idem (ref?[ ℓ ] M) = cong ref?[ ℓ ]_ (erase-idem M)
-erase-idem (ref✓[ ℓ ] M) = cong ref✓[ ℓ ]_ (erase-idem M)
-erase-idem (! M) = cong !_ (erase-idem M)
-erase-idem (L := M) = cong₂ _:=_ (erase-idem L) (erase-idem M)
-erase-idem (L :=? M) = cong₂ _:=?_ (erase-idem L) (erase-idem M)
-erase-idem (L :=✓ M) = cong₂ _:=✓_ (erase-idem L) (erase-idem M)
-erase-idem (M ⟨ c ⟩) = erase-idem M
-erase-idem (prot ℓ M) with ℓ
-... | low  = cong (prot low) (erase-idem M)
-... | high = refl
-erase-idem (cast-pc g M) = erase-idem M
-erase-idem (error e) = refl
-erase-idem ● = refl
-
 erase-pres-≈ : ∀ {μ μ′} → μ ≈ μ′ → μ ≈ erase-μ μ′
 erase-pres-≈ μ≈μ′ a {V} {low} eq = let eq₁ = μ≈μ′ a eq in {!!}
 erase-pres-≈ μ≈μ′ a {V} {high} = {!!}

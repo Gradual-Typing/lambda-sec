@@ -4,7 +4,7 @@ open import Data.Nat
 open import Data.List using (List; _∷_; [])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; sym; subst; cong)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; sym; subst; cong; cong₂)
 open import Function using (case_of_)
 
 open import Types
@@ -79,6 +79,36 @@ erase-val-value (V-const {ℓ = ℓ}) with ℓ
 ... | high = V-●
 erase-val-value (V-cast v i) = erase-val-value v
 erase-val-value V-● = V-●
+
+erase-idem : ∀ M → erase M ≡ erase (erase M)
+erase-idem (addr a of ℓ) with ℓ
+... | low  = refl
+... | high = refl
+erase-idem ($ k of ℓ) with ℓ
+... | low  = refl
+... | high = refl
+erase-idem (` x) = refl
+erase-idem (ƛ[ pc ] A ˙ N of ℓ) with ℓ
+... | low  = cong (ƛ[ pc ] A ˙_of low) (erase-idem N)
+... | high = refl
+erase-idem (L · M) = cong₂ _·_ (erase-idem L) (erase-idem M)
+erase-idem (if L A M N) rewrite sym (erase-idem L) =
+  cong₂ (if _ A) (erase-idem M) (erase-idem N)
+erase-idem (`let M N) = cong₂ `let (erase-idem M) (erase-idem N)
+erase-idem (ref[ ℓ ]  M) = cong ref[ ℓ ]_ (erase-idem M)
+erase-idem (ref?[ ℓ ] M) = cong ref?[ ℓ ]_ (erase-idem M)
+erase-idem (ref✓[ ℓ ] M) = cong ref✓[ ℓ ]_ (erase-idem M)
+erase-idem (! M) = cong !_ (erase-idem M)
+erase-idem (L := M) = cong₂ _:=_ (erase-idem L) (erase-idem M)
+erase-idem (L :=? M) = cong₂ _:=?_ (erase-idem L) (erase-idem M)
+erase-idem (L :=✓ M) = cong₂ _:=✓_ (erase-idem L) (erase-idem M)
+erase-idem (M ⟨ c ⟩) = erase-idem M
+erase-idem (prot ℓ M) with ℓ
+... | low  = cong (prot low) (erase-idem M)
+... | high = refl
+erase-idem (cast-pc g M) = erase-idem M
+erase-idem (error e) = refl
+erase-idem ● = refl
 
 erase-stamp-high : ∀ {V} (v : Value V) → erase (stamp-val V v high) ≡ ●
 erase-stamp-high (V-addr {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl
