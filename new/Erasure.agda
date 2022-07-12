@@ -34,40 +34,6 @@ erase/c : ∀ {A B} → Cast A ⇒ B → Cast ⌈ A ⌉ ⇒ ⌈ B ⌉
 erase/c (cast A B p A~B) = cast ⌈ A ⌉ ⌈ B ⌉ p (erasure-consis A~B)
 
 {- **** Term erasure **** -}
-
--- erase : Term → Term
--- erase (addr a of ℓ) =
---   case ℓ of λ where
---   low  → addr a of low
---   high → ●
--- erase ($ k of ℓ) =
---   case ℓ of λ where
---   low  → $ k of low
---   high → ●
--- erase (` x) = ` x
--- erase (ƛ[ pc ] A ˙ N of ℓ) =
---   case ℓ of λ where
---   low  → ƛ[ low ] ⌈ A ⌉ ˙ (erase N) of low
---   high → ●
--- erase (L · M) = erase L · erase M
--- erase (if L A M N) = if (erase L) ⌈ A ⌉ (erase M) (erase N)
--- erase (`let M N) = `let (erase M) (erase N)
--- erase (ref[ ℓ ] M) = ref[ low ] erase M
--- erase (ref?[ ℓ ] M) = ref?[ low ] erase M
--- erase (ref✓[ ℓ ] M) = ref✓[ low ] erase M
--- erase (! M) = ! erase M
--- erase (L := M) = erase L := erase M
--- erase (L :=? M) = erase L :=? erase M
--- erase (L :=✓ M) = erase L :=✓ erase M
--- erase (M ⟨ c ⟩) = erase M ⟨ erase/c c ⟩
--- erase (prot ℓ M) =
---   case ℓ of λ where
---   low  → prot low erase M
---   high → ●
--- erase (cast-pc g M) = erase M
--- erase (error e) = error e
--- erase ● = ●
-
 erase : Term → Term
 erase (addr a of ℓ) =
   case ℓ of λ where
