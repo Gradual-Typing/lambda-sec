@@ -102,7 +102,7 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
   ⊢prot : ∀ {Γ Σ gc pc A M ℓ}
     → Γ ; Σ ; gc ⋎̃ l ℓ ; pc ⋎ ℓ ⊢ M ⦂ A
       ----------------------------------------------- CCProt
-    → Γ ; Σ ; gc ; pc ⊢ prot[ ℓ ] M ⦂ stamp A (l ℓ)
+    → Γ ; Σ ; gc ; pc ⊢ prot ℓ M ⦂ stamp A (l ℓ)
 
   ⊢cast : ∀ {Γ Σ gc pc A B M} {c : Cast A ⇒ B}
     → Γ ; Σ ; gc ; pc ⊢ M ⦂ A

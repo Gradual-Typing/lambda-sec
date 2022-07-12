@@ -73,7 +73,7 @@ pattern _:=_  L M                = op-assign ⦅ cons (ast L) (cons (ast M) nil)
 pattern _:=?_ L M                = op-assign? ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern _:=✓_ L M                = op-assign✓ ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern _⟨_⟩ M c                 = (op-cast c) ⦅ cons (ast M) nil ⦆
-pattern prot[_]_ ℓ M             = (op-prot ℓ) ⦅ cons (ast M) nil ⦆      {- protection term -}
+pattern prot ℓ M                 = (op-prot ℓ) ⦅ cons (ast M) nil ⦆      {- protection term -}
 pattern cast-pc g M              = (op-cast-pc g) ⦅ cons (ast M) nil ⦆
 pattern error e                  = (op-error e) ⦅ nil ⦆                  {- blame / nsu error -}
 pattern ●                       = op-opaque ⦅ nil ⦆                     {- opaque value -}

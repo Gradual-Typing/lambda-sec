@@ -60,9 +60,9 @@ erase/c (cast A B p A~B) = cast ⌈ A ⌉ ⌈ B ⌉ p (erasure-consis A~B)
 -- erase (L :=? M) = erase L :=? erase M
 -- erase (L :=✓ M) = erase L :=✓ erase M
 -- erase (M ⟨ c ⟩) = erase M ⟨ erase/c c ⟩
--- erase (prot[ ℓ ] M) =
+-- erase (prot ℓ M) =
 --   case ℓ of λ where
---   low  → prot[ low ] erase M
+--   low  → prot low erase M
 --   high → ●
 -- erase (cast-pc g M) = erase M
 -- erase (error e) = error e
@@ -93,9 +93,9 @@ erase (L := M) = erase L := erase M
 erase (L :=? M) = erase L :=? erase M
 erase (L :=✓ M) = erase L :=✓ erase M
 erase (M ⟨ c ⟩) = erase M  {- let's try simply deleting the cast -}
-erase (prot[ ℓ ] M) =
+erase (prot ℓ M) =
   case ℓ of λ where
-  low  → prot[ low ] erase M
+  low  → prot low (erase M)
   high → ●
 erase (cast-pc g M) = erase M
 erase (error e) = error e

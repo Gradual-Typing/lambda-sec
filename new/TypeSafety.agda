@@ -122,7 +122,7 @@ progress pc (L :=✓ M) (⊢assign✓ ⊢L ⊢M pc≼ℓ) μ ⊢μ =
         (I-ref _ I-label I-label) → step (assign-cast (ref-is-value r) w i)
     (err (E-error {e})) → step (ξ-err {F = (L :=✓□) v} {e = e})
   (err (E-error {e})) → step (ξ-err {F = □:=✓ M} {e = e})
-progress pc (prot[ ℓ ] M) (⊢prot ⊢M) μ ⊢μ =
+progress pc (prot ℓ M) (⊢prot ⊢M) μ ⊢μ =
   case progress (pc ⋎ ℓ) M ⊢M μ ⊢μ of λ where
   (step M→N) → step (prot-ctx M→N)
   (done v) → step (prot-val v)
