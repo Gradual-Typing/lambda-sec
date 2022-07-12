@@ -80,7 +80,7 @@ sim {μ₁ = μ₁} {μ₁′} {Σ = Σ} (assign {V} {a = a} {ℓ} {ℓ₁} v eq
   ⟨ {!!} , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign (erase-val-value v) {!!} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , {!!} ⟩
 ... | high | high =
   ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign-● (erase-val-value v) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ ,
-    {!!} ⟩
+    μ≈-high-update μ₁≈ eq ⟩
 sim (cast ⊢V v a) = {!!}
 sim (if-cast-true x) = {!!}
 sim (if-cast-false x) = {!!}

@@ -30,15 +30,15 @@ _≈_ : ∀ (μ μ′ : Heap) → Set
      low  → key _≟_ μ′ a ≡ just ⟨ erase V , low  ⟩
      high → key _≟_ μ′ a ≡ just ⟨ ●      , high ⟩
 
--- μ≈-high : ∀ {μ μ′ a V} → μ ≈ μ′ → ⟨ a , V , high ⟩ ∷ μ ≈ μ′
--- μ≈-high {μ} {μ′} {a₁} {V₁} μ≈ a {V} with a ≟ a₁
--- ... | yes _ = λ ()
--- ... | no  _ = λ eq → μ≈ a eq
+μ≈-high-update : ∀ {μ μ′ a V₁ V₂} → μ ≈ μ′ → key _≟_ μ a ≡ just ⟨ V₁ , high ⟩ → ⟨ a , V₂ , high ⟩ ∷ μ ≈ μ′
+μ≈-high-update {μ} {μ′} {a₁} {V₁} {V₂} μ≈ eq a {V} {ℓ} with a ≟ a₁
+... | yes refl = λ { refl → μ≈ a eq }
+... | no  _    = λ eq → μ≈ a eq
 
 μ≈-low : ∀ {μ μ′ a V} → μ ≈ μ′ → ⟨ a , V , low ⟩ ∷ μ ≈ ⟨ a , erase V , low ⟩ ∷ μ′
 μ≈-low {μ} {μ′} {a₁} {V₁} μ≈ a {ℓ = low}  with a ≟ a₁
 ... | yes _ = λ { refl → refl }
 ... | no  _ = λ eq → μ≈ a eq
 μ≈-low {μ} {μ′} {a₁} {V₁} μ≈ a {ℓ = high} with a ≟ a₁
-...   | yes _ = λ ()
-...   | no _  = λ eq → μ≈ a eq
+... | yes _ = λ ()
+... | no _  = λ eq → μ≈ a eq
