@@ -54,8 +54,21 @@ _≈_ : ∀ (μ μ′ : Heap) → Set
     ∎
 ≈-trans μ₁≈μ₂ μ₂≈μ₃ a {V} {high} eq = μ₂≈μ₃ a (μ₁≈μ₂ a eq)
 
-postulate
-  erase-≈ : ∀ μ → μ ≈ erase-μ μ
+
+erase-≈ : ∀ μ → μ ≈ erase-μ μ
+erase-≈ [] = λ _ ()
+erase-≈ (⟨ a₁ , V₁ , low  ⟩ ∷ μ) a {V} {low} with a ≟ a₁
+... | yes _ = λ { refl → refl }
+... | no  _ = λ eq → erase-≈ μ a eq
+erase-≈ (⟨ a₁ , V₁ , low  ⟩ ∷ μ) a {V} {high} with a ≟ a₁
+... | yes _ = λ ()
+... | no  _ = λ eq → erase-≈ μ a eq
+erase-≈ (⟨ a₁ , V₁ , high ⟩ ∷ μ) a {V} {low} with a ≟ a₁
+... | yes _ = λ ()
+... | no  _ = λ eq → erase-≈ μ a eq
+erase-≈ (⟨ a₁ , V₁ , high ⟩ ∷ μ) a {V} {high} with a ≟ a₁
+... | yes _ = λ { refl → refl }
+... | no  _ = λ eq → erase-≈ μ a eq
 
 erase-pres-≈ : ∀ {μ μ′} → μ ≈ μ′ → μ ≈ erase-μ μ′
 erase-pres-≈ {μ} {μ′} μ≈μ′ = ≈-trans {μ} {μ′} {erase-μ μ′} μ≈μ′ (erase-≈ μ′)
