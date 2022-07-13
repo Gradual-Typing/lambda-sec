@@ -77,7 +77,9 @@ sim {μ₁ = μ₁} {μ₁′} {Σ = Σ} (assign {V} {a = a} {ℓ} {ℓ₁} v eq
      _ ∣ _ ∣ Σ ∣ _ —→⟨ assign (erase-val-value v) (μ₁≈ a eq) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈-low μ₁≈ ⟩
 ... | low  | high = {!!} {- Need to discriminate this case -}
 ... | high | low  =
-  ⟨ {!!} , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign (erase-val-value v) {!!} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , {!!} ⟩
+  let ⟨ V′ , eq′ ⟩ = μ₁≈ a eq in
+  ⟨ ⟨ a , erase V , high ⟩ ∷ μ₁′  , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign (erase-val-value v) eq′ ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ ,
+    μ≈-high μ₁≈ ⟩
 ... | high | high =
   ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign-● (erase-val-value v) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ ,
     μ≈-high-update μ₁≈ eq ⟩
