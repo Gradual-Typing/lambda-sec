@@ -145,42 +145,6 @@ progress pc M (⊢sub ⊢M _) μ ⊢μ = progress pc M ⊢M μ ⊢μ
 progress pc M (⊢sub-pc ⊢M _) μ ⊢μ = progress pc M ⊢M μ ⊢μ
 
 
-plug-inversion : ∀ {Σ gc pc M A} {F : Frame}
-  → [] ; Σ ; gc ; pc ⊢ plug M F ⦂ A
-  → l pc ≾ gc
-    -------------------------------------------------------------
-  → ∃[ gc′ ] ∃[ B ]
-       (l pc ≾ gc′) × ([] ; Σ ; gc′ ; pc ⊢ M ⦂ B) ×
-       (∀ {Σ′ M′} → [] ; Σ′ ; gc′ ; pc ⊢ M′ ⦂ B → Σ′ ⊇ Σ → [] ; Σ′ ; gc ; pc ⊢ plug M′ F ⦂ A)
-plug-inversion {F = □· M} (⊢app ⊢L ⊢M) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢app ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
-plug-inversion {F = (V ·□) v} (⊢app ⊢V ⊢M) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢app (relax-Σ ⊢V Σ′⊇Σ) ⊢M′) ⟩
-plug-inversion {F = ref✓[ ℓ ]□} (⊢ref✓ ⊢M pc≼ℓ) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢ref✓ ⊢M′ pc≼ℓ) ⟩
-plug-inversion {F = !□} (⊢deref ⊢M) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢deref ⊢M′) ⟩
-plug-inversion {F = □:=? M} (⊢assign? ⊢L ⊢M) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign? ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
-plug-inversion {F = □:=✓ M} (⊢assign✓ ⊢L ⊢M pc≼ℓ) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign✓ ⊢L′ (relax-Σ ⊢M Σ′⊇Σ) pc≼ℓ) ⟩
-plug-inversion {F = (V :=✓□) v} (⊢assign✓ ⊢V ⊢M pc≼ℓ) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢assign✓ (relax-Σ ⊢V Σ′⊇Σ) ⊢M′ pc≼ℓ) ⟩
-plug-inversion {F = let□ N} (⊢let ⊢M ⊢N) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢let ⊢M′ (relax-Σ ⊢N Σ′⊇Σ)) ⟩
-plug-inversion {F = if□ A M N} (⊢if ⊢L ⊢M ⊢N) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢if ⊢L′ (relax-Σ ⊢M Σ′⊇Σ) (relax-Σ ⊢N Σ′⊇Σ)) ⟩
-plug-inversion {F = □⟨ c ⟩} (⊢cast ⊢M) pc≾gc =
-  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast ⊢M′) ⟩
-plug-inversion {F = cast-pc g □} (⊢cast-pc ⊢M pc~g) _ =
-  ⟨ g , _ , proj₁ (~ₗ→≾ pc~g) , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast-pc ⊢M′ pc~g) ⟩
-plug-inversion (⊢sub ⊢M A<:B) pc≾gc =
-  let ⟨ gc′ , B , pc≾gc′ , ⊢M , wt-plug ⟩ = plug-inversion ⊢M pc≾gc in
-  ⟨ gc′ , B , pc≾gc′ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢sub (wt-plug ⊢M′ Σ′⊇Σ) A<:B) ⟩
-plug-inversion (⊢sub-pc ⊢plug gc<:gc′) pc≾gc =
-  let ⟨ gc″ , B , pc≾gc″ , ⊢M , wt-plug ⟩ = plug-inversion ⊢plug (≾-<: pc≾gc gc<:gc′) in
-  ⟨ gc″ , B , pc≾gc″ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢sub-pc (wt-plug ⊢M′ Σ′⊇Σ) gc<:gc′) ⟩
-
 preserve : ∀ {Σ gc pc M M′ A μ μ′}
   → [] ; Σ ; gc ; pc ⊢ M ⦂ A
   → Σ ⊢ μ

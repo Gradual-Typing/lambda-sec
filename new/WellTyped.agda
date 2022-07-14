@@ -10,11 +10,9 @@ open import Function using (case_of_)
 open import Utils
 open import Types
 open import TypeBasedCast
-open import CCSyntax Cast_⇒_
-open import CCTyping Cast_⇒_
-open import Values
-open import ApplyCast
-
+open import CC
+open import Reduction
+open import HeapTyping
 
 
 {- Function and reference predicates respect type -}
@@ -28,7 +26,7 @@ ref-wt : ∀ {Σ V gc pc A g}
   → Reference V Σ (Ref A of g)
   → [] ; Σ ; gc ; pc ⊢ V ⦂ Ref A of g
 ref-wt (Ref-addr eq sub)     = ⊢sub (⊢addr eq) sub
-ref-wt (Ref-proxy ref i sub) = ⊢sub (⊢cast (ref-wt ref)) sub
+ref-wt (Ref-proxy r i sub) = ⊢sub (⊢cast (ref-wt r)) sub
 
 {- "Opaque" is not well-typed -}
 ●-nwt : ∀ {Σ gc pc A} → ¬ ([] ; Σ ; gc ; pc ⊢ ● ⦂ A)
@@ -50,6 +48,44 @@ stamp-val-wt ⊢const V-const = ⊢const
 stamp-val-wt (⊢cast ⊢V) (V-cast v i) = ⊢cast (stamp-val-wt ⊢V v)
 stamp-val-wt (⊢sub ⊢V A<:B) v = ⊢sub (stamp-val-wt ⊢V v) (stamp-<: A<:B <:ₗ-refl)
 stamp-val-wt (⊢sub-pc ⊢V gc<:gc′) v = ⊢sub-pc (stamp-val-wt ⊢V v) gc<:gc′
+
+
+{- Plug inversion -}
+plug-inversion : ∀ {Σ gc pc M A} {F : Frame}
+  → [] ; Σ ; gc ; pc ⊢ plug M F ⦂ A
+  → l pc ≾ gc
+    -------------------------------------------------------------
+  → ∃[ gc′ ] ∃[ B ]
+       (l pc ≾ gc′) × ([] ; Σ ; gc′ ; pc ⊢ M ⦂ B) ×
+       (∀ {Σ′ M′} → [] ; Σ′ ; gc′ ; pc ⊢ M′ ⦂ B → Σ′ ⊇ Σ → [] ; Σ′ ; gc ; pc ⊢ plug M′ F ⦂ A)
+plug-inversion {F = □· M} (⊢app ⊢L ⊢M) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢app ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
+plug-inversion {F = (V ·□) v} (⊢app ⊢V ⊢M) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢app (relax-Σ ⊢V Σ′⊇Σ) ⊢M′) ⟩
+plug-inversion {F = ref✓[ ℓ ]□} (⊢ref✓ ⊢M pc≼ℓ) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢ref✓ ⊢M′ pc≼ℓ) ⟩
+plug-inversion {F = !□} (⊢deref ⊢M) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢deref ⊢M′) ⟩
+plug-inversion {F = □:=? M} (⊢assign? ⊢L ⊢M) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign? ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
+plug-inversion {F = □:=✓ M} (⊢assign✓ ⊢L ⊢M pc≼ℓ) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign✓ ⊢L′ (relax-Σ ⊢M Σ′⊇Σ) pc≼ℓ) ⟩
+plug-inversion {F = (V :=✓□) v} (⊢assign✓ ⊢V ⊢M pc≼ℓ) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢assign✓ (relax-Σ ⊢V Σ′⊇Σ) ⊢M′ pc≼ℓ) ⟩
+plug-inversion {F = let□ N} (⊢let ⊢M ⊢N) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢let ⊢M′ (relax-Σ ⊢N Σ′⊇Σ)) ⟩
+plug-inversion {F = if□ A M N} (⊢if ⊢L ⊢M ⊢N) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢if ⊢L′ (relax-Σ ⊢M Σ′⊇Σ) (relax-Σ ⊢N Σ′⊇Σ)) ⟩
+plug-inversion {F = □⟨ c ⟩} (⊢cast ⊢M) pc≾gc =
+  ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast ⊢M′) ⟩
+plug-inversion {F = cast-pc g □} (⊢cast-pc ⊢M pc~g) _ =
+  ⟨ g , _ , proj₁ (~ₗ→≾ pc~g) , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢cast-pc ⊢M′ pc~g) ⟩
+plug-inversion (⊢sub ⊢M A<:B) pc≾gc =
+  let ⟨ gc′ , B , pc≾gc′ , ⊢M , wt-plug ⟩ = plug-inversion ⊢M pc≾gc in
+  ⟨ gc′ , B , pc≾gc′ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢sub (wt-plug ⊢M′ Σ′⊇Σ) A<:B) ⟩
+plug-inversion (⊢sub-pc ⊢plug gc<:gc′) pc≾gc =
+  let ⟨ gc″ , B , pc≾gc″ , ⊢M , wt-plug ⟩ = plug-inversion ⊢plug (≾-<: pc≾gc gc<:gc′) in
+  ⟨ gc″ , B , pc≾gc″ , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢sub-pc (wt-plug ⊢M′ Σ′⊇Σ) gc<:gc′) ⟩
 
 
 {- Applying cast is well-typed -}
