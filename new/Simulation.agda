@@ -53,7 +53,7 @@ sim {Σ} {M₁ = M₁} {M₂} {μ₁} {μ₁′} {μ₂} (⊢prot ⊢M) ⊢μ₁
 ... | low  = {- This case is like ξ because pc ⋎ low = pc -}
   let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim {μ₁ = μ₁} {μ₁′} ⊢M ⊢μ₁ (consis-join-≾ pc≾gc ≾-refl) M₁→M₂ μ₁≈ in
   ⟨ μ₂′ , prot-ctx-mult eraseM₁↠eraseM₂ , μ₂≈ ⟩
-... | high = {!!}
+... | high = ⟨ erase-μ μ₂ , _ ∣ _ ∣ Σ ∣ _ —→⟨ ●-● ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , erase-≈ μ₂ ⟩
 sim _ ⊢μ₁ _ prot-err μ≈ = {!!}
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (β {V} {N} {ℓ = ℓ} v) μ≈ with ℓ
 ... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ β (erase-val-value v) ⟩ cong (prot low) eq ∣ _ ∣ Σ ∣ _ ≡∎ , μ≈ ⟩
@@ -74,9 +74,23 @@ sim _ ⊢μ₁ _ (ref?-ok x) _ = {!!}
 sim _ ⊢μ₁ _ (ref?-fail x) _ = {!!}
 sim _ ⊢μ₁ _ (ref x x₁) = {!!}
 sim _ ⊢μ₁ _ (deref x) = {!!}
-sim _ ⊢μ₁ _ assign-static = {!!}
-sim _ ⊢μ₁ _ (assign?-ok x x₁) = {!!}
-sim _ ⊢μ₁ _ (assign?-fail x x₁) = {!!}
+sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ assign-static μ≈ =
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign-static ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
+sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (assign?-ok {a = a} {ℓ} {ℓ₁} eq pc≼ℓ₁) μ₁≈ with ℓ
+... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign?-ok● ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ₁≈ ⟩
+... | low with ℓ₁
+...   | low =
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign?-ok (μ₁≈ a eq) pc≼ℓ₁ ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ₁≈ ⟩
+...   | high =
+  let ⟨ V′ , eq′ ⟩ = μ₁≈ a eq in
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign?-ok eq′ pc≼ℓ₁ ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ₁≈ ⟩
+sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (assign?-fail {a = a} {ℓ} {ℓ₁} eq pc⋠ℓ₁) μ₁≈ with ℓ
+... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign?-fail● ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ₁≈ ⟩
+... | low with ℓ₁
+... |   low = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign?-fail (μ₁≈ a eq) pc⋠ℓ₁ ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ₁≈ ⟩
+... |   high =
+  let ⟨ V′ , eq′ ⟩ = μ₁≈ a eq in
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ assign?-fail eq′ pc⋠ℓ₁ ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ₁≈ ⟩
 sim {Σ} {μ₁ = μ₁} {μ₁′} (⊢assign✓ {ℓ = ℓ′} ⊢a ⊢V pc≼ℓ′) ⊢μ₁ _ (assign {V} {a = a} {ℓ} {ℓ₁} v eq) μ₁≈
   with ℓ₁ | ℓ
 ... | low  | low  =
@@ -105,10 +119,12 @@ sim _ ⊢μ₁ _ (deref-cast x x₁) = {!!}
 sim _ ⊢μ₁ _ (assign?-cast x i) = {!!}
 sim _ ⊢μ₁ _ (assign-cast x x₁ i) = {!!}
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (β-cast-pc v) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
-sim (⊢app ⊢● _)         ⊢μ₁ _ (app-● v)    μ≈ = contradiction ⊢● ●-nwt
-sim (⊢if ⊢● _ _)        ⊢μ₁ _ if-●         μ≈ = contradiction ⊢● ●-nwt
-sim (⊢deref ⊢●)         ⊢μ₁ _ deref-●      μ≈ = contradiction ⊢● ●-nwt
-sim (⊢assign✓ ⊢● _ _)  ⊢μ₁ _ (assign-● v) μ≈ = contradiction ⊢● ●-nwt
-sim (⊢sub ⊢M A<:B)       ⊢μ₁ pc≾gc M₁→M₂    μ≈ = sim ⊢M ⊢μ₁ pc≾gc M₁→M₂ μ≈
-sim (⊢sub-pc ⊢M gc<:gc′) ⊢μ₁ pc≾gc M₁→M₂    μ≈ = sim ⊢M ⊢μ₁ (≾-<: pc≾gc gc<:gc′) M₁→M₂ μ≈
+sim (⊢app ⊢● _)         ⊢μ₁ _ (app-● v)     μ≈ = contradiction ⊢● ●-nwt
+sim (⊢if ⊢● _ _)        ⊢μ₁ _ if-●          μ≈ = contradiction ⊢● ●-nwt
+sim (⊢deref ⊢●)         ⊢μ₁ _ deref-●       μ≈ = contradiction ⊢● ●-nwt
+sim (⊢assign? ⊢● _)     ⊢μ₁ _ assign?-ok●   μ≈ = contradiction ⊢● ●-nwt
+sim (⊢assign? ⊢● _)     ⊢μ₁ _ assign?-fail● μ≈ = contradiction ⊢● ●-nwt
+sim (⊢assign✓ ⊢● _ _)  ⊢μ₁ _ (assign-● v)  μ≈ = contradiction ⊢● ●-nwt
+sim (⊢sub ⊢M A<:B)       ⊢μ₁ pc≾gc M₁→M₂     μ≈ = sim ⊢M ⊢μ₁ pc≾gc M₁→M₂ μ≈
+sim (⊢sub-pc ⊢M gc<:gc′) ⊢μ₁ pc≾gc M₁→M₂     μ≈ = sim ⊢M ⊢μ₁ (≾-<: pc≾gc gc<:gc′) M₁→M₂ μ≈
 
