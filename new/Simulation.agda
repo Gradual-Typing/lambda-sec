@@ -15,7 +15,6 @@ open import Types
 open import TypeBasedCast
 open import Heap
 open import CC
-open import Reduction
 open import ErasedReduction
 open import HeapTyping
 open import WellTyped
@@ -32,10 +31,10 @@ sim : ∀ {Σ gc pc A M₁ M₂ μ₁ μ₁′ μ₂}
   → μ₁ ≈ μ₁′
     -----------------------------------------------------------------------
   → ∃[ μ₂′ ] (erase M₁ ∣ μ₁′ ∣ Σ ∣ pc —↠ₑ erase M₂ ∣ μ₂′) × (μ₂ ≈ μ₂′)
-sim {M₁ = M₁} {M₂} {μ₁} {μ₁′} ⊢M₁ ⊢μ₁ pc≾gc (ξ {F = F} M₁→M₂) μ₁≈ = {!!}
-  -- let ⟨ gc′ , B , pc≾gc′ , ⊢M , _ ⟩    = plug-inversion ⊢M₁ pc≾gc in
-  -- let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim ⊢M ⊢μ₁ pc≾gc′ M₁→M₂ μ₁≈ in
-  -- ⟨ μ₂′ , r* (erase-plug F eraseM₁↠eraseM₂) , μ₂≈ ⟩
+sim {M₁ = M₁} {M₂} {μ₁} {μ₁′} ⊢M₁ ⊢μ₁ pc≾gc (ξ {F = F} M₁→M₂) μ₁≈ =
+  let ⟨ gc′ , B , pc≾gc′ , ⊢M , _ ⟩    = plug-inversion ⊢M₁ pc≾gc in
+  let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim ⊢M ⊢μ₁ pc≾gc′ M₁→M₂ μ₁≈ in
+  ⟨ μ₂′ , erase-plug F eraseM₁↠eraseM₂ , μ₂≈ ⟩
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ξ-err {F}) μ≈ = {!!} -- ⟨ μ₁′ , erase-plug-error F , μ≈ ⟩
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (prot-val {V} {ℓ = ℓ} v) μ≈ = {!!}
 
@@ -60,46 +59,46 @@ sim {Σ} {M₁ = M₁} {M₂} {μ₁} {μ₁′} {μ₂} (⊢prot ⊢M) ⊢μ₁
 -- ... | high = ⟨ erase-μ μ₂ , _ ∣ _ ∣ Σ ∣ _ —→⟨ ●-● ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , erase-≈ μ₂ ⟩
 sim _ ⊢μ₁ _ prot-err μ≈ = {!!}
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (β {V} {N} {ℓ = ℓ} v) μ≈ with ℓ
-... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r (β (erase-val-value v)) ⟩ cong (prot low) eq ∣ _ ∣ Σ ∣ _ ≡∎ₑ , μ≈ ⟩
+... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ β (erase-val-value v) ⟩ cong (prot low) eq ∣ _ ∣ Σ ∣ _ ≡∎ₑ , μ≈ ⟩
   where
   eq : erase N [ erase V ] ≡ erase (N [ V ])
   eq = {!!}
 ... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ app-● (erase-val-value v) ⟩ ● ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (β-if-true {ℓ = ℓ}) μ≈ with ℓ
-... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r β-if-true ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
+... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ β-if-true ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
 ... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ if-●     ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (β-if-false {ℓ = ℓ}) μ≈ with ℓ
-... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r β-if-false ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
+... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ β-if-false ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
 ... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ if-●      ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
 sim _ ⊢μ₁ _ (β-let x) μ≈ = {!!}
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ ref-static μ≈ =
-  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r ref-static ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ ref-static ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
 sim _ ⊢μ₁ _ (ref?-ok x) _ = {!!}
 sim _ ⊢μ₁ _ (ref?-fail x) _ = {!!}
 sim _ ⊢μ₁ _ (ref x x₁) = {!!}
 sim _ ⊢μ₁ _ (deref x) = {!!}
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ assign-static μ≈ =
-  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r assign-static ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ assign-static ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈ ⟩
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (assign?-ok {a = a} {ℓ} {ℓ₁} eq pc≼ℓ₁) μ₁≈ with ℓ
 ... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ assign?-ok● ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ₁≈ ⟩
 ... | low with ℓ₁
 ...   | low =
-  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r (assign?-ok (μ₁≈ a eq) pc≼ℓ₁) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ₁≈ ⟩
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ assign?-ok (μ₁≈ a eq) pc≼ℓ₁ ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ₁≈ ⟩
 ...   | high =
   let ⟨ V′ , eq′ ⟩ = μ₁≈ a eq in
-  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r (assign?-ok eq′ pc≼ℓ₁) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ₁≈ ⟩
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ assign?-ok eq′ pc≼ℓ₁ ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ₁≈ ⟩
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (assign?-fail {a = a} {ℓ} {ℓ₁} eq pc⋠ℓ₁) μ₁≈ with ℓ
 ... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ assign?-fail● ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ₁≈ ⟩
 ... | low with ℓ₁
-... |   low = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r (assign?-fail (μ₁≈ a eq) pc⋠ℓ₁) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ₁≈ ⟩
+... |   low = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ assign?-fail (μ₁≈ a eq) pc⋠ℓ₁ ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ₁≈ ⟩
 ... |   high =
   let ⟨ V′ , eq′ ⟩ = μ₁≈ a eq in
-  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r (assign?-fail eq′ pc⋠ℓ₁) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ₁≈ ⟩
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ assign?-fail eq′ pc⋠ℓ₁ ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ₁≈ ⟩
 sim {Σ} {μ₁ = μ₁} {μ₁′} (⊢assign✓ {ℓ = ℓ′} ⊢a ⊢V pc≼ℓ′) ⊢μ₁ _ (assign {V} {a = a} {ℓ} {ℓ₁} v eq) μ₁≈
   with ℓ₁ | ℓ
 ... | low  | low  =
   ⟨ ⟨ a , erase V , low ⟩ ∷ μ₁′ ,
-     _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r (assign (erase-val-value v) (μ₁≈ a eq)) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈-low μ₁≈ ⟩
+     _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ assign (erase-val-value v) (μ₁≈ a eq) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ , μ≈-low μ₁≈ ⟩
 ... | low  | high =  {- This case is impossible -}
  case canonical-ref ⊢a V-addr of λ where
  (Ref-addr eq₁ (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
@@ -110,7 +109,7 @@ sim {Σ} {μ₁ = μ₁} {μ₁′} (⊢assign✓ {ℓ = ℓ′} ⊢a ⊢V pc≼
     refl → contradiction ℓ≼ℓ′ λ ()  {- high ⋠ low -}
 ... | high | low  =
   let ⟨ V′ , eq′ ⟩ = μ₁≈ a eq in
-  ⟨ ⟨ a , erase V , high ⟩ ∷ μ₁′  , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ r (assign (erase-val-value v) eq′) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ ,
+  ⟨ ⟨ a , erase V , high ⟩ ∷ μ₁′  , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ assign (erase-val-value v) eq′ ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ ,
     μ≈-high μ₁≈ ⟩
 ... | high | high =
   ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→ₑ⟨ assign-● (erase-val-value v) ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ₑ ,
