@@ -28,15 +28,6 @@ ref-wt : ∀ {Σ V gc pc A g}
 ref-wt (Ref-addr eq sub)     = ⊢sub (⊢addr eq) sub
 ref-wt (Ref-proxy r i sub) = ⊢sub (⊢cast (ref-wt r)) sub
 
-{- "Opaque" is not well-typed -}
-●-nwt : ∀ {Σ gc pc A} → ¬ ([] ; Σ ; gc ; pc ⊢ ● ⦂ A)
-●-nwt {A = ` ι of g} ⊢● =
-  case canonical-const ⊢● V-● of λ ()
-●-nwt {A = (Ref A) of g} ⊢● =
-  case canonical-ref ⊢● V-● of λ ()
-●-nwt {A = [ gc ] A ⇒ B of g} ⊢● =
-  case canonical-fun ⊢● V-● of λ ()
-
 {- Value stamping is well-typed -}
 stamp-val-wt : ∀ {Σ gc pc V A ℓ}
   → [] ; Σ ; gc ; pc ⊢ V ⦂ A
