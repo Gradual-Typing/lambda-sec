@@ -189,9 +189,34 @@ data _∣_∣_∣_—→ₑ_∣_ : Term → Heap → HeapContext → StaticLabel
     → ● ∣ μ ∣ Σ ∣ pc —→ₑ ● ∣ μ′
 
 
-open import MultiStep _∣_∣_∣_—→ₑ_∣_ ξ prot-ctx public
-  renaming (
-    _∣_∣_∣_—↠_∣_ to _∣_∣_∣_—↠ₑ_∣_;
-    _∣_∣_∣_∎ to _∣_∣_∣_∎ₑ;
-    _∣_∣_∣_—→⟨_⟩_ to _∣_∣_∣_—→ₑ⟨_⟩_;
-    _∣_∣_∣_≡∎ to _∣_∣_∣_≡∎ₑ)
+infix  2 _∣_∣_∣_—↠ₑ_∣_
+infixr 2 _∣_∣_∣_—→⟨_⟩_
+infix  3 _∣_∣_∣_∎
+
+data _∣_∣_∣_—↠ₑ_∣_ : Term → Heap → HeapContext → StaticLabel → Term → Heap → Set where
+
+    _∣_∣_∣_∎ : ∀ M μ Σ pc
+        -----------------------------------
+      → M ∣ μ ∣ Σ ∣ pc —↠ₑ M ∣ μ
+
+    _∣_∣_∣_—→⟨_⟩_ : ∀ L μ Σ pc {M N μ′ μ″ Σ′}
+      → L ∣ μ  ∣ Σ  ∣ pc —→ₑ M ∣ μ′
+      → M ∣ μ′ ∣ Σ′ ∣ pc —↠ₑ N ∣ μ″
+        -----------------------------------
+      → L ∣ μ  ∣ Σ  ∣ pc —↠ₑ N ∣ μ″
+
+_∣_∣_∣_≡∎ : ∀ {M M′} → M ≡ M′ → ∀ μ Σ pc → M ∣ μ ∣ Σ ∣ pc —↠ₑ M′ ∣ μ
+M≡M′ ∣ μ ∣ Σ ∣ pc ≡∎ rewrite M≡M′ = _ ∣ _ ∣ _ ∣ _ ∎
+
+plug-mult : ∀ {M M′ μ μ′ Σ pc} (F : Frame)
+  → M ∣ μ ∣ Σ ∣ pc —↠ₑ M′ ∣ μ′
+  → plug M F ∣ μ ∣ Σ ∣ pc —↠ₑ plug M′ F ∣ μ′
+plug-mult F (_ ∣ _ ∣ _ ∣ _ ∎) = _ ∣ _ ∣ _ ∣ _ ∎
+plug-mult F (_ ∣ _ ∣ _ ∣ _ —→⟨ R ⟩ R*) = _ ∣ _ ∣ _ ∣ _ —→⟨ ξ {F = F} R ⟩ plug-mult F R*
+
+prot-ctx-mult : ∀ {M M′ μ μ′ Σ pc ℓ}
+  → M ∣ μ ∣ Σ ∣ pc ⋎ ℓ —↠ₑ M′ ∣ μ′
+  → prot ℓ M ∣ μ ∣ Σ ∣ pc —↠ₑ prot ℓ M′ ∣ μ′
+prot-ctx-mult (_ ∣ _ ∣ _ ∣ .(_ ⋎ _) ∎) = _ ∣ _ ∣ _ ∣ _ ∎
+prot-ctx-mult (_ ∣ _ ∣ _ ∣ .(_ ⋎ _) —→⟨ R ⟩ R*) = _ ∣ _ ∣ _ ∣ _ —→⟨ prot-ctx R ⟩ prot-ctx-mult R*
+
