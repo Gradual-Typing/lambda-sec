@@ -20,7 +20,7 @@ data Err : Term → Set where
 
 data Value : Term → Set where
   V-addr : ∀ {a ℓ} → Value (addr a of ℓ)
-  V-ƛ : ∀ {gc A N ℓ} → Value (ƛ[ gc ] A ˙ N of ℓ)
+  V-ƛ : ∀ {pc A N ℓ} → Value (ƛ[ pc ] A ˙ N of ℓ)
   V-const : ∀ {ι} {k : rep ι} {ℓ} → Value ($ k of ℓ)
   V-cast : ∀ {A B V} {c : Cast A ⇒ B}
     → Value V → Inert c → Value (V ⟨ c ⟩)
@@ -215,7 +215,7 @@ stamp-inert-inert (I-ref c I-label I-label) =
 
 stamp-val : ∀ V → Value V → StaticLabel → Term
 stamp-val (addr a of ℓ₁) V-addr ℓ = addr a of (ℓ₁ ⋎ ℓ)
-stamp-val (ƛ[ gc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ gc ] A ˙ N of (ℓ₁ ⋎ ℓ)
+stamp-val (ƛ[ pc ] A ˙ N of ℓ₁) V-ƛ ℓ = ƛ[ pc ] A ˙ N of (ℓ₁ ⋎ ℓ)
 stamp-val ($ k of ℓ₁) V-const ℓ = $ k of (ℓ₁ ⋎ ℓ)
 stamp-val (V ⟨ c ⟩) (V-cast v i) ℓ = stamp-val V v ℓ ⟨ stamp-inert c i ℓ ⟩
 stamp-val ● V-● ℓ = ●
