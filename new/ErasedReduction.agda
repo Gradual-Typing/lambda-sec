@@ -158,10 +158,10 @@ data _∣_∣_∣_—→ₑ_∣_ : Term → Heap → HeapContext → StaticLabel
     → cast-pc g V ∣ μ ∣ Σ ∣ pc —→ₑ V ∣ μ
 
   {- Special rules that consume ● -}
-  app-● : ∀ {M V μ Σ pc}
+  app-● : ∀ {V μ Σ pc}
     → Value V
       ----------------------------------- App●
-    → ● · V ∣ μ ∣ Σ ∣ pc —→ₑ discard M {- NOTE: not sure if this is right -} ∣ μ
+    → ● · V ∣ μ ∣ Σ ∣ pc —→ₑ ● ∣ μ
 
   if-● : ∀ {M N μ Σ pc A}
       ---------------------------------------- If●
@@ -184,19 +184,9 @@ data _∣_∣_∣_—→ₑ_∣_ : Term → Heap → HeapContext → StaticLabel
       ------------------------------------------------------------------------ Assign●
     → ● :=✓ V ∣ μ ∣ Σ ∣ pc —→ₑ $ tt of low ∣ μ {- skip the assignment -}
 
-  discard-ctx : ∀ {M M′ μ μ′ Σ pc}
-    → M         ∣ μ ∣ Σ ∣ high —→ₑ M′         ∣ μ′
-      --------------------------------------------------- DiscardContext
-    → discard M ∣ μ ∣ Σ ∣ pc   —→ₑ discard M′ ∣ μ′
-
-  discard-err : ∀ {μ Σ pc e}
-      --------------------------------------------------- DiscardContext
-    → discard (error e) ∣ μ ∣ Σ ∣ pc —→ₑ error e ∣ μ
-
-  β-discard : ∀ {V μ Σ pc}
-    → Value V
-      ------------------------------------- Discard
-    → discard V ∣ μ ∣ Σ ∣ pc —→ₑ ● ∣ μ
+  ●-● : ∀ {μ μ′ Σ pc}
+      ------------------------------------ ●●
+    → ● ∣ μ ∣ Σ ∣ pc —→ₑ ● ∣ μ′
 
 
 infix  2 _∣_∣_∣_—↠ₑ_∣_
@@ -229,12 +219,3 @@ prot-ctx-mult : ∀ {M M′ μ μ′ Σ pc ℓ}
   → prot ℓ M ∣ μ ∣ Σ ∣ pc —↠ₑ prot ℓ M′ ∣ μ′
 prot-ctx-mult (_ ∣ _ ∣ _ ∣ .(_ ⋎ _) ∎) = _ ∣ _ ∣ _ ∣ _ ∎
 prot-ctx-mult (_ ∣ _ ∣ _ ∣ .(_ ⋎ _) —→⟨ R ⟩ R*) = _ ∣ _ ∣ _ ∣ _ —→⟨ prot-ctx R ⟩ prot-ctx-mult R*
-
-discard-ctx-mult : ∀ {M M′ μ μ′ Σ pc}
-  → M ∣ μ ∣ Σ ∣ pc ⋎ high —↠ₑ M′ ∣ μ′
-  → discard M ∣ μ ∣ Σ ∣ pc —↠ₑ discard M′ ∣ μ′
-discard-ctx-mult (_ ∣ _ ∣ _ ∣ _ ∎) = _ ∣ _ ∣ _ ∣ _ ∎
-discard-ctx-mult (_ ∣ _ ∣ _ ∣ _ —→⟨ R ⟩ R*) = _ ∣ _ ∣ _ ∣ _ —→⟨ discard-ctx R† ⟩ discard-ctx-mult R*
-  where
-  R† : _ ∣ _ ∣ _ ∣ high —→ₑ _ ∣ _
-  R† rewrite sym (ℓ⋎high≡high) = R

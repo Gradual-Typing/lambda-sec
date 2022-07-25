@@ -62,11 +62,10 @@ erase (M ⟨ c ⟩) = erase M  {- let's try simply deleting the cast -}
 erase (prot ℓ M) =
   case ℓ of λ where
   low  → prot low (erase M)
-  high → discard (erase M)
+  high → ●
 erase (cast-pc g M) = erase M
 erase (error e) = error e
 erase ● = ●
-erase (discard M) = discard (erase M)
 
 erase-val-value : ∀ {V} (v : Value V) → Value (erase V)
 erase-val-value (V-addr {ℓ = ℓ}) with ℓ
@@ -106,11 +105,10 @@ erase-idem (L :=✓ M) = cong₂ _:=✓_ (erase-idem L) (erase-idem M)
 erase-idem (M ⟨ c ⟩) = erase-idem M
 erase-idem (prot ℓ M) with ℓ
 ... | low  = cong (prot low) (erase-idem M)
-... | high = cong discard (erase-idem M)
+... | high = refl
 erase-idem (cast-pc g M) = erase-idem M
 erase-idem (error e) = refl
 erase-idem ● = refl
-erase-idem (discard M) = cong discard (erase-idem M)
 
 erase-stamp-high : ∀ {V} (v : Value V) → erase (stamp-val V v high) ≡ ●
 erase-stamp-high (V-addr {ℓ = ℓ}) rewrite ℓ⋎high≡high {ℓ} = refl

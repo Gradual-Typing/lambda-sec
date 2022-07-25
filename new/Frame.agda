@@ -85,9 +85,3 @@ plug-not-lam {pc} {A} {N} {ℓ} M F eq = case lam-is-plugged of λ ()
   where
   lam-is-plugged : Plugged (ƛ[ pc ] A ˙ N of ℓ)
   lam-is-plugged rewrite sym eq = plug-is-plugged M F
-
-plug-not-discard : ∀ {N} M F → plug M F ≢ discard N
-plug-not-discard {N} M F eq = case discard-is-plugged of λ ()
-  where
-  discard-is-plugged : Plugged (discard N)
-  discard-is-plugged rewrite sym eq = plug-is-plugged M F
