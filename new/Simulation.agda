@@ -38,7 +38,7 @@ sim {M₁ = M₁} {M₂} {μ₁} {μ₁′} ⊢M₁ ⊢μ₁ pc≾gc (ξ {F = F}
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ξ-err {F}) μ≈ = ⟨ μ₁′ , erase-plug-error F , μ≈ ⟩
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (prot-val {V} {ℓ = ℓ} v) μ≈ with ℓ
 ... | high rewrite erase-stamp-high v =
-  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ β-discard (erase-val-value v) ⟩ ● ∣ μ₁′ ∣ Σ ∣ _ ∎ , μ≈ ⟩
+  ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
 ... | low  =
   ⟨ μ₁′ , prot low (erase V) ∣ μ₁′ ∣ Σ ∣ _ —→⟨ prot-val (erase-val-value v) ⟩ eq ∣ μ₁′ ∣ Σ ∣ _ ≡∎ , μ≈ ⟩
   where
@@ -54,24 +54,22 @@ sim {Σ} {M₁ = M₁} {M₂} {μ₁} {μ₁′} {μ₂} (⊢prot ⊢M) ⊢μ₁
 ... | low  = {- This case is like ξ because pc ⋎ low = pc -}
   let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim {μ₁ = μ₁} {μ₁′} ⊢M ⊢μ₁ (consis-join-≾ pc≾gc ≾-refl) M₁→M₂ μ₁≈ in
   ⟨ μ₂′ , prot-ctx-mult eraseM₁↠eraseM₂ , μ₂≈ ⟩
-... | high =
-  let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim {μ₁ = μ₁} {μ₁′} ⊢M ⊢μ₁ (consis-join-≾ pc≾gc ≾-refl) M₁→M₂ μ₁≈ in
-  ⟨ μ₂′ , discard-ctx-mult eraseM₁↠eraseM₂ , μ₂≈ ⟩
+... | high = ⟨ erase-μ μ₂ , _ ∣ _ ∣ Σ ∣ _ —→⟨ ●-● ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , erase-≈ μ₂ ⟩
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (prot-err {ℓ = ℓ}) μ≈ with ℓ
 ... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ prot-err    ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
-... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ discard-err ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
+... | high = {!!}
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (β {V} {N} {ℓ = ℓ} v) μ≈ with ℓ
 ... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ β (erase-val-value v) ⟩ cong (prot low) eq ∣ _ ∣ Σ ∣ _ ≡∎ , μ≈ ⟩
   where
   eq : erase N [ erase V ] ≡ erase (N [ V ])
   eq = {!!}
-... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ app-● (erase-val-value v) ⟩ discard (erase (N [ V ])) ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
+... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ app-● (erase-val-value v) ⟩ ● ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (β-if-true {ℓ = ℓ}) μ≈ with ℓ
 ... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ β-if-true ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
-... | high = {!!} -- ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ if-●     ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
+... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ if-●     ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ (β-if-false {ℓ = ℓ}) μ≈ with ℓ
 ... | low  = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ β-if-false ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
-... | high = {!!} -- ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ if-●      ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
+... | high = ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ if-●      ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
 sim _ ⊢μ₁ _ (β-let x) μ≈ = {!!}
 sim {Σ} {μ₁′ = μ₁′} _ ⊢μ₁ _ ref-static μ≈ =
   ⟨ μ₁′ , _ ∣ _ ∣ Σ ∣ _ —→⟨ ref-static ⟩ _ ∣ _ ∣ Σ ∣ _ ∎ , μ≈ ⟩
