@@ -133,20 +133,6 @@ erase-plug (if□ A M N) R* = plug-mult (if□ A (erase M) (erase N)) R*
 erase-plug □⟨ c ⟩ R* = R*
 erase-plug cast-pc g □ R* = R*
 
-erase-plug-error : ∀ {pc μ e} (F : Frame)
-  → erase (plug (error e) F) ∣ μ ∣ pc —↠ₑ error e ∣ μ
-erase-plug-error (□· M) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = □· erase M} ⟩ _ ∣ _ ∣ _ ∎
-erase-plug-error ((V ·□) v) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = (erase V ·□) (erase-val-value v)} ⟩ _ ∣ _ ∣ _ ∎
-erase-plug-error ref✓[ ℓ ]□ = _ ∣ _ ∣ _ —→⟨ ξ-err {F = ref✓[ ℓ ]□} ⟩ _ ∣ _ ∣ _ ∎
-erase-plug-error !□ = _ ∣ _ ∣ _ —→⟨ ξ-err {F = !□} ⟩ _ ∣ _ ∣ _ ∎
-erase-plug-error (□:=? M) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = □:=? erase M} ⟩ _ ∣ _ ∣ _ ∎
-erase-plug-error (□:=✓ M) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = □:=✓ erase M} ⟩ _ ∣ _ ∣ _ ∎
-erase-plug-error ((V :=✓□) v) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = (erase V :=✓□) (erase-val-value v)} ⟩ _ ∣ _ ∣ _ ∎
-erase-plug-error (let□ N) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = let□ erase N} ⟩ _ ∣ _ ∣ _ ∎
-erase-plug-error (if□ A M N) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = if□ A (erase M) (erase N)} ⟩ _ ∣ _ ∣ _ ∎
-erase-plug-error □⟨ c ⟩ = _ ∣ _ ∣ _ ∎
-erase-plug-error cast-pc g □ = _ ∣ _ ∣ _ ∎
-
 
 {- **** Heap erasure **** -}
 erase-μ : Heap → Heap
