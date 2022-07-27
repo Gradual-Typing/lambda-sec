@@ -6,7 +6,7 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (_×_; ∃; ∃-syntax; Σ; Σ-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Negation using (contradiction)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong; sym)
 open import Function using (case_of_)
 
 open import Utils
@@ -22,10 +22,13 @@ addr⌿→ eq (ξ-err {F} {e = e}) = plug-not-addr (error e) F eq
 ƛ⌿→ eq (ξ {F = F} _) = plug-not-lam _ F eq
 ƛ⌿→ eq (ξ-err {F} {e = e}) = plug-not-lam (error e) F eq
 
-value⌿→ : ∀ {V M μ μ′ Σ pc} → Value V → ¬ (V ∣ μ ∣ Σ ∣ pc —→ₑ M ∣ μ′)
-value⌿→ v (ξ R) = {!!}
-value⌿→ v ξ-err = {!!}
-value⌿→ (V-cast _ i) (cast _ _ a) = {!!}
+V→V : ∀ {V M μ μ′ Σ pc} → V ∣ μ ∣ Σ ∣ pc —→ₑ M ∣ μ′ → Value V → V ≡ M
+V→V (ξ {F = □⟨ c ⟩} V→M) (V-cast v i) = cong _⟨ c ⟩ (V→V V→M v)
+V→V (ξ-err {F = □⟨ c ⟩}) (V-cast () i)
+V→V (cast ⊢V v† a) (V-cast v i) =
+  {- Cast c can't be active and inert -}
+  {!!}
+V→V ●-● V-● = refl
 
 error⌿→ : ∀ {M M′ μ μ′ Σ pc e} → M ≡ error e → ¬ (M ∣ μ ∣ Σ ∣ pc —→ₑ M′ ∣ μ′)
 error⌿→ eq (ξ {F = F} R) = plug-not-error _ F eq
@@ -40,9 +43,7 @@ determinism : ∀ {M V₁ V₂ μ μ₁ μ₂ Σ pc}
   → Value V₁ → Value V₂
   → V₁ ≡ V₂
 determinism (V₁ ∣ μ ∣ Σ ∣ pc ∎) (V₂ ∣ μ ∣ Σ ∣ pc ∎) v₁ v₂ = refl
-determinism (V₁ ∣ μ ∣ Σ ∣ pc ∎) (V₁ ∣ μ ∣ Σ ∣ pc —→⟨ V₁→N ⟩ N↠V₂) v₁ v₂ =
-  contradiction V₁→N (value⌿→ v₁)
-determinism (V₂ ∣ μ ∣ Σ ∣ pc —→⟨ V₂→N ⟩ N↠V₁) (V₂ ∣ μ ∣ Σ ∣ pc ∎) v₁ v₂ =
-  contradiction V₂→N (value⌿→ v₂)
+determinism (V₁ ∣ μ ∣ Σ ∣ pc ∎) (V₁ ∣ μ ∣ Σ ∣ pc —→⟨ V₁→N ⟩ N↠V₂) v₁ v₂ = {!!}
+determinism (V₂ ∣ μ ∣ Σ ∣ pc —→⟨ V₂→N ⟩ N↠V₁) (V₂ ∣ μ ∣ Σ ∣ pc ∎) v₁ v₂ = {!!}
 determinism (M ∣ μ ∣ Σ ∣ pc —→⟨ M→N₁ ⟩ N₁↠V₁) (M ∣ μ ∣ Σ ∣ pc —→⟨ M→N₂ ⟩ N₂↠V₂) v1 v2 =
   {!!}
