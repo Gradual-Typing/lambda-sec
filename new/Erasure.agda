@@ -118,9 +118,9 @@ erase-stamp-high (V-cast v i) = erase-stamp-high v
 erase-stamp-high V-● = refl
 
 
-erase-plug : ∀ {Σ pc M₁ M₂ μ₁ μ₂} (F : Frame)
-  → erase M₁ ∣ μ₁ ∣ Σ ∣ pc —↠ₑ erase M₂ ∣ μ₂
-  → erase (plug M₁ F) ∣ μ₁ ∣ Σ ∣ pc —↠ₑ erase (plug M₂ F) ∣ μ₂
+erase-plug : ∀ {M₁ M₂ pc μ₁ μ₂} (F : Frame)
+  → erase M₁ ∣ μ₁ ∣ pc —↠ₑ erase M₂ ∣ μ₂
+  → erase (plug M₁ F) ∣ μ₁ ∣ pc —↠ₑ erase (plug M₂ F) ∣ μ₂
 erase-plug (□· M) R* = plug-mult (□· erase M) R*
 erase-plug ((V ·□) v) R* = plug-mult ((erase V ·□) (erase-val-value v)) R*
 erase-plug (ref✓[ ℓ ]□) R* = plug-mult ref✓[ ℓ ]□ R*
@@ -133,28 +133,19 @@ erase-plug (if□ A M N) R* = plug-mult (if□ A (erase M) (erase N)) R*
 erase-plug □⟨ c ⟩ R* = R*
 erase-plug cast-pc g □ R* = R*
 
-erase-plug-error : ∀ {Σ pc μ e} (F : Frame)
-  → erase (plug (error e) F) ∣ μ ∣ Σ ∣ pc —↠ₑ error e ∣ μ
-erase-plug-error {Σ} (□· M) =
-  _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err {F = □· erase M} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎
-erase-plug-error {Σ} ((V ·□) v) =
-  _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err {F = (erase V ·□) (erase-val-value v)} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎
-erase-plug-error {Σ} ref✓[ ℓ ]□ =
-  _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err {F = ref✓[ ℓ ]□} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎
-erase-plug-error {Σ} !□ =
-  _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err {F = !□} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎
-erase-plug-error {Σ} (□:=? M) =
-  _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err {F = □:=? erase M} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎
-erase-plug-error {Σ} (□:=✓ M) =
-  _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err {F = □:=✓ erase M} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎
-erase-plug-error {Σ} ((V :=✓□) v) =
-  _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err {F = (erase V :=✓□) (erase-val-value v)} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎
-erase-plug-error {Σ} (let□ N) =
-  _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err {F = let□ erase N} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎
-erase-plug-error {Σ} (if□ A M N) =
-  _ ∣ _ ∣ Σ ∣ _ —→⟨ ξ-err {F = if□ A (erase M) (erase N)} ⟩ _ ∣ _ ∣ Σ ∣ _ ∎
-erase-plug-error □⟨ c ⟩ = _ ∣ _ ∣ _ ∣ _ ∎
-erase-plug-error cast-pc g □ = _ ∣ _ ∣ _ ∣ _ ∎
+erase-plug-error : ∀ {pc μ e} (F : Frame)
+  → erase (plug (error e) F) ∣ μ ∣ pc —↠ₑ error e ∣ μ
+erase-plug-error (□· M) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = □· erase M} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error ((V ·□) v) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = (erase V ·□) (erase-val-value v)} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error ref✓[ ℓ ]□ = _ ∣ _ ∣ _ —→⟨ ξ-err {F = ref✓[ ℓ ]□} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error !□ = _ ∣ _ ∣ _ —→⟨ ξ-err {F = !□} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error (□:=? M) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = □:=? erase M} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error (□:=✓ M) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = □:=✓ erase M} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error ((V :=✓□) v) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = (erase V :=✓□) (erase-val-value v)} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error (let□ N) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = let□ erase N} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error (if□ A M N) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = if□ A (erase M) (erase N)} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error □⟨ c ⟩ = _ ∣ _ ∣ _ ∎
+erase-plug-error cast-pc g □ = _ ∣ _ ∣ _ ∎
 
 
 {- **** Heap erasure **** -}
