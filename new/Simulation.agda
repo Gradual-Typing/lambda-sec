@@ -65,9 +65,14 @@ sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (β-if-false {ℓ = ℓ}) μ≈ with ℓ
 sim _ ⊢μ₁ _ (β-let x) μ≈ = {!!}
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ ref-static μ≈ =
   ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ ref-static ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
-sim _ ⊢μ₁ _ (ref?-ok x) _ = {!!}
-sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ref?-fail ¬pc≼ℓ) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ fail ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
-sim _ ⊢μ₁ _ (ref x x₁) = {!!}
+sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ref?-ok    pc≼ℓ) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ ref?-ok ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ref?-fail ¬pc≼ℓ) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ fail    ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+sim {μ₁ = μ₁} {μ₁′} _ ⊢μ₁ _ (ref {V} {a = a} {ℓ} v fresh) μ≈ =
+  ⟨ ⟨ a , erase V , ℓ ⟩ ∷ μ₁′ , _ ∣ _ ∣ _ —→⟨ ref (erase-val-value v) ⟩ _ ∣ _ ∣ _ ∎ , μ₂≈μ₂′ ℓ ⟩
+  where
+  μ₂≈μ₂′ : ∀ ℓ → ⟨ a , V , ℓ ⟩ ∷ μ₁ ≈ ⟨ a , erase V , ℓ ⟩ ∷ μ₁′
+  μ₂≈μ₂′ low  = μ≈-low  μ≈
+  μ₂≈μ₂′ high = μ≈-high μ≈
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (deref {ℓ = ℓ} {ℓ₁} eq) μ≈ with ℓ
 ... | high rewrite ℓ⋎high≡high {ℓ₁} = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ deref-● ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
 ... | low  with ℓ₁
