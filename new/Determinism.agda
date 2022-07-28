@@ -10,40 +10,34 @@ open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; con
 open import Function using (case_of_)
 
 open import Utils
+open import Types
 open import CC
 open import TypeBasedCast
 open import ErasedReduction
 
-addr⌿→ : ∀ {M M′ μ μ′ Σ pc a ℓ} → M ≡ addr a of ℓ → ¬ (M ∣ μ ∣ Σ ∣ pc —→ₑ M′ ∣ μ′)
-addr⌿→ eq (ξ {F = F} _) = plug-not-addr _ F eq
-addr⌿→ eq (ξ-err {F} {e = e}) = plug-not-addr (error e) F eq
+Reachable : Term → Set
+Reachable M = Σ[ b ∈ 𝔹 ] ∃[ ℓ ] ∃[ μ ] ∃[ μ′ ] ∃[ pc ] (M ∣ μ ∣ pc —↠ₑ $ b of ℓ ∣ μ′)
 
-ƛ⌿→ : ∀ {M M′ μ μ′ Σ pc pc′ A N ℓ} → M ≡ ƛ[ pc′ ] A ˙ N of ℓ → ¬ (M ∣ μ ∣ Σ ∣ pc —→ₑ M′ ∣ μ′)
-ƛ⌿→ eq (ξ {F = F} _) = plug-not-lam _ F eq
-ƛ⌿→ eq (ξ-err {F} {e = e}) = plug-not-lam (error e) F eq
+error⌿↠const : ∀ {M μ μ′ pc ℓ ι} e (k : rep ι) → M ≡ error e → ¬ (M ∣ μ ∣ pc —↠ₑ $ k of ℓ ∣ μ′)
+error⌿↠const e k eq (_ ∣ μ ∣ pc —→⟨ ξ {F = F} R ⟩ R*) = contradiction eq (plug-not-error _ F)
+error⌿↠const e k eq (M ∣ μ ∣ pc —→⟨ fail ⟩ R*) = error⌿↠const _ k refl R*
 
-V→V : ∀ {V M μ μ′ Σ pc} → V ∣ μ ∣ Σ ∣ pc —→ₑ M ∣ μ′ → Value V → V ≡ M
-V→V (ξ {F = □⟨ c ⟩} V→M) (V-cast v i) = cong _⟨ c ⟩ (V→V V→M v)
-V→V (ξ-err {F = □⟨ c ⟩}) (V-cast () i)
-V→V (cast ⊢V v† a) (V-cast v i) =
-  {- Cast c can't be active and inert -}
-  {!!}
-V→V ●-● V-● = refl
+error-not-reachable : ∀ e → ¬ (Reachable (error e))
+error-not-reachable e ⟨ b , ℓ , μ , μ′ , pc , M↠b ⟩ = contradiction M↠b (error⌿↠const e b refl)
 
-error⌿→ : ∀ {M M′ μ μ′ Σ pc e} → M ≡ error e → ¬ (M ∣ μ ∣ Σ ∣ pc —→ₑ M′ ∣ μ′)
-error⌿→ eq (ξ {F = F} R) = plug-not-error _ F eq
-error⌿→ eq (ξ-err {F} {e = e}) = plug-not-error (error e) F eq
+{- Constant does not step to reachable -}
+const⌿→ : ∀ {M M′ μ μ′ pc ι ℓ} {k : rep ι} → M ≡ $ k of ℓ → Reachable M′ → ¬ (M ∣ μ ∣ pc —→ₑ M′ ∣ μ′)
+const⌿→ eq r (ξ {F = F} R) = plug-not-const _ F eq
+const⌿→ eq r fail = contradiction r (error-not-reachable _)
 
-var⌿→ : ∀ {M M′ μ μ′ Σ pc x} → M ≡ ` x → ¬ (M ∣ μ ∣ Σ ∣ pc —→ₑ M′ ∣ μ′)
-var⌿→ eq = {!!}
-
-determinism : ∀ {M V₁ V₂ μ μ₁ μ₂ Σ pc}
-  → M ∣ μ ∣ Σ ∣ pc —↠ₑ V₁ ∣ μ₁
-  → M ∣ μ ∣ Σ ∣ pc —↠ₑ V₂ ∣ μ₂
-  → Value V₁ → Value V₂
-  → V₁ ≡ V₂
-determinism (V₁ ∣ μ ∣ Σ ∣ pc ∎) (V₂ ∣ μ ∣ Σ ∣ pc ∎) v₁ v₂ = refl
-determinism (V₁ ∣ μ ∣ Σ ∣ pc ∎) (V₁ ∣ μ ∣ Σ ∣ pc —→⟨ V₁→N ⟩ N↠V₂) v₁ v₂ = {!!}
-determinism (V₂ ∣ μ ∣ Σ ∣ pc —→⟨ V₂→N ⟩ N↠V₁) (V₂ ∣ μ ∣ Σ ∣ pc ∎) v₁ v₂ = {!!}
-determinism (M ∣ μ ∣ Σ ∣ pc —→⟨ M→N₁ ⟩ N₁↠V₁) (M ∣ μ ∣ Σ ∣ pc —→⟨ M→N₂ ⟩ N₂↠V₂) v1 v2 =
+determinism : ∀ {M μ μ₁ μ₂ pc} {b₁ b₂ : 𝔹}
+  → M ∣ μ ∣ pc —↠ₑ $ b₁ of low ∣ μ₁
+  → M ∣ μ ∣ pc —↠ₑ $ b₂ of low ∣ μ₂
+  → b₁ ≡ b₂
+determinism ($ b₁ of ℓ ∣ μ ∣ pc ∎) ($ b₁ of ℓ ∣ μ ∣ pc ∎) = refl
+determinism ($ b₁ of ℓ ∣ μ ∣ pc ∎) ($ b₁ of ℓ ∣ μ ∣ pc —→⟨ b₁→M ⟩ M↠b₂) =
+  contradiction b₁→M (const⌿→ refl ⟨ _ , _ , _ , _ , _ , M↠b₂ ⟩)
+determinism ($ b₂ of ℓ ∣ μ ∣ pc —→⟨ b₂→M ⟩ M↠b₁) ($ b₂ of ℓ ∣ μ ∣ pc ∎) =
+  contradiction b₂→M (const⌿→ refl ⟨ _ , _ , _ , _ , _ , M↠b₁ ⟩)
+determinism (M ∣ μ ∣ pc —→⟨ M→N₁ ⟩ N₁↠b₁) (M ∣ μ ∣ pc —→⟨ M→N₂ ⟩ N₂↠b₂) =
   {!!}
