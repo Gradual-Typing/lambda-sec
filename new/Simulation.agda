@@ -42,14 +42,8 @@ sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (prot-val {V} {ℓ = ℓ} v) μ≈ with �
 ... | low  =
   ⟨ μ₁′ , prot low (erase V) ∣ μ₁′ ∣ _ —→⟨ prot-val (erase-val-value v) ⟩ eq ∣ μ₁′ ∣ _ ≡∎ , μ≈ ⟩
   where
-  eq =
-    begin
-     stamp-val (erase V) (erase-val-value v) low
-     ≡⟨ stamp-val-low (erase-val-value v) ⟩
-     erase V
-     ≡⟨ cong erase (sym (stamp-val-low v)) ⟩
-     erase (stamp-val V v low)
-     ∎
+  eq : erase V ≡ erase (stamp-val V v low)
+  eq = cong erase (sym (stamp-val-low v))
 sim {M₁ = M₁} {M₂} {μ₁} {μ₁′} {μ₂} (⊢prot ⊢M) ⊢μ₁ pc≾gc (prot-ctx {ℓ = ℓ} M₁→M₂) μ₁≈ with ℓ
 ... | low  = {- This case is like ξ because pc ⋎ low = pc -}
   let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim {μ₁ = μ₁} {μ₁′} ⊢M ⊢μ₁ (consis-join-≾ pc≾gc ≾-refl) M₁→M₂ μ₁≈ in
@@ -74,7 +68,11 @@ sim {μ₁′ = μ₁′} _ ⊢μ₁ _ ref-static μ≈ =
 sim _ ⊢μ₁ _ (ref?-ok x) _ = {!!}
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ref?-fail ¬pc≼ℓ) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ fail ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
 sim _ ⊢μ₁ _ (ref x x₁) = {!!}
-sim _ ⊢μ₁ _ (deref x) = {!!}
+sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (deref {ℓ = ℓ} {ℓ₁} eq) μ≈ with ℓ
+... | high rewrite ℓ⋎high≡high {ℓ₁} = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ deref-● ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+... | low  with ℓ₁
+...   | low  = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ deref-low  ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+...   | high = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ deref-high ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ assign-static μ≈ =
   ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ assign-static ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (assign?-ok {a = a} {ℓ} {ℓ₁} eq pc≼ℓ₁) μ₁≈ with ℓ
