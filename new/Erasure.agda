@@ -133,6 +133,51 @@ erase-plug (if□ A M N) R* = plug-mult (if□ A (erase M) (erase N)) R*
 erase-plug □⟨ c ⟩ R* = R*
 erase-plug cast-pc g □ R* = R*
 
+{- Predicate of erased term -}
+data Erased : Term → Set where
+  e-var   : ∀ {x} → Erased (` x)
+  e-●      : Erased ●
+  e-ƛ       : ∀ {pc A N}        → Erased N → Erased (ƛ[ pc ] A ˙ N of low)
+  e-const   : ∀ {ι} {k : rep ι} → Erased ($ k of low)
+  e-addr    : ∀ {a}             → Erased (addr a of low)
+  e-app     : ∀ {L M}           → Erased L → Erased M → Erased (L · M)
+  e-if      : ∀ {A L M N}       → Erased L → Erased M → Erased N → Erased (if L A M N)
+  e-let     : ∀ {M N}           → Erased M → Erased N → Erased (`let M N)
+  e-ref     : ∀ {M ℓ}           → Erased M → Erased (ref[ ℓ ] M)
+  e-ref?    : ∀ {M ℓ}           → Erased M → Erased (ref?[ ℓ ] M)
+  e-ref✓    : ∀ {M ℓ}           → Erased M → Erased (ref✓[ ℓ ] M)
+  e-deref   : ∀ {M}             → Erased M → Erased (! M)
+  e-assign  : ∀ {L M}           → Erased L → Erased M → Erased (L := M)
+  e-assign? : ∀ {L M}           → Erased L → Erased M → Erased (L :=? M)
+  e-assign✓ : ∀ {L M}           → Erased L → Erased M → Erased (L :=✓ M)
+  e-prot    : ∀ {M}             → Erased M → Erased (prot low M)
+  e-error   : ∀ {e}             → Erased (error e)
+
+erase-is-erased : ∀ M → Erased (erase M)
+erase-is-erased (addr a of low) = e-addr
+erase-is-erased (addr a of high) = e-●
+erase-is-erased ($ k of low) = e-const
+erase-is-erased ($ k of high) = e-●
+erase-is-erased (` x) = e-var
+erase-is-erased (ƛ[ pc ] A ˙ N of low) = e-ƛ (erase-is-erased N)
+erase-is-erased (ƛ[ pc ] A ˙ N of high) = e-●
+erase-is-erased (L · M) = e-app (erase-is-erased L) (erase-is-erased M)
+erase-is-erased (if L A M N) = e-if (erase-is-erased L) (erase-is-erased M) (erase-is-erased N)
+erase-is-erased (`let M N) = e-let (erase-is-erased M) (erase-is-erased N)
+erase-is-erased (ref[ ℓ ] M) = e-ref (erase-is-erased M)
+erase-is-erased (ref?[ ℓ ] M) = e-ref? (erase-is-erased M)
+erase-is-erased (ref✓[ ℓ ] M) = e-ref✓ (erase-is-erased M)
+erase-is-erased (! M) = e-deref (erase-is-erased M)
+erase-is-erased (L := M) = e-assign (erase-is-erased L) (erase-is-erased M)
+erase-is-erased (L :=? M) = e-assign? (erase-is-erased L) (erase-is-erased M)
+erase-is-erased (L :=✓ M) = e-assign✓ (erase-is-erased L) (erase-is-erased M)
+erase-is-erased (M ⟨ c ⟩) = erase-is-erased M
+erase-is-erased (prot low M) = e-prot (erase-is-erased M)
+erase-is-erased (prot high M) = e-●
+erase-is-erased (cast-pc g M) = erase-is-erased M
+erase-is-erased (error e) = e-error
+erase-is-erased ● = e-●
+
 
 {- **** Heap erasure **** -}
 erase-μ : Heap → Heap

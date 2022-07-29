@@ -74,6 +74,12 @@ plug-not-error {e} M F eq = case error-is-plugged of λ ()
   error-is-plugged : Plugged (error e)
   error-is-plugged rewrite sym eq = plug-is-plugged M F
 
+plug-not-● : ∀ M F → plug M F ≢ ●
+plug-not-● M F eq = case ●-is-plugged of λ ()
+  where
+  ●-is-plugged : Plugged ●
+  ●-is-plugged rewrite sym eq = plug-is-plugged M F
+
 plug-not-addr : ∀ {a ℓ} M F → plug M F ≢ addr a of ℓ
 plug-not-addr {a} {ℓ} M F eq = case addr-is-plugged of λ ()
   where
