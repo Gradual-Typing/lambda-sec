@@ -19,11 +19,21 @@ open import ErasedReduction
 Reachable : Term → Set
 Reachable M = Σ[ b ∈ 𝔹 ] ∃[ ℓ ] ∃[ μ ] ∃[ μ′ ] ∃[ pc ] (M ∣ μ ∣ pc —↠ₑ $ b of ℓ ∣ μ′)
 
-error-unreachable : ∀ e → ¬ (Reachable (error e))
+error-unreachable : ∀ e → ¬ Reachable (error e)
 error-unreachable e ⟨ b , ℓ , μ , μ′ , pc , _ ∣ μ ∣ pc —→⟨ error→M ⟩ _ ⟩ = error⌿→ₑ refl error→M
 
-●-unreachable : ¬ (Reachable ●)
+●-unreachable : ¬ Reachable ●
 ●-unreachable ⟨ b , ℓ , μ , μ′ , pc , _ ∣ μ ∣ pc —→⟨ ●→M ⟩ _ ⟩ = ●⌿→ₑ refl ●→M
+
+discard-unreachable : ∀ M → ¬ Reachable (discard M)
+discard-unreachable M ⟨ b , ℓ , μ , μ′ , pc , discard↠b ⟩ = contradiction discard↠b (discard⌿↠b _ refl)
+  where
+  discard⌿↠b : ∀ {M μ μ′ pc} N → N ≡ discard M → ¬ (N ∣ μ ∣ pc —↠ₑ $ b of ℓ ∣ μ′)
+  discard⌿↠b N eq (_ ∣ _ ∣ _ —→⟨ ξ {F = F} R ⟩ _) = contradiction eq (plug-not-discard _ F)
+  discard⌿↠b N eq (_ ∣ _ ∣ _ —→⟨ ξ-err {F} ⟩ _) = contradiction eq (plug-not-discard _ F)
+  discard⌿↠b N eq (_ ∣ _ ∣ _ —→⟨ discard-ctx _ ⟩ discard↠b) = discard⌿↠b _ refl discard↠b
+  discard⌿↠b N eq (_ ∣ _ ∣ _ —→⟨ discard-err ⟩ error↠b) = contradiction ⟨ _ , _ , _ , _ , _ , error↠b ⟩ (error-unreachable _)
+  discard⌿↠b N eq (_ ∣ _ ∣ _ —→⟨ discard-val _ ⟩ ●↠b) = contradiction ⟨ _ , _ , _ , _ , _ , ●↠b ⟩ ●-unreachable
 
 data Stub : Term → Set where
   stub-●       : Stub ●

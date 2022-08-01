@@ -97,3 +97,9 @@ plug-not-const {ι} {k} {ℓ} M F eq = case const-is-plugged of λ ()
   where
   const-is-plugged : Plugged ($ k of ℓ)
   const-is-plugged rewrite sym eq = plug-is-plugged M F
+
+plug-not-discard : ∀ {N} M F → plug M F ≢ discard N
+plug-not-discard {N} M F eq = case discard-is-plugged of λ ()
+  where
+  discard-is-plugged : Plugged (discard N)
+  discard-is-plugged rewrite sym eq = plug-is-plugged M F
