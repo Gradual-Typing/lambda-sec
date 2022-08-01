@@ -35,7 +35,7 @@ sim {M₁ = M₁} {M₂} {μ₁} {μ₁′} ⊢M₁ ⊢μ₁ pc≾gc (ξ {F = F}
   let ⟨ gc′ , B , pc≾gc′ , ⊢M , _ ⟩    = plug-inversion ⊢M₁ pc≾gc in
   let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈ ⟩ = sim ⊢M ⊢μ₁ pc≾gc′ M₁→M₂ μ₁≈ in
   ⟨ μ₂′ , erase-plug F eraseM₁↠eraseM₂ , μ₂≈ ⟩
-sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ξ-err {F}) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ fail ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ξ-err {F}) μ≈ = ⟨ μ₁′ , erase-plug-error F , μ≈ ⟩
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (prot-val {V} {ℓ = ℓ} v) μ≈ with ℓ
 ... | high rewrite erase-stamp-high v =
   ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ discard-val (erase-val-value v) ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
@@ -54,7 +54,9 @@ sim {gc = gc} {pc} {μ₁ = μ₁} {μ₁′} {μ₂} (⊢prot ⊢M) ⊢μ₁ pc
   let ⟨ μ₂′ , eraseM₁↠eraseM₂ , μ₂≈μ₂′ ⟩ = sim ⊢M ⊢μ₁ (consis-join-≾ pc≾gc ≾-refl) M₁→M₂ μ₁≈ in
   let eraseM₁↠eraseM₂ = subst (_ ∣ μ₁′ ∣_—↠ₑ _ ∣ μ₂′) (ℓ⋎high≡high {pc}) eraseM₁↠eraseM₂ in
   ⟨ μ₂′ , discard-mult eraseM₁↠eraseM₂ , μ₂≈μ₂′ ⟩
-sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (prot-err {ℓ = ℓ}) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ fail ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (prot-err {ℓ = ℓ}) μ≈ with ℓ
+... | low  = ⟨ μ₁′ , _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+... | high = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ discard-err ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (β {V} {N} {ℓ = ℓ} v) μ≈ with ℓ
 ... | low  = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ β (erase-val-value v) ⟩ eq ∣ _ ∣ _ ≡∎ , μ≈ ⟩
   where
@@ -71,7 +73,7 @@ sim _ ⊢μ₁ _ (β-let x) μ≈ = {!!}
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ ref-static μ≈ =
   ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ ref-static ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ref?-ok    pc≼ℓ) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ ref?-ok ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
-sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ref?-fail ¬pc≼ℓ) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ fail    ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (ref?-fail ¬pc≼ℓ) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ ref?-fail ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
 sim {μ₁ = μ₁} {μ₁′} _ ⊢μ₁ _ (ref {V} {a = a} {ℓ} v fresh) μ≈ =
   ⟨ ⟨ a , erase V , ℓ ⟩ ∷ μ₁′ , _ ∣ _ ∣ _ —→⟨ ref (erase-val-value v) ⟩ _ ∣ _ ∣ _ ∎ , μ₂≈μ₂′ ℓ ⟩
   where
@@ -87,8 +89,10 @@ sim {μ₁′ = μ₁′} _ ⊢μ₁ _ assign-static μ≈ =
   ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ assign-static ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
 sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (assign?-ok {a = a} {ℓ} {ℓ₁} eq pc≼ℓ₁) μ₁≈ with ℓ
 ... | high = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ assign?-ok● ⟩ _ ∣ _ ∣ _ ∎ , μ₁≈ ⟩
-... | low  = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ assign?-ok   ⟩ _ ∣ _ ∣ _ ∎ , μ₁≈ ⟩
-sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (assign?-fail {a = a} {ℓ} {ℓ₁} eq pc⋠ℓ₁) μ≈ = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ fail ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+... | low  = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ assign?-ok  ⟩ _ ∣ _ ∣ _ ∎ , μ₁≈ ⟩
+sim {μ₁′ = μ₁′} _ ⊢μ₁ _ (assign?-fail {a = a} {ℓ} {ℓ₁} eq pc⋠ℓ₁) μ≈ with ℓ
+... | low  = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ assign?-fail  ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
+... | high = ⟨ μ₁′ , _ ∣ _ ∣ _ —→⟨ assign?-fail● ⟩ _ ∣ _ ∣ _ ∎ , μ≈ ⟩
 sim {μ₁ = μ₁} {μ₁′} (⊢assign✓ {ℓ = ℓ′} ⊢a ⊢V pc≼ℓ′) ⊢μ₁ _ (assign {V} {a = a} {ℓ} {ℓ₁} v eq) μ₁≈
   with ℓ₁ | ℓ
 ... | low  | low  =

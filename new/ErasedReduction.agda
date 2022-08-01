@@ -27,10 +27,18 @@ data _∣_∣_—→ₑ_∣_ : Term → Heap → StaticLabel → Term → Heap �
       ---------------------------------------------- ξ
     → plug M F ∣ μ ∣ pc —→ₑ plug M′ F ∣ μ′
 
+  ξ-err : ∀ {F μ pc e}
+      ---------------------------------------------- ξ-error
+    → plug (error e) F ∣ μ ∣ pc —→ₑ error e ∣ μ
+
   discard-ctx : ∀ {M M′ μ μ′ pc}
     → M         ∣ μ ∣ high —→ₑ M′         ∣ μ′
       --------------------------------------------------- DiscardContext
     → discard M ∣ μ ∣ pc   —→ₑ discard M′ ∣ μ′
+
+  discard-err : ∀ {μ pc e}
+      --------------------------------------------------- DiscardError
+    → discard (error e) ∣ μ ∣ pc —→ₑ error e ∣ μ
 
   discard-val : ∀ {V μ pc}
     → Value V
@@ -63,6 +71,10 @@ data _∣_∣_—→ₑ_∣_ : Term → Heap → StaticLabel → Term → Heap �
       ------------------------------------------------- RefNSUSuccess
     → ref?[ ℓ ] M ∣ μ ∣ pc —→ₑ ref✓[ ℓ ] M ∣ μ
 
+  ref?-fail : ∀ {M μ pc ℓ}
+      ------------------------------------------------- RefNSUFail
+    → ref?[ ℓ ] M ∣ μ ∣ pc —→ₑ error nsu-error ∣ μ
+
   ref : ∀ {V μ pc a ℓ}
     → Value V
       ----------------------------------------------------------------- Ref
@@ -84,6 +96,10 @@ data _∣_∣_—→ₑ_∣_ : Term → Heap → StaticLabel → Term → Heap �
   assign?-ok : ∀ {M μ pc a}
       -------------------------------------------------------------------- AssignNSUSuccess
     → (addr a of low) :=? M ∣ μ ∣ pc —→ₑ (addr a of low) :=✓ M ∣ μ
+
+  assign?-fail : ∀ {M μ pc a}
+      -------------------------------------------------------------------- AssignNSUFail
+    → (addr a of low) :=? M ∣ μ ∣ pc —→ₑ error nsu-error ∣ μ
 
   assign : ∀ {V μ pc a ℓ}
     → Value V
@@ -109,18 +125,17 @@ data _∣_∣_—→ₑ_∣_ : Term → Heap → StaticLabel → Term → Heap �
     → ! ● ∣ μ ∣ pc —→ₑ discard M ∣ μ
 
   assign?-ok● : ∀ {M μ pc}
-      ------------------------------------------ AssignNSUSuccess●
+      ---------------------------------------------- AssignNSUSuccess●
     → ● :=? M ∣ μ ∣ pc —→ₑ ● :=✓ M ∣ μ
+
+  assign?-fail● : ∀ {M μ pc}
+      ---------------------------------------------- AssignNSUFail●
+    → ● :=? M ∣ μ ∣ pc —→ₑ error nsu-error ∣ μ
 
   assign-● : ∀ {V μ pc}
     → Value V
       ------------------------------------------------------------------------ Assign●
     → ● :=✓ V ∣ μ ∣ pc —→ₑ $ tt of low ∣ μ {- skip the assignment -}
-
-  {- Simulates rules that produce errors -}
-  fail : ∀ {M μ pc e}
-      ------------------------------------ Fail
-    → M ∣ μ ∣ pc —→ₑ error e ∣ μ
 
 
 infix  2 _∣_∣_—↠ₑ_∣_
@@ -153,3 +168,9 @@ discard-mult : ∀ {M M′ μ μ′ pc}
   → discard M ∣ μ ∣ pc   —↠ₑ discard M′ ∣ μ′
 discard-mult (_ ∣ _ ∣ _ ∎)            = _ ∣ _ ∣ _ ∎
 discard-mult (_ ∣ _ ∣ _ —→⟨ R ⟩ R*) = _ ∣ _ ∣ _ —→⟨ discard-ctx R ⟩ discard-mult R*
+
+{- Address does not reduce -}
+-- addr⌿→ : ∀ {M M′ μ μ′ pc a ℓ} → M ≡ addr a of ℓ → ¬ (M ∣ μ ∣ pc —→ₑ M′ ∣ μ′)
+-- addr⌿→ eq (ξ {F = F} _) = plug-not-addr _ F eq
+-- addr⌿→ refl fail = {!!}
+-- addr⌿→ eq (ξ-err {F} {e = e}) = plug-not-addr (error e) F eq

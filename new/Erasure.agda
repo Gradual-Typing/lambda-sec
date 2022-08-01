@@ -4,6 +4,7 @@ open import Data.Nat
 open import Data.List using (List; _∷_; [])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
+open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; sym; subst; cong; cong₂)
 open import Function using (case_of_)
 
@@ -135,6 +136,20 @@ erase-plug (if□ A M N) R* = plug-mult (if□ A (erase M) (erase N)) R*
 erase-plug □⟨ c ⟩ R* = R*
 erase-plug cast-pc g □ R* = R*
 
+erase-plug-error : ∀ {pc μ e} (F : Frame)
+  → erase (plug (error e) F) ∣ μ ∣ pc —↠ₑ error e ∣ μ
+erase-plug-error (□· M) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = □· erase M} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error ((V ·□) v) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = (erase V ·□) (erase-val-value v)} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error ref✓[ ℓ ]□ = _ ∣ _ ∣ _ —→⟨ ξ-err {F = ref✓[ ℓ ]□} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error !□ = _ ∣ _ ∣ _ —→⟨ ξ-err {F = !□} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error (□:=? M) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = □:=? erase M} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error (□:=✓ M) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = □:=✓ erase M} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error ((V :=✓□) v) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = (erase V :=✓□) (erase-val-value v)} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error (let□ N) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = let□ erase N} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error (if□ A M N) = _ ∣ _ ∣ _ —→⟨ ξ-err {F = if□ A (erase M) (erase N)} ⟩ _ ∣ _ ∣ _ ∎
+erase-plug-error □⟨ c ⟩ = _ ∣ _ ∣ _ ∎
+erase-plug-error cast-pc g □ = _ ∣ _ ∣ _ ∎
+
 {- Predicate of erased term -}
 data Erased : Term → Set where
   e-var   : ∀ {x} → Erased (` x)
@@ -180,6 +195,13 @@ erase-is-erased (cast-pc g M) = erase-is-erased M
 erase-is-erased (error e) = e-error
 erase-is-erased (discard M) = e-discard (erase-is-erased M)
 erase-is-erased ● = e-●
+
+{- Erased value does not reduce -}
+-- V⌿→ₑ : ∀ {V M μ μ′ pc} → Value V → Erased V → ¬ (V ∣ μ ∣ pc —→ₑ M ∣ μ′)
+-- V⌿→ₑ V-addr e-addr R = {!!}
+-- V⌿→ₑ V-ƛ (e-ƛ e) R = {!!}
+-- V⌿→ₑ V-const e-const R = {!!}
+-- V⌿→ₑ V-● e-● R = {!!}
 
 
 {- **** Heap erasure **** -}
