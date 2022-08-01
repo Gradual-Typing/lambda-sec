@@ -185,3 +185,7 @@ const⌿→ₑ eq (ξ-err {F} {e = e}) = plug-not-const (error e) F eq
 ●⌿→ₑ : ∀ {M M′ μ μ′ pc} → M ≡ ● → ¬ (M ∣ μ ∣ pc —→ₑ M′ ∣ μ′)
 ●⌿→ₑ eq (ξ {F = F} _)       = plug-not-● _ F eq
 ●⌿→ₑ eq (ξ-err {F} {e = e}) = plug-not-● (error e) F eq
+
+error⌿→ₑ : ∀ {M M′ μ μ′ pc e} → M ≡ error e → ¬ (M ∣ μ ∣ pc —→ₑ M′ ∣ μ′)
+error⌿→ₑ eq (ξ {F = F} _)       = plug-not-error _ F eq
+error⌿→ₑ eq (ξ-err {F} {e = e}) = plug-not-error (error e) F eq

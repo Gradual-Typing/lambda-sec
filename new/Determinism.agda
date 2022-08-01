@@ -19,69 +19,24 @@ open import ErasedReduction
 Reachable : Term → Set
 Reachable M = Σ[ b ∈ 𝔹 ] ∃[ ℓ ] ∃[ μ ] ∃[ μ′ ] ∃[ pc ] (M ∣ μ ∣ pc —↠ₑ $ b of ℓ ∣ μ′)
 
-error⌿↠const : ∀ {M μ μ′ pc ℓ ι} e (k : rep ι) → M ≡ error e → ¬ (M ∣ μ ∣ pc —↠ₑ $ k of ℓ ∣ μ′)
-error⌿↠const e k eq (_ ∣ μ ∣ pc —→⟨ ξ {F = F} R ⟩ R*) = contradiction eq (plug-not-error _ F)
-error⌿↠const e k eq (M ∣ μ ∣ pc —→⟨ fail ⟩ R*) = error⌿↠const _ k refl R*
-
 error-unreachable : ∀ e → ¬ (Reachable (error e))
-error-unreachable e ⟨ b , ℓ , μ , μ′ , pc , M↠b ⟩ = contradiction M↠b (error⌿↠const e b refl)
-
-●⌿↠const : ∀ {M μ μ′ pc ℓ ι} (k : rep ι) → M ≡ ● → ¬ (M ∣ μ ∣ pc —↠ₑ $ k of ℓ ∣ μ′)
-●⌿↠const k eq (_ ∣ μ ∣ pc —→⟨ ξ {F = F} R ⟩ R*) = contradiction eq (plug-not-● _ F)
-●⌿↠const k eq (M ∣ μ ∣ pc —→⟨ fail ⟩ R*) = error⌿↠const _ k refl R*
-●⌿↠const k eq (M ∣ μ ∣ pc —→⟨ ●-● ⟩ R*) = ●⌿↠const k refl R*
+error-unreachable e ⟨ b , ℓ , μ , μ′ , pc , _ ∣ μ ∣ pc —→⟨ error→M ⟩ _ ⟩ = error⌿→ₑ refl error→M
 
 ●-unreachable : ¬ (Reachable ●)
-●-unreachable ⟨ b , ℓ , μ , μ′ , pc , M↠b ⟩ = contradiction M↠b (●⌿↠const b refl)
-
-{- Constant does not step to reachable -}
-const⌿→reachable : ∀ {M M′ μ μ′ pc ι ℓ} {k : rep ι} → M ≡ $ k of ℓ → Reachable M′ → ¬ (M ∣ μ ∣ pc —→ₑ M′ ∣ μ′)
-const⌿→reachable eq r (ξ {F = F} R) = plug-not-const _ F eq
-const⌿→reachable eq r fail = contradiction r (error-unreachable _)
+●-unreachable ⟨ b , ℓ , μ , μ′ , pc , _ ∣ μ ∣ pc —→⟨ ●→M ⟩ _ ⟩ = ●⌿→ₑ refl ●→M
 
 data Stub : Term → Set where
-  stub-●    : Stub ●
-  stub-error : ∀ {e} → Stub (error e)
+  stub-●       : Stub ●
+  stub-error   : ∀ {e} → Stub (error e)
+  stub-discard : ∀ {M} → Stub (discard M)
 
-value→stub : ∀ {V M μ μ′ pc}
-  → V ∣ μ ∣ pc —→ₑ M ∣ μ′
-  → Value V → Erased V
-  → Stub M
-value→stub (ξ {F = □⟨ c ⟩} R) (V-cast v i) ()
-value→stub ●-● v _ = stub-●
-value→stub fail v _ = stub-error
-
-determinism-step : ∀ {M₁ M₂ N₁ N₂ μ μ₁ μ₂ pc}
-  → M₁ ∣ μ ∣ pc —→ₑ N₁ ∣ μ₁
-  → M₂ ∣ μ ∣ pc —→ₑ N₂ ∣ μ₂
-  → M₁ ≡ M₂
-  → Erased M₁
-  → Reachable N₁ → Reachable N₂
-  → N₁ ≡ N₂ × μ₁ ≡ μ₂
-determinism-step (ξ R1) R2 eq r1 r2 = {!!}
-determinism-step (prot-val v) R2 eq r1 r2 = {!!}
-determinism-step (prot-ctx R1) R2 eq r1 r2 = {!!}
-determinism-step (β x) (ξ R2) eq (e-app _ eV) r1 r2 = {!!}
-determinism-step (β x) (β x₁) eq r1 r2 = {!!}
-determinism-step (β x) fail eq r1 r2 = {!!}
-determinism-step β-if-true R2 eq r1 r2 = {!!}
-determinism-step β-if-false R2 eq r1 r2 = {!!}
-determinism-step (β-let x) R2 eq r1 r2 = {!!}
-determinism-step ref-static R2 eq r1 r2 = {!!}
-determinism-step ref?-ok R2 eq r1 r2 = {!!}
-determinism-step (ref x) R2 eq r1 r2 = {!!}
-determinism-step deref-low R2 eq r1 r2 = {!!}
-determinism-step deref-high R2 eq r1 r2 = {!!}
-determinism-step assign-static R2 eq r1 r2 = {!!}
-determinism-step assign?-ok R2 eq r1 r2 = {!!}
-determinism-step (assign x) R2 eq r1 r2 = {!!}
-determinism-step (app-● x) R2 eq r1 r2 = {!!}
-determinism-step if-● R2 eq r1 r2 = {!!}
-determinism-step deref-● R2 eq r1 r2 = {!!}
-determinism-step assign?-ok● R2 eq r1 r2 = {!!}
-determinism-step (assign-● x) R2 eq r1 r2 = {!!}
-determinism-step ●-● R2 eq r1 r2 = {!!}
-determinism-step fail R2 eq r1 r2 = {!!}
+-- determinism-step : ∀ {M₁ M₂ N₁ N₂ μ μ₁ μ₂ pc}
+--   → M₁ ∣ μ ∣ pc —→ₑ N₁ ∣ μ₁
+--   → M₂ ∣ μ ∣ pc —→ₑ N₂ ∣ μ₂
+--   → M₁ ≡ M₂
+--   → Erased M₁
+--   → Reachable N₁ → Reachable N₂
+--   → N₁ ≡ N₂ × μ₁ ≡ μ₂
 
 determinism : ∀ {M μ μ₁ μ₂ pc} {b₁ b₂ : 𝔹}
   → M ∣ μ ∣ pc —↠ₑ $ b₁ of low ∣ μ₁
@@ -90,8 +45,8 @@ determinism : ∀ {M μ μ₁ μ₂ pc} {b₁ b₂ : 𝔹}
   → b₁ ≡ b₂
 determinism ($ b₁ of ℓ ∣ μ ∣ pc ∎) ($ b₁ of ℓ ∣ μ ∣ pc ∎) e = refl
 determinism ($ b₁ of ℓ ∣ μ ∣ pc ∎) ($ b₁ of ℓ ∣ μ ∣ pc —→⟨ b₁→M ⟩ M↠b₂) e =
-  contradiction b₁→M (const⌿→reachable refl ⟨ _ , _ , _ , _ , _ , M↠b₂ ⟩)
+  contradiction b₁→M (const⌿→ₑ refl)
 determinism ($ b₂ of ℓ ∣ μ ∣ pc —→⟨ b₂→M ⟩ M↠b₁) ($ b₂ of ℓ ∣ μ ∣ pc ∎) e =
-  contradiction b₂→M (const⌿→reachable refl ⟨ _ , _ , _ , _ , _ , M↠b₁ ⟩)
+  contradiction b₂→M (const⌿→ₑ refl)
 determinism (M ∣ μ ∣ pc —→⟨ M→N₁ ⟩ N₁↠b₁) (M ∣ μ ∣ pc —→⟨ M→N₂ ⟩ N₂↠b₂) e =
   {!!}
