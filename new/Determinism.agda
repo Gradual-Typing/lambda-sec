@@ -40,13 +40,42 @@ data Stub : Term → Set where
   stub-error   : ∀ {e} → Stub (error e)
   stub-discard : ∀ {M} → Stub (discard M)
 
--- determinism-step : ∀ {M₁ M₂ N₁ N₂ μ μ₁ μ₂ pc}
---   → M₁ ∣ μ ∣ pc —→ₑ N₁ ∣ μ₁
---   → M₂ ∣ μ ∣ pc —→ₑ N₂ ∣ μ₂
---   → M₁ ≡ M₂
---   → Erased M₁
---   → Reachable N₁ → Reachable N₂
---   → N₁ ≡ N₂ × μ₁ ≡ μ₂
+determinism-step : ∀ {M₁ M₂ N₁ N₂ μ μ₁ μ₂ pc}
+  → M₁ ∣ μ ∣ pc —→ₑ N₁ ∣ μ₁
+  → M₂ ∣ μ ∣ pc —→ₑ N₂ ∣ μ₂
+  → M₁ ≡ M₂
+  → Erased M₁
+  → Reachable N₁ → Reachable N₂
+    --------------------------------
+  → N₁ ≡ N₂ × μ₁ ≡ μ₂
+determinism-step (ξ R1) R2 eq e r1 r2 = {!!}
+determinism-step ξ-err R2 eq e r1 r2 = {!!}
+determinism-step (discard-ctx R1) R2 eq e r1 r2 = {!!}
+determinism-step discard-err R2 eq e r1 r2 = {!!}
+determinism-step (discard-val x) R2 eq e r1 r2 = {!!}
+determinism-step (β x) R2 eq e r1 r2 = {!!}
+determinism-step β-if-true (ξ {F = if□ A M N} true→) refl e r1 r2 = contradiction true→ (const⌿→ₑ refl)
+determinism-step β-if-true (ξ-err {if□ A M N}) ()
+determinism-step β-if-true β-if-true refl e r1 r2 = ⟨ refl , refl ⟩
+determinism-step β-if-false R2 eq e r1 r2 = {!!}
+determinism-step (β-let x) R2 eq e r1 r2 = {!!}
+determinism-step ref-static R2 eq e r1 r2 = {!!}
+determinism-step ref?-ok R2 eq e r1 r2 = {!!}
+determinism-step ref?-fail R2 eq e r1 r2 = {!!}
+determinism-step (ref x) R2 eq e r1 r2 = {!!}
+determinism-step (deref-low x) R2 eq e r1 r2 = {!!}
+determinism-step deref-high R2 eq e r1 r2 = {!!}
+determinism-step assign-static R2 eq e r1 r2 = {!!}
+determinism-step assign?-ok R2 eq e r1 r2 = {!!}
+determinism-step assign?-fail R2 eq e r1 r2 = {!!}
+determinism-step (assign x) R2 eq e r1 r2 = {!!}
+determinism-step (app-● x) R2 eq e r1 r2 = {!!}
+determinism-step if-true-● R2 eq e r1 r2 = {!!}
+determinism-step if-false-● R2 eq e r1 r2 = {!!}
+determinism-step deref-● R2 eq e r1 r2 = {!!}
+determinism-step assign?-ok● R2 eq e r1 r2 = {!!}
+determinism-step assign?-fail● R2 eq e r1 r2 = {!!}
+determinism-step (assign-● x) R2 eq e r1 r2 = {!!}
 
 determinism : ∀ {M μ μ₁ μ₂ pc} {b₁ b₂ : 𝔹}
   → M ∣ μ ∣ pc —↠ₑ $ b₁ of low ∣ μ₁
