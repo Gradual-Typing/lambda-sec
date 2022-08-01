@@ -170,7 +170,18 @@ discard-mult (_ ∣ _ ∣ _ ∎)            = _ ∣ _ ∣ _ ∎
 discard-mult (_ ∣ _ ∣ _ —→⟨ R ⟩ R*) = _ ∣ _ ∣ _ —→⟨ discard-ctx R ⟩ discard-mult R*
 
 {- Address does not reduce -}
--- addr⌿→ : ∀ {M M′ μ μ′ pc a ℓ} → M ≡ addr a of ℓ → ¬ (M ∣ μ ∣ pc —→ₑ M′ ∣ μ′)
--- addr⌿→ eq (ξ {F = F} _) = plug-not-addr _ F eq
--- addr⌿→ refl fail = {!!}
--- addr⌿→ eq (ξ-err {F} {e = e}) = plug-not-addr (error e) F eq
+addr⌿→ₑ : ∀ {M M′ μ μ′ pc a ℓ} → M ≡ addr a of ℓ → ¬ (M ∣ μ ∣ pc —→ₑ M′ ∣ μ′)
+addr⌿→ₑ eq (ξ {F = F} _)       = plug-not-addr _ F eq
+addr⌿→ₑ eq (ξ-err {F} {e = e}) = plug-not-addr (error e) F eq
+
+ƛ⌿→ₑ : ∀ {M M′ μ μ′ pc pc′ A N ℓ} → M ≡ ƛ[ pc′ ] A ˙ N of ℓ → ¬ (M ∣ μ ∣ pc —→ₑ M′ ∣ μ′)
+ƛ⌿→ₑ eq (ξ {F = F} _)       = plug-not-lam _ F eq
+ƛ⌿→ₑ eq (ξ-err {F} {e = e}) = plug-not-lam (error e) F eq
+
+const⌿→ₑ : ∀ {M M′ μ μ′ pc ι} {k : rep ι} {ℓ} → M ≡ $ k of ℓ → ¬ (M ∣ μ ∣ pc —→ₑ M′ ∣ μ′)
+const⌿→ₑ eq (ξ {F = F} _)       = plug-not-const _ F eq
+const⌿→ₑ eq (ξ-err {F} {e = e}) = plug-not-const (error e) F eq
+
+●⌿→ₑ : ∀ {M M′ μ μ′ pc} → M ≡ ● → ¬ (M ∣ μ ∣ pc —→ₑ M′ ∣ μ′)
+●⌿→ₑ eq (ξ {F = F} _)       = plug-not-● _ F eq
+●⌿→ₑ eq (ξ-err {F} {e = e}) = plug-not-● (error e) F eq

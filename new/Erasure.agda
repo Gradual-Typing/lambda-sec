@@ -197,11 +197,11 @@ erase-is-erased (discard M) = e-discard (erase-is-erased M)
 erase-is-erased ● = e-●
 
 {- Erased value does not reduce -}
--- V⌿→ₑ : ∀ {V M μ μ′ pc} → Value V → Erased V → ¬ (V ∣ μ ∣ pc —→ₑ M ∣ μ′)
--- V⌿→ₑ V-addr e-addr R = {!!}
--- V⌿→ₑ V-ƛ (e-ƛ e) R = {!!}
--- V⌿→ₑ V-const e-const R = {!!}
--- V⌿→ₑ V-● e-● R = {!!}
+V⌿→ₑ : ∀ {V M μ μ′ pc} → Value V → Erased V → ¬ (V ∣ μ ∣ pc —→ₑ M ∣ μ′)
+V⌿→ₑ V-addr e-addr R   = addr⌿→ₑ refl R
+V⌿→ₑ V-ƛ (e-ƛ e) R     = ƛ⌿→ₑ refl R
+V⌿→ₑ V-const e-const R = const⌿→ₑ refl R
+V⌿→ₑ V-● e-● R         = ●⌿→ₑ refl R
 
 
 {- **** Heap erasure **** -}
