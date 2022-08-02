@@ -49,21 +49,15 @@ determinism-step : ∀ {M₁ M₂ N₁ N₂ μ μ₁ μ₂ pc}
     --------------------------------
   → N₁ ≡ N₂ × μ₁ ≡ μ₂
 determinism-step (ξ R1) (ξ R2) eq _ r1 r2 = {!!}
-determinism-step (ξ _) ξ-err eq _ _ r = contradiction r (error-unreachable _)
-determinism-step (ξ {F = F} _) (discard-ctx _) eq = contradiction eq (plug-not-discard _ F)
-determinism-step (ξ {F = F} _) discard-err eq = contradiction eq (plug-not-discard _ F)
-determinism-step (ξ {F = F} _) (discard-val v) eq = contradiction eq (plug-not-discard _ F)
 determinism-step (ξ {F = □· _} ƛ→) (β v) refl = contradiction ƛ→ (ƛ⌿→ₑ refl)
 determinism-step (ξ {F = (_ ·□) v} W→) (β w) refl (e-app _ erased-w) = contradiction W→ (V⌿→ₑ w erased-w)
 determinism-step (ξ {F = if□ A M N} true→) β-if-true refl = contradiction true→ (const⌿→ₑ refl)
 determinism-step (ξ {F = if□ A M N} false→) β-if-false refl = contradiction false→ (const⌿→ₑ refl)
-determinism-step (ξ R1) (β-let x) eq e r1 r2 = {!!}
-determinism-step (ξ R1) ref-static eq e r1 r2 = {!!}
-determinism-step (ξ R1) ref?-ok eq e r1 r2 = {!!}
-determinism-step (ξ R1) ref?-fail eq e r1 r2 = {!!}
-determinism-step (ξ R1) (ref x) eq e r1 r2 = {!!}
-determinism-step (ξ R1) (deref-low x) eq e r1 r2 = {!!}
-determinism-step (ξ R1) deref-high eq e r1 r2 = {!!}
+determinism-step (ξ {F = let□ _} V→) (β-let v) refl (e-let erased-v _) = contradiction V→ (V⌿→ₑ v erased-v)
+determinism-step (ξ {F = □· _} _) ref-static ()
+determinism-step (ξ {F = □· _} _) ref?-ok ()
+determinism-step (ξ {F = ref✓[ ℓ ]□} V→) (ref v) refl (e-ref✓ erased-v) = contradiction V→ (V⌿→ₑ v erased-v)
+determinism-step (ξ {F = !□} addr→) (deref-low eq) refl e r1 r2 = contradiction addr→ (addr⌿→ₑ refl)
 determinism-step (ξ R1) assign-static eq e r1 r2 = {!!}
 determinism-step (ξ R1) assign?-ok eq e r1 r2 = {!!}
 determinism-step (ξ R1) assign?-fail eq e r1 r2 = {!!}
@@ -75,22 +69,15 @@ determinism-step (ξ R1) deref-● eq e r1 r2 = {!!}
 determinism-step (ξ R1) assign?-ok● eq e r1 r2 = {!!}
 determinism-step (ξ R1) assign?-fail● eq e r1 r2 = {!!}
 determinism-step (ξ R1) (assign-● x) eq e r1 r2 = {!!}
-determinism-step ξ-err R2 eq e r1 r2 = {!!}
-determinism-step (discard-ctx R1) R2 eq e r1 r2 = {!!}
-determinism-step discard-err R2 eq e r1 r2 = {!!}
-determinism-step (discard-val x) R2 eq e r1 r2 = {!!}
 determinism-step (β x) R2 eq e r1 r2 = {!!}
 determinism-step β-if-true (ξ {F = if□ A M N} true→) refl = contradiction true→ (const⌿→ₑ refl)
-determinism-step β-if-true (ξ-err {if□ A M N}) ()
 determinism-step β-if-true β-if-true refl e r1 r2 = ⟨ refl , refl ⟩
 determinism-step β-if-false R2 eq e r1 r2 = {!!}
 determinism-step (β-let x) R2 eq e r1 r2 = {!!}
 determinism-step ref-static R2 eq e r1 r2 = {!!}
 determinism-step ref?-ok R2 eq e r1 r2 = {!!}
-determinism-step ref?-fail R2 eq e r1 r2 = {!!}
 determinism-step (ref x) R2 eq e r1 r2 = {!!}
 determinism-step (deref-low x) R2 eq e r1 r2 = {!!}
-determinism-step deref-high R2 eq e r1 r2 = {!!}
 determinism-step assign-static R2 eq e r1 r2 = {!!}
 determinism-step assign?-ok R2 eq e r1 r2 = {!!}
 determinism-step assign?-fail R2 eq e r1 r2 = {!!}
@@ -102,11 +89,25 @@ determinism-step deref-● R2 eq e r1 r2 = {!!}
 determinism-step assign?-ok● R2 eq e r1 r2 = {!!}
 determinism-step assign?-fail● R2 eq e r1 r2 = {!!}
 determinism-step (assign-● x) R2 eq e r1 r2 = {!!}
+determinism-step ξ-err _ eq _ r _           = contradiction r (error-unreachable _)
+determinism-step _ ξ-err eq _ _ r           = contradiction r (error-unreachable _)
+determinism-step _ (discard-ctx _) eq _ _ r = contradiction r (discard-unreachable _)
+determinism-step (discard-ctx _) _ eq _ r _ = contradiction r (discard-unreachable _)
+determinism-step _ discard-err eq _ _ r     = contradiction r (error-unreachable _)
+determinism-step discard-err _ eq _ r _     = contradiction r (error-unreachable _)
+determinism-step _ (discard-val v) eq _ _ r = contradiction r ●-unreachable
+determinism-step (discard-val v) _ eq _ r _ = contradiction r ●-unreachable
+determinism-step ref?-fail _ eq _ r _       = contradiction r (error-unreachable _)
+determinism-step _ ref?-fail eq _ _ r       = contradiction r (error-unreachable _)
+determinism-step deref-high _ eq _ r _      = contradiction r (discard-unreachable _)
+determinism-step _ deref-high eq _ _ r      = contradiction r (discard-unreachable _)
+
 
 determinism : ∀ {M μ μ₁ μ₂ pc} {b₁ b₂ : 𝔹}
   → M ∣ μ ∣ pc —↠ₑ $ b₁ of low ∣ μ₁
   → M ∣ μ ∣ pc —↠ₑ $ b₂ of low ∣ μ₂
   → Erased M
+    -------------------------------------
   → b₁ ≡ b₂
 determinism ($ b₁ of ℓ ∣ μ ∣ pc ∎) ($ b₁ of ℓ ∣ μ ∣ pc ∎) e = refl
 determinism ($ b₁ of ℓ ∣ μ ∣ pc ∎) ($ b₁ of ℓ ∣ μ ∣ pc —→⟨ b₁→M ⟩ M↠b₂) e =
