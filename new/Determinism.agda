@@ -40,6 +40,11 @@ data Stub : Term → Set where
   stub-error   : ∀ {e} → Stub (error e)
   stub-discard : ∀ {M} → Stub (discard M)
 
+reachable-not-stub : ∀ M → Reachable M → ¬ Stub M
+reachable-not-stub ● ●-reachable stub-● = contradiction ●-reachable ●-unreachable
+reachable-not-stub (error e) error-reachable stub-error = contradiction error-reachable (error-unreachable e)
+reachable-not-stub (discard M) discard-reachable stub-discard = contradiction discard-reachable (discard-unreachable M)
+
 determinism-step : ∀ {M₁ M₂ N₁ N₂ μ μ₁ μ₂ pc}
   → M₁ ∣ μ ∣ pc —→ₑ N₁ ∣ μ₁
   → M₂ ∣ μ ∣ pc —→ₑ N₂ ∣ μ₂
@@ -48,7 +53,17 @@ determinism-step : ∀ {M₁ M₂ N₁ N₂ μ μ₁ μ₂ pc}
   → Reachable N₁ → Reachable N₂
     --------------------------------
   → N₁ ≡ N₂ × μ₁ ≡ μ₂
-determinism-step (ξ R1) (ξ R2) eq _ r1 r2 = {!!}
+determinism-step (ξ {F = □· x} M₁→N₁) (ξ {F = F2} M₂→N₂) eq _ r1 r2 = {!!}
+determinism-step (ξ {F = (V ·□) x} M₁→N₁) (ξ {F = F2} M₂→N₂) eq _ r1 r2 = {!!}
+determinism-step (ξ {F = ref✓[ ℓ ]□} M→N₁) (ξ {F = ref✓[ ℓ ]□} M→N₂) refl (e-ref✓ erased-M) r1 r2 =
+  let ⟨ N₁≡N₂ , μ₁≡μ₂ ⟩ = determinism-step M→N₁ M→N₂ refl erased-M {!!} {!!} in
+  {!!}
+determinism-step (ξ {F = !□} M₁→N₁) (ξ {F = F2} M₂→N₂) eq _ r1 r2 = {!!}
+determinism-step (ξ {F = □:=? x} M₁→N₁) (ξ {F = F2} M₂→N₂) eq _ r1 r2 = {!!}
+determinism-step (ξ {F = □:=✓ x} M₁→N₁) (ξ {F = F2} M₂→N₂) eq _ r1 r2 = {!!}
+determinism-step (ξ {F = (V :=✓□) x} M₁→N₁) (ξ {F = F2} M₂→N₂) eq _ r1 r2 = {!!}
+determinism-step (ξ {F = let□ x} M₁→N₁) (ξ {F = F2} M₂→N₂) eq _ r1 r2 = {!!}
+determinism-step (ξ {F = if□ x x₁ x₂} M₁→N₁) (ξ {F = F2} M₂→N₂) eq _ r1 r2 = {!!}
 determinism-step (ξ {F = □· _} ƛ→) (β v) refl = contradiction ƛ→ (ƛ⌿→ₑ refl)
 determinism-step (ξ {F = (_ ·□) v} W→) (β w) refl (e-app _ erased-w) = contradiction W→ (V⌿→ₑ w erased-w)
 determinism-step (ξ {F = if□ A M N} true→) β-if-true refl = contradiction true→ (const⌿→ₑ refl)
@@ -60,17 +75,18 @@ determinism-step (ξ {F = ref✓[ ℓ ]□} V→) (ref v) refl (e-ref✓ erased-
 determinism-step (ξ {F = !□} addr→) (deref-low eq) refl e r1 r2 = contradiction addr→ (addr⌿→ₑ refl)
 determinism-step (ξ {F = □· _} _) assign-static ()
 determinism-step (ξ {F = □:=? _} addr→) assign?-ok refl = contradiction addr→ (addr⌿→ₑ refl)
-determinism-step (ξ {F = □:=✓ _} addr→) (assign v) refl = {!!}
+determinism-step (ξ {F = □:=✓ _} addr→) (assign v) refl = contradiction addr→ (addr⌿→ₑ refl)
 determinism-step (ξ {F = (_ :=✓□) V-addr} V→) (assign v) refl (e-assign✓ _ erased-v) = contradiction V→ (V⌿→ₑ v erased-v)
 determinism-step (ξ {F = □:=? _} ●→) assign?-ok● refl = contradiction ●→ (●⌿→ₑ refl)
 determinism-step (ξ {F = □:=✓ _} ●→) (assign-● v) refl = contradiction ●→ (●⌿→ₑ refl)
 determinism-step (ξ {F = (_ :=✓□) V-●} V→) (assign-● v) refl (e-assign✓ _ erased-v) = contradiction V→ (V⌿→ₑ v erased-v)
 determinism-step (β w) (ξ {F = □· _} ƛ→) refl = contradiction ƛ→ (ƛ⌿→ₑ refl)
 determinism-step (β w) (ξ {F = (_ ·□) v} W→) refl (e-app _ erased-w) = contradiction W→ (V⌿→ₑ w erased-w)
-determinism-step (β x) (β x₁) eq e r1 r2 = {!!}
+determinism-step (β v) (β v†) refl erased _ _ = ⟨ refl , refl ⟩
 determinism-step β-if-true (ξ {F = if□ A M N} true→) refl = contradiction true→ (const⌿→ₑ refl)
-determinism-step β-if-true β-if-true refl e r1 r2 = ⟨ refl , refl ⟩
-determinism-step β-if-false R2 eq e r1 r2 = {!!}
+determinism-step β-if-true β-if-true refl e _ _ = ⟨ refl , refl ⟩
+determinism-step β-if-false (ξ {F = if□ A M N} false→) refl = contradiction false→ (const⌿→ₑ refl)
+determinism-step β-if-false β-if-false refl e _ _ = ⟨ refl , refl ⟩
 determinism-step (β-let x) R2 eq e r1 r2 = {!!}
 determinism-step ref-static R2 eq e r1 r2 = {!!}
 determinism-step ref?-ok R2 eq e r1 r2 = {!!}
