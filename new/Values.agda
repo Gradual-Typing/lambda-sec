@@ -8,6 +8,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; sub
 open import Function using (case_of_)
 
 open import Types
+open import HeapContext
 open import TypeBasedCast
 open import CCSyntax Cast_⇒_
 open import CCTyping Cast_⇒_
@@ -65,11 +66,11 @@ canonical-fun (⊢sub ⊢V sub) v =
 canonical-fun (⊢sub-pc ⊢V gc<:gc′) v = canonical-fun ⊢V v
 
 data Reference : Term → HeapContext → Type → Set where
-  Ref-addr : ∀ {Σ A a T g ℓ ℓ₁}
-    → nth Σ a ≡ just ⟨ T , ℓ₁ ⟩
+  Ref-addr : ∀ {Σ A n T g ℓ ℓ₁}
+    → lookup-Σ Σ (a[ ℓ₁ ] n) ≡ just T
     → Ref (T of l ℓ₁) of l ℓ <: Ref A of g
       ---------------------------------------- Reference
-    → Reference (addr a of ℓ) Σ (Ref A of g)
+    → Reference (addr (a[ ℓ₁ ] n) of ℓ) Σ (Ref A of g)
 
   Ref-proxy : ∀ {Σ A A₁ A₂ g g₁ g₂ V} {c : Cast (Ref A₁ of g₁) ⇒ (Ref A₂ of g₂)}
     → Reference V Σ (Ref A₁ of g₁)

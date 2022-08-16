@@ -20,13 +20,12 @@ nth (x ∷ ls) (suc k) = nth ls k
    similar to `assoc` in Scheme but has a different
    name because we use "assoc" for associativity.
 -}
-key : ∀ {K V : Set}
-  → (∀ (k₁ k₂ : K) → Dec (k₁ ≡ k₂)) → List (K × V) → K → Maybe V
-key _≟_ [] _ = nothing
-key _≟_ (⟨ k₀ , v₀ ⟩ ∷ l) k =
+find : ∀ {K V : Set} → (∀ (k₁ k₂ : K) → Dec (k₁ ≡ k₂)) → List (K × V) → K → Maybe V
+find _≟_ [] _ = nothing
+find _≟_ (⟨ k₀ , v₀ ⟩ ∷ l) k =
   case k ≟ k₀ of λ where
     (yes _) → just v₀
-    (no  _) → key _≟_ l k
+    (no  _) → find _≟_ l k
 
 
 snoc-here : ∀ {X} (x : X) → ∀ xs → nth (xs ∷ʳ x) (length xs) ≡ just x

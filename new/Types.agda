@@ -496,4 +496,3 @@ stamp-low (T of l high) = refl
 
 {- **** Typing contexts **** -}
 Context     = List Type
-HeapContext = List (RawType × StaticLabel)

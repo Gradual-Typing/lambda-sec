@@ -13,6 +13,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Syntax
 open import Utils
 open import Types
+open import HeapContext
 open import CCSyntax Cast_⇒_
 
 infix 4 _;_;_;_⊢_⦂_
@@ -23,10 +24,10 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
       -------------------------------------------- CCConst
     → Γ ; Σ ; gc ; pc ⊢ $ k of ℓ ⦂ ` ι of l ℓ
 
-  ⊢addr : ∀ {Γ Σ gc pc a T ℓ ℓ₁}
-    → nth Σ a ≡ just ⟨ T , ℓ₁ ⟩
+  ⊢addr : ∀ {Γ Σ gc pc n T ℓ ℓ₁}
+    → lookup-Σ Σ (a[ ℓ₁ ] n) ≡ just T
       ------------------------------------------------ CCAddr
-    → Γ ; Σ ; gc ; pc ⊢ addr a of ℓ ⦂ Ref (T of l ℓ₁) of l ℓ
+    → Γ ; Σ ; gc ; pc ⊢ addr (a[ ℓ₁ ] n) of ℓ ⦂ Ref (T of l ℓ₁) of l ℓ
 
   ⊢var : ∀ {Γ Σ gc pc A x}
     → Γ ∋ x ⦂ A
@@ -84,7 +85,7 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
     → Γ ; Σ ; l pc′ ; pc ⊢ M ⦂ T of l ℓ
     → pc′ ≼ ℓ
       --------------------------------------------- CCAssignStatic
-    → Γ ; Σ ; l pc′ ; pc ⊢ L [ ℓ ]:= M ⦂ ` Unit of l low
+    → Γ ; Σ ; l pc′ ; pc ⊢ L := M ⦂ ` Unit of l low
 
   ⊢assign? : ∀ {Γ Σ gc pc L M T g}
     → Γ ; Σ ; gc ; pc ⊢ L ⦂ Ref (T of g) of g
@@ -97,7 +98,7 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
     → Γ ; Σ ; gc ; pc ⊢ M ⦂ T of l ℓ
     → pc ≼ ℓ
       --------------------------------------------- CCAssignChecked
-    → Γ ; Σ ; gc ; pc ⊢ L [ ℓ ]:=✓ M ⦂ ` Unit of l low
+    → Γ ; Σ ; gc ; pc ⊢ L :=✓ M ⦂ ` Unit of l low
 
   ⊢prot : ∀ {Γ Σ gc pc A M ℓ}
     → Γ ; Σ ; gc ⋎̃ l ℓ ; pc ⋎ ℓ ⊢ M ⦂ A
