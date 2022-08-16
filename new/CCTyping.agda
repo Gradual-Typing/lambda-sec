@@ -84,7 +84,7 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
     → Γ ; Σ ; l pc′ ; pc ⊢ M ⦂ T of l ℓ
     → pc′ ≼ ℓ
       --------------------------------------------- CCAssignStatic
-    → Γ ; Σ ; l pc′ ; pc ⊢ L := M ⦂ ` Unit of l low
+    → Γ ; Σ ; l pc′ ; pc ⊢ L [ ℓ ]:= M ⦂ ` Unit of l low
 
   ⊢assign? : ∀ {Γ Σ gc pc L M T g}
     → Γ ; Σ ; gc ; pc ⊢ L ⦂ Ref (T of g) of g
@@ -97,7 +97,7 @@ data _;_;_;_⊢_⦂_ : Context → HeapContext → Label → StaticLabel → 
     → Γ ; Σ ; gc ; pc ⊢ M ⦂ T of l ℓ
     → pc ≼ ℓ
       --------------------------------------------- CCAssignChecked
-    → Γ ; Σ ; gc ; pc ⊢ L :=✓ M ⦂ ` Unit of l low
+    → Γ ; Σ ; gc ; pc ⊢ L [ ℓ ]:=✓ M ⦂ ` Unit of l low
 
   ⊢prot : ∀ {Γ Σ gc pc A M ℓ}
     → Γ ; Σ ; gc ⋎̃ l ℓ ; pc ⋎ ℓ ⊢ M ⦂ A

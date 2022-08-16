@@ -18,9 +18,9 @@ data Frame : Set where
 
   □:=?_ : Term → Frame
 
-  □:=✓_ : Term → Frame
+  □[_]:=✓_ : StaticLabel → Term → Frame
 
-  _:=✓□ : (V : Term) → Value V → Frame
+  _[_]:=✓□ : (V : Term) → StaticLabel → Value V → Frame
 
   let□_ : Term → Frame
 
@@ -37,8 +37,8 @@ plug M ((V ·□) v)      = V · M
 plug M ref✓[ ℓ ]□      = ref✓[ ℓ ] M
 plug M !□              = ! M
 plug L (□:=? M)        = L :=? M
-plug L (□:=✓ M)        = L :=✓ M
-plug M ((V :=✓□) v)    = V :=✓ M
+plug L (□[ ℓ ]:=✓ M)   = L [ ℓ ]:=✓ M
+plug M ((V [ ℓ ]:=✓□) v) = V [ ℓ ]:=✓ M
 plug M (let□ N)        = `let M N
 plug L (if□ A M N)     = if L A M N
 plug M □⟨ c ⟩          = M ⟨ c ⟩
@@ -49,7 +49,7 @@ data Plugged : Term → Set where
   plugged-ref✓ : ∀ {M ℓ} → Plugged (ref✓[ ℓ ] M)
   plugged-deref : ∀ {M} → Plugged (! M)
   plugged-assign? : ∀ {L M} → Plugged (L :=? M)
-  plugged-assign✓ : ∀ {L M} → Plugged (L :=✓ M)
+  plugged-assign✓ : ∀ {L M ℓ} → Plugged (L [ ℓ ]:=✓ M)
   plugged-let : ∀ {M N} → Plugged (`let M N)
   plugged-if : ∀ {A L M N} → Plugged (if L A M N)
   plugged-cast : ∀ {A B M} {c : Cast A ⇒ B} → Plugged (M ⟨ c ⟩)
@@ -61,8 +61,8 @@ plug-is-plugged M ((V ·□) x) = plugged-app
 plug-is-plugged M ref✓[ x ]□ = plugged-ref✓
 plug-is-plugged M !□ = plugged-deref
 plug-is-plugged M (□:=? x) = plugged-assign?
-plug-is-plugged M (□:=✓ x) = plugged-assign✓
-plug-is-plugged M ((V :=✓□) x) = plugged-assign✓
+plug-is-plugged M (□[ ℓ ]:=✓ x) = plugged-assign✓
+plug-is-plugged M ((V [ ℓ ]:=✓□) x) = plugged-assign✓
 plug-is-plugged M (let□ x) = plugged-let
 plug-is-plugged M (if□ x x₁ x₂) = plugged-if
 plug-is-plugged M □⟨ x ⟩ = plugged-cast
@@ -74,11 +74,11 @@ plug-not-error {e} M F eq = case error-is-plugged of λ ()
   error-is-plugged : Plugged (error e)
   error-is-plugged rewrite sym eq = plug-is-plugged M F
 
-plug-not-● : ∀ M F → plug M F ≢ ●
-plug-not-● M F eq = case ●-is-plugged of λ ()
-  where
-  ●-is-plugged : Plugged ●
-  ●-is-plugged rewrite sym eq = plug-is-plugged M F
+-- plug-not-● : ∀ M F → plug M F ≢ ●
+-- plug-not-● M F eq = case ●-is-plugged of λ ()
+--   where
+--   ●-is-plugged : Plugged ●
+--   ●-is-plugged rewrite sym eq = plug-is-plugged M F
 
 plug-not-addr : ∀ {a ℓ} M F → plug M F ≢ addr a of ℓ
 plug-not-addr {a} {ℓ} M F eq = case addr-is-plugged of λ ()
@@ -98,8 +98,8 @@ plug-not-const {ι} {k} {ℓ} M F eq = case const-is-plugged of λ ()
   const-is-plugged : Plugged ($ k of ℓ)
   const-is-plugged rewrite sym eq = plug-is-plugged M F
 
-plug-not-discard : ∀ {N} M F → plug M F ≢ discard N
-plug-not-discard {N} M F eq = case discard-is-plugged of λ ()
-  where
-  discard-is-plugged : Plugged (discard N)
-  discard-is-plugged rewrite sym eq = plug-is-plugged M F
+-- plug-not-discard : ∀ {N} M F → plug M F ≢ discard N
+-- plug-not-discard {N} M F eq = case discard-is-plugged of λ ()
+--   where
+--   discard-is-plugged : Plugged (discard N)
+--   discard-is-plugged rewrite sym eq = plug-is-plugged M F

@@ -25,16 +25,16 @@ data Op : Set where
   op-ref?         : StaticLabel → Op
   op-ref✓         : StaticLabel → Op
   op-deref        : Op
-  op-assign       : Op
+  op-assign       : StaticLabel → Op
   op-assign?      : Op
-  op-assign✓      : Op
+  op-assign✓      : StaticLabel → Op
   op-cast         : ∀ {A B} → Cast A ⇒ B → Op
   op-prot         : StaticLabel → Op
   op-cast-pc      : Label → Op
   op-error        : Error → Op
   {- Terms that only appear in erasure -}
   op-opaque       : Op
-  op-discard      : Op
+  -- op-discard      : Op
 
 sig : Op → List Sig
 sig (op-addr a ℓ)      = []
@@ -47,15 +47,15 @@ sig (op-ref  ℓ)        = ■ ∷ []
 sig (op-ref? ℓ)        = ■ ∷ []
 sig (op-ref✓ ℓ)        = ■ ∷ []
 sig op-deref           = ■ ∷ []
-sig op-assign          = ■ ∷ ■ ∷ []
+sig (op-assign ℓ)      = ■ ∷ ■ ∷ []
 sig op-assign?         = ■ ∷ ■ ∷ []
-sig op-assign✓         = ■ ∷ ■ ∷ []
+sig (op-assign✓ ℓ)     = ■ ∷ ■ ∷ []
 sig (op-cast c)        = ■ ∷ []
 sig (op-prot ℓ)        = ■ ∷ []
 sig (op-cast-pc g)     = ■ ∷ []
 sig (op-error e)       = []
 sig op-opaque          = []
-sig op-discard         = ■ ∷ []
+-- sig op-discard         = ■ ∷ []
 
 open Syntax.OpSig Op sig renaming (ABT to Term) hiding (plug) public
 
@@ -72,12 +72,12 @@ pattern ref[_]_  ℓ M             = (op-ref ℓ) ⦅ cons (ast M) nil ⦆
 pattern ref?[_]_ ℓ M             = (op-ref? ℓ) ⦅ cons (ast M) nil ⦆
 pattern ref✓[_]_ ℓ M             = (op-ref✓ ℓ) ⦅ cons (ast M) nil ⦆
 pattern !_ M                     = op-deref ⦅ cons (ast M) nil ⦆
-pattern _:=_  L M                = op-assign ⦅ cons (ast L) (cons (ast M) nil) ⦆
+pattern _[_]:=_  L ℓ M           = (op-assign ℓ) ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern _:=?_ L M                = op-assign? ⦅ cons (ast L) (cons (ast M) nil) ⦆
-pattern _:=✓_ L M                = op-assign✓ ⦅ cons (ast L) (cons (ast M) nil) ⦆
+pattern _[_]:=✓_ L ℓ M           = (op-assign✓ ℓ) ⦅ cons (ast L) (cons (ast M) nil) ⦆
 pattern _⟨_⟩ M c                 = (op-cast c) ⦅ cons (ast M) nil ⦆
 pattern prot ℓ M                 = (op-prot ℓ) ⦅ cons (ast M) nil ⦆      {- protection term -}
 pattern cast-pc g M              = (op-cast-pc g) ⦅ cons (ast M) nil ⦆
 pattern error e                  = (op-error e) ⦅ nil ⦆                  {- blame / nsu error -}
-pattern discard M                = op-discard ⦅ cons (ast M) nil ⦆       {- discarding value as ● -}
+-- pattern discard M                = op-discard ⦅ cons (ast M) nil ⦆       {- discarding value as ● -}
 pattern ●                       = op-opaque ⦅ nil ⦆                     {- opaque value -}
