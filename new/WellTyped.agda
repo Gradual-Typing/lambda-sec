@@ -13,6 +13,7 @@ open import TypeBasedCast
 open import CC
 open import Reduction
 open import HeapTyping
+open import HeapContext
 
 
 {- Function and reference predicates respect type -}
@@ -59,9 +60,9 @@ plug-inversion {F = !□} (⊢deref ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢deref ⊢M′) ⟩
 plug-inversion {F = □:=? M} (⊢assign? ⊢L ⊢M) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign? ⊢L′ (relax-Σ ⊢M Σ′⊇Σ)) ⟩
-plug-inversion {F = □[ ℓ ]:=✓ M} (⊢assign✓ ⊢L ⊢M pc≼ℓ) pc≾gc =
+plug-inversion {F = □:=✓ M} (⊢assign✓ ⊢L ⊢M pc≼ℓ) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢L , (λ ⊢L′ Σ′⊇Σ → ⊢assign✓ ⊢L′ (relax-Σ ⊢M Σ′⊇Σ) pc≼ℓ) ⟩
-plug-inversion {F = (V [ ℓ ]:=✓□) v} (⊢assign✓ ⊢V ⊢M pc≼ℓ) pc≾gc =
+plug-inversion {F = (V :=✓□) v} (⊢assign✓ ⊢V ⊢M pc≼ℓ) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢assign✓ (relax-Σ ⊢V Σ′⊇Σ) ⊢M′ pc≼ℓ) ⟩
 plug-inversion {F = let□ N} (⊢let ⊢M ⊢N) pc≾gc =
   ⟨ _ , _ , pc≾gc , ⊢M , (λ ⊢M′ Σ′⊇Σ → ⊢let ⊢M′ (relax-Σ ⊢N Σ′⊇Σ)) ⟩

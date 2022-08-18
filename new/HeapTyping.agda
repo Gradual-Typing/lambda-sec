@@ -29,14 +29,13 @@ _⊢_ : HeapContext → Heap → Set
   → ∃[ V ] Value V × (lookup-μ μ (a[ ℓ ] n) ≡ just V) × ([] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ)
 
 
-relax-Σ : ∀ {Γ Σᴸ Σᴴ Σᴸ′ Σᴴ′ gc pc M A}
-  → Γ ; ⟨ Σᴸ , Σᴴ ⟩ ; gc ; pc ⊢ M ⦂ A
-  → (Σᴸ′ ⊇ Σᴸ × Σᴴ′ ⊇ Σᴴ)
+relax-Σ : ∀ {Γ Σ Σ′ gc pc M A}
+  → Γ ; Σ ; gc ; pc ⊢ M ⦂ A
+  → Σ′ ⊇ Σ
     ---------------------
-  → Γ ; ⟨ Σᴸ′ , Σᴴ′ ⟩ ; gc ; pc ⊢ M ⦂ A
+  → Γ ; Σ′ ; gc ; pc ⊢ M ⦂ A
 relax-Σ ⊢const Σ′⊇Σ = ⊢const
-relax-Σ (⊢addr {ℓ₁ = low} eq) ⟨ Σᴸ′⊇Σᴸ , _ ⟩ = ⊢addr (Σᴸ′⊇Σᴸ _ eq)
-relax-Σ (⊢addr {ℓ₁ = high} eq) ⟨ _ , Σᴴ′⊇Σᴴ ⟩ = ⊢addr (Σᴴ′⊇Σᴴ _ eq)
+relax-Σ (⊢addr {n = n} {ℓ₁ = ℓ₁} eq) Σ′⊇Σ = ⊢addr (Σ′⊇Σ (a[ ℓ₁ ] n) eq)
 relax-Σ (⊢var Γ∋x) Σ′⊇Σ = ⊢var Γ∋x
 relax-Σ (⊢lam ⊢M) Σ′⊇Σ = ⊢lam (relax-Σ ⊢M Σ′⊇Σ)
 relax-Σ (⊢app ⊢L ⊢M) Σ′⊇Σ = ⊢app (relax-Σ ⊢L Σ′⊇Σ) (relax-Σ ⊢M Σ′⊇Σ)
@@ -56,9 +55,10 @@ relax-Σ ⊢err Σ′⊇Σ = ⊢err
 relax-Σ (⊢sub ⊢M A<:B) Σ′⊇Σ = ⊢sub (relax-Σ ⊢M Σ′⊇Σ) A<:B
 relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′⊇Σ) gc<:gc′
 
--- {- Properties about Σ ⊢ μ : -}
--- ⊢μ-nil : [] ⊢ []
--- ⊢μ-nil = λ a ()
+{- Properties about Σ ⊢ μ : -}
+⊢μ-nil : ∅ ⊢ ∅
+⊢μ-nil n low  ()
+⊢μ-nil n high ()
 
 -- ⊢μ-new : ∀ {Σ V a T ℓ μ}
 --   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ

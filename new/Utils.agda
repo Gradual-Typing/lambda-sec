@@ -41,18 +41,18 @@ snoc-there x (y ∷ xs) {suc n} eq neq = snoc-there x xs eq n≢len
   n≢len n≡len = contradiction (cong suc n≡len) neq
 
 
-infix 4 _⊇_
+-- infix 4 _⊇_
 
-_⊇_ : ∀ {X : Set} (xs ys : List X) → Set
-xs ⊇ ys = ∀ n {x} → nth ys n ≡ just x → nth xs n ≡ just x
+-- _⊇_ : ∀ {X : Set} (xs ys : List X) → Set
+-- xs ⊇ ys = ∀ n {x} → nth ys n ≡ just x → nth xs n ≡ just x
 
-{- Properties about _⊇_ : -}
-⊇-refl : ∀ {X : Set} (xs : List X) → xs ⊇ xs
-⊇-refl xs n eq = eq
+-- {- Properties about _⊇_ : -}
+-- ⊇-refl : ∀ {X : Set} (xs : List X) → xs ⊇ xs
+-- ⊇-refl xs n eq = eq
 
-⊇-snoc : ∀ {X : Set} (xs : List X) → ∀ x → xs ∷ʳ x ⊇ xs
-⊇-snoc (_ ∷ xs) x zero eq = eq
-⊇-snoc (_ ∷ xs) x (suc n) eq = ⊇-snoc xs x n eq
+-- ⊇-snoc : ∀ {X : Set} (xs : List X) → ∀ x → xs ∷ʳ x ⊇ xs
+-- ⊇-snoc (_ ∷ xs) x zero eq = eq
+-- ⊇-snoc (_ ∷ xs) x (suc n) eq = ⊇-snoc xs x n eq
 
 
 pattern ⟨_,_,_⟩ x y z = ⟨ x , ⟨ y , z ⟩ ⟩
@@ -61,3 +61,5 @@ pattern ⟨_,_,_,_,_⟩ x y z w u = ⟨ x , ⟨ y , ⟨ z , ⟨ w , u ⟩ ⟩ �
 pattern ⟨_,_,_,_,_,_⟩ x y z w u v = ⟨ x , ⟨ y , ⟨ z , ⟨ w , ⟨ u , v ⟩ ⟩ ⟩ ⟩ ⟩
 pattern ⟨_,_,_,_,_,_,_⟩ x y z w u v p = ⟨ x , ⟨ y , ⟨ z , ⟨ w , ⟨ u , ⟨ v , p ⟩ ⟩ ⟩ ⟩ ⟩ ⟩
 pattern ⟨_,_,_,_,_,_,_,_⟩ x y z w u v p q = ⟨ x , ⟨ y , ⟨ z , ⟨ w , ⟨ u , ⟨ v , ⟨ p , q ⟩ ⟩ ⟩ ⟩ ⟩ ⟩ ⟩
+
+pattern ∅ = ⟨ [] , [] ⟩
