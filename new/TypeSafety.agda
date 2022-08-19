@@ -76,50 +76,66 @@ progress pc (ref?[ ℓ ] M) (⊢ref? ⊢M) μ ⊢μ =
   case pc ≼? ℓ of λ where
   (yes pc≼ℓ) → step (ref?-ok pc≼ℓ)
   (no  pc⋠ℓ) → step (ref?-fail pc⋠ℓ)
-progress pc (ref✓[ ℓ ] M) (⊢ref✓ ⊢M pc≼ℓ) μ ⊢μ =
+-- progress pc (ref✓[ low ] M) (⊢ref✓ ⊢M pc≼ℓ) μ ⊢μ =
+--   case progress pc M ⊢M μ ⊢μ of λ where
+--   (step M→M′) → step (ξ {F = ref✓[ low ]□} M→M′)
+--   (done v) → step (ref v refl)
+--   (err (E-error {e})) → step (ξ-err {F = ref✓[ low ]□} {e = e})
+-- progress pc (ref✓[ high ] M) (⊢ref✓ ⊢M pc≼ℓ) μ ⊢μ =
+--   case progress pc M ⊢M μ ⊢μ of λ where
+--   (step M→M′) → step (ξ {F = ref✓[ high ]□} M→M′)
+--   (done v) → step (ref v refl)
+--   (err (E-error {e})) → step (ξ-err {F = ref✓[ high ]□} {e = e})
+progress {Σ} pc (ref✓[ ℓ ] M) (⊢ref✓ ⊢M pc≼ℓ) μ ⊢μ =
   case progress pc M ⊢M μ ⊢μ of λ where
-  (step M→M′) → step (ξ {F = ref✓[ ℓ ]□} M→M′)
-  (done v) → step (ref v refl)
-  (err (E-error {e})) → step (ξ-err {F = ref✓[ ℓ ]□} {e = e})
+    (step M→M′) → step (ξ {F = ref✓[ ℓ ]□} M→M′)
+    (done v) →
+      let ⟨ n , fresh ⟩ = fresh-in Σ in step (ref v fresh)
+    (err (E-error {e})) →
+      step (ξ-err {F = ref✓[ ℓ ]□} {e = e})
+  where
+  fresh-in : ∀ Σ {ℓ} → ∃[ n ] (a[ ℓ ] n FreshIn Σ)
+  fresh-in ⟨ Σᴸ , Σᴴ ⟩ {low}  = ⟨ length Σᴸ , refl ⟩
+  fresh-in ⟨ Σᴸ , Σᴴ ⟩ {high} = ⟨ length Σᴴ , refl ⟩
 progress pc (! M) (⊢deref ⊢M) μ ⊢μ =
   case progress pc M ⊢M μ ⊢μ of λ where
   (step M→M′) → step (ξ {F = !□} M→M′)
   (done v) →
     case canonical-ref ⊢M v of λ where
-    (Ref-addr eq _) →
-      let ⟨ V₁ , v₁ , eq , ⊢V₁ ⟩ = ⊢μ _ eq in
+    (Ref-addr {n = n} {ℓ₁ = ℓ₁} eq _) →
+      let ⟨ V₁ , v₁ , eq , ⊢V₁ ⟩ = ⊢μ n ℓ₁ eq in
       step (deref eq)
     (Ref-proxy r i _) → step (deref-cast (ref-is-value r) i)
   (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
-progress pc (L [ ℓ ]:= M) (⊢assign ⊢L ⊢M pc′≼ℓ) μ ⊢μ =
+progress pc (L := M) (⊢assign ⊢L ⊢M pc′≼ℓ) μ ⊢μ =
   step assign-static
 progress pc (L :=? M) (⊢assign? ⊢L ⊢M) μ ⊢μ =
   case progress pc L ⊢L μ ⊢μ of λ where
   (step L→L′) → step (ξ {F = □:=? M} L→L′)
   (done v) →
     case canonical-ref ⊢L v of λ where
-    (Ref-addr {ℓ₁ = ℓ₁} eq sub) →
-      let ⟨ V₁ , v₁ , eq₁ , ⊢V₁ ⟩ = ⊢μ _ eq in
+    (Ref-addr {n = n} {ℓ₁ = ℓ₁} eq sub) →
+      let ⟨ V₁ , v₁ , eq₁ , ⊢V₁ ⟩ = ⊢μ n ℓ₁ eq in
       case pc ≼? ℓ₁ of λ where
-      (yes pc≼ℓ₁) → step (assign?-ok eq₁ pc≼ℓ₁)
-      (no  pc⋠ℓ₁) → step (assign?-fail eq₁ pc⋠ℓ₁)
+      (yes pc≼ℓ₁) → step (assign?-ok pc≼ℓ₁)
+      (no  pc⋠ℓ₁) → step (assign?-fail pc⋠ℓ₁)
     (Ref-proxy r i (<:-ty _ (<:-ref (<:-ty _ _) _))) →
       step (assign?-cast (ref-is-value r) i)
   (err (E-error {e})) → step (ξ-err {F = □:=? M} {e = e})
-progress pc (L [ ℓ ]:=✓ M) (⊢assign✓ ⊢L ⊢M pc≼ℓ) μ ⊢μ =
+progress pc (L :=✓ M) (⊢assign✓ ⊢L ⊢M pc≼ℓ) μ ⊢μ =
   case progress pc L ⊢L μ ⊢μ of λ where
-  (step L→L′) → step (ξ {F = □[ ℓ ]:=✓ M} L→L′)
+  (step L→L′) → step (ξ {F = □:=✓ M} L→L′)
   (done v) →
     case progress pc M ⊢M μ ⊢μ of λ where
-    (step M→M′) → step (ξ {F = (L [ ℓ ]:=✓□) v} M→M′)
+    (step M→M′) → step (ξ {F = (L :=✓□) v} M→M′)
     (done w) →
       case canonical-ref ⊢L v of λ where
       (Ref-addr eq _) → step (assign w)
       (Ref-proxy r i _) →
         case i of λ where
         (I-ref _ I-label I-label) → step (assign-cast (ref-is-value r) w i)
-    (err (E-error {e})) → step (ξ-err {F = (L [ ℓ ]:=✓□) v} {e = e})
-  (err (E-error {e})) → step (ξ-err {F = □[ ℓ ]:=✓ M} {e = e})
+    (err (E-error {e})) → step (ξ-err {F = (L :=✓□) v} {e = e})
+  (err (E-error {e})) → step (ξ-err {F = □:=✓ M} {e = e})
 progress pc (prot ℓ M) (⊢prot ⊢M) μ ⊢μ =
   case progress (pc ⋎ ℓ) M ⊢M μ ⊢μ of λ where
   (step M→N) → step (prot-ctx M→N)
@@ -143,163 +159,163 @@ progress pc M (⊢sub ⊢M _) μ ⊢μ = progress pc M ⊢M μ ⊢μ
 progress pc M (⊢sub-pc ⊢M _) μ ⊢μ = progress pc M ⊢M μ ⊢μ
 
 
-preserve : ∀ {Σ gc pc M M′ A μ μ′}
-  → [] ; Σ ; gc ; pc ⊢ M ⦂ A
-  → Σ ⊢ μ
-  → l pc ≾ gc
-  → M ∣ μ ∣ Σ ∣ pc —→ M′ ∣ μ′
-    ----------------------------------------------------------
-  → ∃[ Σ′ ] (Σ′ ⊇ Σ) × ([] ; Σ′ ; gc ; pc ⊢ M′ ⦂ A) × (Σ′ ⊢ μ′)
-preserve ⊢plug ⊢μ pc≾gc (ξ {F = F} M→M′) =
-  let ⟨ gc′ , B , pc≾gc′ , ⊢M , wt-plug ⟩ = plug-inversion ⊢plug pc≾gc
-      ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩  = preserve ⊢M ⊢μ pc≾gc′ M→M′ in
-  ⟨ Σ′ , Σ′⊇Σ , wt-plug ⊢M′ Σ′⊇Σ , ⊢μ′ ⟩
-preserve {Σ} ⊢M ⊢μ pc≾gc ξ-err = ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
-preserve {Σ} (⊢prot ⊢V) ⊢μ pc≾gc (prot-val v) =
-  ⟨ Σ , ⊇-refl Σ , ⊢value-pc (stamp-val-wt ⊢V v) (stamp-val-value v) , ⊢μ ⟩
-preserve (⊢prot ⊢M) ⊢μ pc≾gc (prot-ctx M→M′) =
-  let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ (consis-join-≾ pc≾gc ≾-refl) M→M′ in
-  ⟨ Σ′ , Σ′⊇Σ , ⊢prot ⊢M′ , ⊢μ′ ⟩
-preserve {Σ} ⊢M ⊢μ pc≾gc prot-err = ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
-preserve {Σ} (⊢app ⊢V ⊢M) ⊢μ pc≾gc (β v) =
-  case canonical-fun ⊢V V-ƛ of λ where
-  (Fun-ƛ ⊢N (<:-ty ℓ<:g (<:-fun gc⋎g<:gc′ A<:A′ B′<:B))) →
-    let gc⋎ℓ<:gc⋎g = consis-join-<:ₗ <:ₗ-refl ℓ<:g
-        gc⋎ℓ<:gc′  = <:ₗ-trans gc⋎ℓ<:gc⋎g gc⋎g<:gc′ in
-    ⟨ Σ , ⊇-refl Σ ,
-      ⊢sub (⊢prot (substitution-pres (⊢sub-pc ⊢N gc⋎ℓ<:gc′) (⊢value-pc (⊢sub ⊢M A<:A′) v)))
-           (stamp-<: B′<:B ℓ<:g) , ⊢μ ⟩
-preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-true {ℓ = ℓ}) =
-  case const-label-≼ ⊢L of λ where
-  ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ →
-    let gc⋎ℓ<:gc⋎ℓ′ = consis-join-<:ₗ <:ₗ-refl (<:-l ℓ≼ℓ′)
-        A⋎ℓ<:A⋎ℓ′   = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
-    ⟨ Σ , ⊇-refl Σ , ⊢sub (⊢prot (⊢sub-pc ⊢M gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
-preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-false {ℓ = ℓ}) =
-  case const-label-≼ ⊢L of λ where
-  ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ →
-    let gc⋎ℓ<:gc⋎ℓ′ = consis-join-<:ₗ <:ₗ-refl (<:-l ℓ≼ℓ′)
-        A⋎ℓ<:A⋎ℓ′   = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
-    ⟨ Σ , ⊇-refl Σ , ⊢sub (⊢prot (⊢sub-pc ⊢N gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
-preserve {Σ} (⊢let ⊢V ⊢N) ⊢μ pc≾gc (β-let v) =
-  ⟨ Σ , ⊇-refl Σ , substitution-pres ⊢N (⊢value-pc ⊢V v) , ⊢μ ⟩
-preserve {Σ} (⊢ref ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) ref-static =
-  ⟨ Σ , ⊇-refl Σ , ⊢ref✓ ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
-preserve {Σ} (⊢ref✓ {T = T} {ℓ} ⊢V pc≼ℓ) ⊢μ pc≾gc (ref v refl {- a is fresh -}) =
-  ⟨ Σ ∷ʳ ⟨ T , ℓ ⟩ , ⊇-snoc Σ ⟨ T , ℓ ⟩ ,
-    ⊢addr (snoc-here ⟨ T , ℓ ⟩ Σ) , ⊢μ-new (⊢value-pc ⊢V v) v ⊢μ refl ⟩
-preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-ok pc≼ℓ) =
-  ⟨ Σ , ⊇-refl Σ , ⊢ref✓ ⊢M pc≼ℓ , ⊢μ ⟩
-preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-fail pc⋠ℓ) =
-  ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
-preserve {Σ} (⊢deref ⊢a) ⊢μ pc≾gc (deref {ℓ = ℓ} {ℓ₁} eq) =
-  case canonical-ref ⊢a V-addr of λ where
-  (Ref-addr {g = l ℓ′} eq₁ (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
-    case <:-antisym A′<:A A<:A′ of λ where
-    refl →
-      let ⟨ V₁ , v₁ , eq′ , ⊢V₁ ⟩ = ⊢μ _ eq₁ in
-      case trans (sym eq) eq′ of λ where
-      refl →
-        let leq : ℓ₁ ⋎ (ℓ₁ ⋎ ℓ) ≼ ℓ₁ ⋎ ℓ′
-            leq = subst (λ □ → □ ≼ _) (sym ℓ₁⋎[ℓ₁⋎ℓ]≡ℓ₁⋎ℓ) (join-≼′ ≼-refl ℓ≼ℓ′)
-            in
-        ⟨ Σ , ⊇-refl Σ ,
-          ⊢sub (⊢prot (⊢value-pc ⊢V₁ v₁)) (<:-ty (<:-l leq) <:ᵣ-refl) , ⊢μ ⟩
-preserve {Σ} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) assign-static =
-  ⟨ Σ , ⊇-refl Σ , ⊢assign✓ ⊢L ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
-preserve {Σ} (⊢assign✓ {ℓ = ℓ′} ⊢a ⊢V pc≼ℓ′) ⊢μ pc≾gc (assign {ℓ = ℓ} {ℓ₁} v) =
- case canonical-ref ⊢a V-addr of λ where
- (Ref-addr eq (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
-   case <:-antisym A′<:A A<:A′ of λ where
-   refl → ⟨ Σ , ⊇-refl Σ , ⊢const , ⊢μ-update (⊢value-pc ⊢V v) v ⊢μ eq ⟩
-preserve {Σ} (⊢assign? ⊢a ⊢M) ⊢μ pc≾gc (assign?-ok eq pc≼ℓ₁) =
- case canonical-ref ⊢a V-addr of λ where
- (Ref-addr eq₁ (<:-ty _ (<:-ref A′<:A A<:A′))) →
-   case <:-antisym A′<:A A<:A′ of λ where
-   refl →
-    let ⟨ _ , _ , eq′ , _ ⟩ = ⊢μ _ eq₁ in
-    case trans (sym eq) eq′ of λ where
-    refl → ⟨ Σ , ⊇-refl Σ , ⊢assign✓ ⊢a ⊢M pc≼ℓ₁ , ⊢μ ⟩
-preserve {Σ} ⊢M ⊢μ pc≾gc (assign?-fail eq pc⋠ℓ₁) =
-  ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
-preserve {Σ} (⊢cast ⊢V) ⊢μ pc≾gc (cast ⊢V† v a) =
-  ⟨ Σ , ⊇-refl Σ , apply-cast-wt ⊢V† v a , ⊢μ ⟩
-preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) with i
-... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
-  case canonical-const ⊢L (V-cast V-const i) of λ where
-  (Const-inj {ℓ = ℓ} ℓ≼ℓ′) →
-    let ⊢M† : [] ; Σ ; ⋆ ; pc ⋎ ℓ ⊢ M ⦂ A
-        ⊢M† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ M ⦂ A) g⋎̃⋆≡⋆ ⊢M in
-    ⟨ Σ , ⊇-refl Σ , ⊢cast (⊢prot (⊢cast-pc ⊢M† ~⋆)) , ⊢μ ⟩
-preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-false i) with i
-... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
-  case canonical-const ⊢L (V-cast V-const i) of λ where
-  (Const-inj {ℓ = ℓ} ℓ≼ℓ′) →
-    let ⊢N† : [] ; Σ ; ⋆ ; pc ⋎ ℓ ⊢ N ⦂ A
-        ⊢N† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ N ⦂ A) g⋎̃⋆≡⋆ (⊢N {pc ⋎ ℓ}) in
-    ⟨ Σ , ⊇-refl Σ , ⊢cast (⊢prot (⊢cast-pc ⊢N† ~⋆)) , ⊢μ ⟩
-preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc = pc} v w i) with i
-... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p c~) I-label I-label =
-  case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
-  ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:pc₂ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun l~ _ _) ⟩ →
-    -- doing some label arithmetic ...
-    case ⟨ g₁~g₂ , g₂<:g , consis-join-<:ₗ-inv gc⋎g<:pc₂ ⟩ of λ where
-    ⟨ l~ , <:-l g₂≼g , <:-l gc≼pc₂ , <:-l g≼pc₂ ⟩ →
-      let ⊢V = fun-wt {gc = gc} f
-          g₂≼pc₂ = ≼-trans g₂≼g g≼pc₂
-          gc⋎g₂≼pc₂ = subst (λ □ → _ ⋎ _ ≼ □) ℓ⋎ℓ≡ℓ (join-≼′ gc≼pc₂ g₂≼pc₂)
-          ⊢V† = ⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l gc⋎g₂≼pc₂) <:-refl <:-refl)) in
-      ⟨ Σ , ⊇-refl Σ ,
-        ⊢sub (⊢cast (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
-... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p c~) I-label I-label
-  with (pc ⋎ ℓ₁) ≼? pc₁
-...   | yes pc⋎ℓ₁≼pc₁ =
-  case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
-  ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:⋆ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun ~⋆ _ _) ⟩ →
-    let ⊢V  = fun-wt {gc = gc} {pc = pc} f
-        ⊢V† = ⊢value-pc {gc′ = l pc} (⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l pc⋎ℓ₁≼pc₁) <:-refl <:-refl))) v in
-    ⟨ Σ , ⊇-refl Σ ,
-      ⊢sub (⊢cast (⊢cast-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C))) l~))
-           (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
-...   | no  _ = ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
-preserve {Σ} (⊢deref {A = A′} ⊢M) ⊢μ pc≾gc (deref-cast v i) =
-  case canonical-ref ⊢M (V-cast v i) of λ where
-  (Ref-proxy r _ (<:-ty g₂<:g (<:-ref B<:A′ A′<:B))) →
-    case <:-antisym B<:A′ A′<:B of λ where
-    refl →
-      ⟨ Σ , ⊇-refl Σ ,
-        ⊢sub (⊢cast (⊢deref (ref-wt r))) (stamp-<: <:-refl g₂<:g) , ⊢μ ⟩
-preserve {Σ} (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (assign?-cast v i) with i
-... | I-ref (cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of l ℓ₂) of g) p c~) I-label I-label =
-  case canonical-ref ⊢L (V-cast v i) of λ where
-  (Ref-proxy r _ (<:-ty g<:g′ (<:-ref A<:B B<:A))) →
-    case ⟨ c~ , g<:g′ , <:-antisym A<:B B<:A ⟩ of λ where
-    ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , <:-l ℓ≼ℓ′ , refl ⟩ →
-      ⟨ Σ , ⊇-refl Σ ,
-        ⊢assign? (⊢sub (ref-wt r) (<:-ty (<:-l ℓ≼ℓ′) <:ᵣ-refl)) (⊢cast ⊢M) , ⊢μ ⟩
-... | I-ref (cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of ⋆) of g) p c~) I-label I-label
-  with ℓ ≼? ℓ₁
-...   | yes ℓ≼ℓ₁ =
-  case canonical-ref ⊢L (V-cast v i) of λ where
-  (Ref-proxy r _ (<:-ty g<:g′ (<:-ref A<:B B<:A))) →
-    case ⟨ c~ , g<:g′ , <:-antisym A<:B B<:A ⟩ of λ where
-    ⟨ ~-ty ~⋆ (~-ref (~-ty ~⋆ _)) , <:-⋆ , refl ⟩ →
-      ⟨ Σ , ⊇-refl Σ ,
-        ⊢assign? (⊢sub (ref-wt r) (<:-ty (<:-l ℓ≼ℓ₁) <:ᵣ-refl)) (⊢cast ⊢M) , ⊢μ ⟩
-...   | no  _ = ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
-preserve {Σ} {gc} (⊢assign✓ ⊢L ⊢M pc≼ℓ) ⊢μ pc≾gc (assign-cast v w i) with i
-... | I-ref (cast _ _ _ c~) I-label I-label =
-  case canonical-ref ⊢L (V-cast v i) of λ where
-  (Ref-proxy r _ (<:-ty ℓ<:ℓ′ (<:-ref A<:B B<:A))) →
-    case ⟨ c~ , <:-antisym A<:B B<:A ⟩ of λ where
-    ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , refl ⟩ →
-      ⟨ Σ , ⊇-refl Σ ,
-        ⊢assign✓ (⊢sub (ref-wt r) (<:-ty ℓ<:ℓ′ <:ᵣ-refl)) (⊢cast ⊢M) pc≼ℓ , ⊢μ ⟩
-preserve {Σ} (⊢cast-pc ⊢V _) ⊢μ pc≾gc (β-cast-pc v) =
-  ⟨ Σ , ⊇-refl Σ , ⊢value-pc ⊢V v , ⊢μ ⟩
-preserve (⊢sub ⊢M A<:B) ⊢μ pc≾gc M→M′ =
-  let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ pc≾gc M→M′ in
-  ⟨ Σ′ , Σ′⊇Σ , ⊢sub ⊢M′ A<:B , ⊢μ′ ⟩
-preserve (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M→M′ =
-  let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ (≾-<: pc≾gc gc<:gc′) M→M′ in
-  ⟨ Σ′ , Σ′⊇Σ , ⊢sub-pc ⊢M′ gc<:gc′ , ⊢μ′ ⟩
+-- preserve : ∀ {Σ gc pc M M′ A μ μ′}
+--   → [] ; Σ ; gc ; pc ⊢ M ⦂ A
+--   → Σ ⊢ μ
+--   → l pc ≾ gc
+--   → M ∣ μ ∣ Σ ∣ pc —→ M′ ∣ μ′
+--     ----------------------------------------------------------
+--   → ∃[ Σ′ ] (Σ′ ⊇ Σ) × ([] ; Σ′ ; gc ; pc ⊢ M′ ⦂ A) × (Σ′ ⊢ μ′)
+-- preserve ⊢plug ⊢μ pc≾gc (ξ {F = F} M→M′) =
+--   let ⟨ gc′ , B , pc≾gc′ , ⊢M , wt-plug ⟩ = plug-inversion ⊢plug pc≾gc
+--       ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩  = preserve ⊢M ⊢μ pc≾gc′ M→M′ in
+--   ⟨ Σ′ , Σ′⊇Σ , wt-plug ⊢M′ Σ′⊇Σ , ⊢μ′ ⟩
+-- preserve {Σ} ⊢M ⊢μ pc≾gc ξ-err = ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
+-- preserve {Σ} (⊢prot ⊢V) ⊢μ pc≾gc (prot-val v) =
+--   ⟨ Σ , ⊇-refl Σ , ⊢value-pc (stamp-val-wt ⊢V v) (stamp-val-value v) , ⊢μ ⟩
+-- preserve (⊢prot ⊢M) ⊢μ pc≾gc (prot-ctx M→M′) =
+--   let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ (consis-join-≾ pc≾gc ≾-refl) M→M′ in
+--   ⟨ Σ′ , Σ′⊇Σ , ⊢prot ⊢M′ , ⊢μ′ ⟩
+-- preserve {Σ} ⊢M ⊢μ pc≾gc prot-err = ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
+-- preserve {Σ} (⊢app ⊢V ⊢M) ⊢μ pc≾gc (β v) =
+--   case canonical-fun ⊢V V-ƛ of λ where
+--   (Fun-ƛ ⊢N (<:-ty ℓ<:g (<:-fun gc⋎g<:gc′ A<:A′ B′<:B))) →
+--     let gc⋎ℓ<:gc⋎g = consis-join-<:ₗ <:ₗ-refl ℓ<:g
+--         gc⋎ℓ<:gc′  = <:ₗ-trans gc⋎ℓ<:gc⋎g gc⋎g<:gc′ in
+--     ⟨ Σ , ⊇-refl Σ ,
+--       ⊢sub (⊢prot (substitution-pres (⊢sub-pc ⊢N gc⋎ℓ<:gc′) (⊢value-pc (⊢sub ⊢M A<:A′) v)))
+--            (stamp-<: B′<:B ℓ<:g) , ⊢μ ⟩
+-- preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-true {ℓ = ℓ}) =
+--   case const-label-≼ ⊢L of λ where
+--   ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ →
+--     let gc⋎ℓ<:gc⋎ℓ′ = consis-join-<:ₗ <:ₗ-refl (<:-l ℓ≼ℓ′)
+--         A⋎ℓ<:A⋎ℓ′   = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
+--     ⟨ Σ , ⊇-refl Σ , ⊢sub (⊢prot (⊢sub-pc ⊢M gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
+-- preserve {Σ} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (β-if-false {ℓ = ℓ}) =
+--   case const-label-≼ ⊢L of λ where
+--   ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ →
+--     let gc⋎ℓ<:gc⋎ℓ′ = consis-join-<:ₗ <:ₗ-refl (<:-l ℓ≼ℓ′)
+--         A⋎ℓ<:A⋎ℓ′   = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
+--     ⟨ Σ , ⊇-refl Σ , ⊢sub (⊢prot (⊢sub-pc ⊢N gc⋎ℓ<:gc⋎ℓ′)) A⋎ℓ<:A⋎ℓ′ , ⊢μ ⟩
+-- preserve {Σ} (⊢let ⊢V ⊢N) ⊢μ pc≾gc (β-let v) =
+--   ⟨ Σ , ⊇-refl Σ , substitution-pres ⊢N (⊢value-pc ⊢V v) , ⊢μ ⟩
+-- preserve {Σ} (⊢ref ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) ref-static =
+--   ⟨ Σ , ⊇-refl Σ , ⊢ref✓ ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
+-- preserve {Σ} (⊢ref✓ {T = T} {ℓ} ⊢V pc≼ℓ) ⊢μ pc≾gc (ref v refl {- a is fresh -}) =
+--   ⟨ Σ ∷ʳ ⟨ T , ℓ ⟩ , ⊇-snoc Σ ⟨ T , ℓ ⟩ ,
+--     ⊢addr (snoc-here ⟨ T , ℓ ⟩ Σ) , ⊢μ-new (⊢value-pc ⊢V v) v ⊢μ refl ⟩
+-- preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-ok pc≼ℓ) =
+--   ⟨ Σ , ⊇-refl Σ , ⊢ref✓ ⊢M pc≼ℓ , ⊢μ ⟩
+-- preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-fail pc⋠ℓ) =
+--   ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
+-- preserve {Σ} (⊢deref ⊢a) ⊢μ pc≾gc (deref {ℓ = ℓ} {ℓ₁} eq) =
+--   case canonical-ref ⊢a V-addr of λ where
+--   (Ref-addr {g = l ℓ′} eq₁ (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
+--     case <:-antisym A′<:A A<:A′ of λ where
+--     refl →
+--       let ⟨ V₁ , v₁ , eq′ , ⊢V₁ ⟩ = ⊢μ _ eq₁ in
+--       case trans (sym eq) eq′ of λ where
+--       refl →
+--         let leq : ℓ₁ ⋎ (ℓ₁ ⋎ ℓ) ≼ ℓ₁ ⋎ ℓ′
+--             leq = subst (λ □ → □ ≼ _) (sym ℓ₁⋎[ℓ₁⋎ℓ]≡ℓ₁⋎ℓ) (join-≼′ ≼-refl ℓ≼ℓ′)
+--             in
+--         ⟨ Σ , ⊇-refl Σ ,
+--           ⊢sub (⊢prot (⊢value-pc ⊢V₁ v₁)) (<:-ty (<:-l leq) <:ᵣ-refl) , ⊢μ ⟩
+-- preserve {Σ} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) assign-static =
+--   ⟨ Σ , ⊇-refl Σ , ⊢assign✓ ⊢L ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
+-- preserve {Σ} (⊢assign✓ {ℓ = ℓ′} ⊢a ⊢V pc≼ℓ′) ⊢μ pc≾gc (assign {ℓ = ℓ} {ℓ₁} v) =
+--  case canonical-ref ⊢a V-addr of λ where
+--  (Ref-addr eq (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
+--    case <:-antisym A′<:A A<:A′ of λ where
+--    refl → ⟨ Σ , ⊇-refl Σ , ⊢const , ⊢μ-update (⊢value-pc ⊢V v) v ⊢μ eq ⟩
+-- preserve {Σ} (⊢assign? ⊢a ⊢M) ⊢μ pc≾gc (assign?-ok eq pc≼ℓ₁) =
+--  case canonical-ref ⊢a V-addr of λ where
+--  (Ref-addr eq₁ (<:-ty _ (<:-ref A′<:A A<:A′))) →
+--    case <:-antisym A′<:A A<:A′ of λ where
+--    refl →
+--     let ⟨ _ , _ , eq′ , _ ⟩ = ⊢μ _ eq₁ in
+--     case trans (sym eq) eq′ of λ where
+--     refl → ⟨ Σ , ⊇-refl Σ , ⊢assign✓ ⊢a ⊢M pc≼ℓ₁ , ⊢μ ⟩
+-- preserve {Σ} ⊢M ⊢μ pc≾gc (assign?-fail eq pc⋠ℓ₁) =
+--   ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
+-- preserve {Σ} (⊢cast ⊢V) ⊢μ pc≾gc (cast ⊢V† v a) =
+--   ⟨ Σ , ⊇-refl Σ , apply-cast-wt ⊢V† v a , ⊢μ ⟩
+-- preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) with i
+-- ... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
+--   case canonical-const ⊢L (V-cast V-const i) of λ where
+--   (Const-inj {ℓ = ℓ} ℓ≼ℓ′) →
+--     let ⊢M† : [] ; Σ ; ⋆ ; pc ⋎ ℓ ⊢ M ⦂ A
+--         ⊢M† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ M ⦂ A) g⋎̃⋆≡⋆ ⊢M in
+--     ⟨ Σ , ⊇-refl Σ , ⊢cast (⊢prot (⊢cast-pc ⊢M† ~⋆)) , ⊢μ ⟩
+-- preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-false i) with i
+-- ... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
+--   case canonical-const ⊢L (V-cast V-const i) of λ where
+--   (Const-inj {ℓ = ℓ} ℓ≼ℓ′) →
+--     let ⊢N† : [] ; Σ ; ⋆ ; pc ⋎ ℓ ⊢ N ⦂ A
+--         ⊢N† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ N ⦂ A) g⋎̃⋆≡⋆ (⊢N {pc ⋎ ℓ}) in
+--     ⟨ Σ , ⊇-refl Σ , ⊢cast (⊢prot (⊢cast-pc ⊢N† ~⋆)) , ⊢μ ⟩
+-- preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc = pc} v w i) with i
+-- ... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p c~) I-label I-label =
+--   case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
+--   ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:pc₂ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun l~ _ _) ⟩ →
+--     -- doing some label arithmetic ...
+--     case ⟨ g₁~g₂ , g₂<:g , consis-join-<:ₗ-inv gc⋎g<:pc₂ ⟩ of λ where
+--     ⟨ l~ , <:-l g₂≼g , <:-l gc≼pc₂ , <:-l g≼pc₂ ⟩ →
+--       let ⊢V = fun-wt {gc = gc} f
+--           g₂≼pc₂ = ≼-trans g₂≼g g≼pc₂
+--           gc⋎g₂≼pc₂ = subst (λ □ → _ ⋎ _ ≼ □) ℓ⋎ℓ≡ℓ (join-≼′ gc≼pc₂ g₂≼pc₂)
+--           ⊢V† = ⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l gc⋎g₂≼pc₂) <:-refl <:-refl)) in
+--       ⟨ Σ , ⊇-refl Σ ,
+--         ⊢sub (⊢cast (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
+-- ... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p c~) I-label I-label
+--   with (pc ⋎ ℓ₁) ≼? pc₁
+-- ...   | yes pc⋎ℓ₁≼pc₁ =
+--   case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
+--   ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:⋆ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun ~⋆ _ _) ⟩ →
+--     let ⊢V  = fun-wt {gc = gc} {pc = pc} f
+--         ⊢V† = ⊢value-pc {gc′ = l pc} (⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l pc⋎ℓ₁≼pc₁) <:-refl <:-refl))) v in
+--     ⟨ Σ , ⊇-refl Σ ,
+--       ⊢sub (⊢cast (⊢cast-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C))) l~))
+--            (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
+-- ...   | no  _ = ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
+-- preserve {Σ} (⊢deref {A = A′} ⊢M) ⊢μ pc≾gc (deref-cast v i) =
+--   case canonical-ref ⊢M (V-cast v i) of λ where
+--   (Ref-proxy r _ (<:-ty g₂<:g (<:-ref B<:A′ A′<:B))) →
+--     case <:-antisym B<:A′ A′<:B of λ where
+--     refl →
+--       ⟨ Σ , ⊇-refl Σ ,
+--         ⊢sub (⊢cast (⊢deref (ref-wt r))) (stamp-<: <:-refl g₂<:g) , ⊢μ ⟩
+-- preserve {Σ} (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (assign?-cast v i) with i
+-- ... | I-ref (cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of l ℓ₂) of g) p c~) I-label I-label =
+--   case canonical-ref ⊢L (V-cast v i) of λ where
+--   (Ref-proxy r _ (<:-ty g<:g′ (<:-ref A<:B B<:A))) →
+--     case ⟨ c~ , g<:g′ , <:-antisym A<:B B<:A ⟩ of λ where
+--     ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , <:-l ℓ≼ℓ′ , refl ⟩ →
+--       ⟨ Σ , ⊇-refl Σ ,
+--         ⊢assign? (⊢sub (ref-wt r) (<:-ty (<:-l ℓ≼ℓ′) <:ᵣ-refl)) (⊢cast ⊢M) , ⊢μ ⟩
+-- ... | I-ref (cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of ⋆) of g) p c~) I-label I-label
+--   with ℓ ≼? ℓ₁
+-- ...   | yes ℓ≼ℓ₁ =
+--   case canonical-ref ⊢L (V-cast v i) of λ where
+--   (Ref-proxy r _ (<:-ty g<:g′ (<:-ref A<:B B<:A))) →
+--     case ⟨ c~ , g<:g′ , <:-antisym A<:B B<:A ⟩ of λ where
+--     ⟨ ~-ty ~⋆ (~-ref (~-ty ~⋆ _)) , <:-⋆ , refl ⟩ →
+--       ⟨ Σ , ⊇-refl Σ ,
+--         ⊢assign? (⊢sub (ref-wt r) (<:-ty (<:-l ℓ≼ℓ₁) <:ᵣ-refl)) (⊢cast ⊢M) , ⊢μ ⟩
+-- ...   | no  _ = ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
+-- preserve {Σ} {gc} (⊢assign✓ ⊢L ⊢M pc≼ℓ) ⊢μ pc≾gc (assign-cast v w i) with i
+-- ... | I-ref (cast _ _ _ c~) I-label I-label =
+--   case canonical-ref ⊢L (V-cast v i) of λ where
+--   (Ref-proxy r _ (<:-ty ℓ<:ℓ′ (<:-ref A<:B B<:A))) →
+--     case ⟨ c~ , <:-antisym A<:B B<:A ⟩ of λ where
+--     ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , refl ⟩ →
+--       ⟨ Σ , ⊇-refl Σ ,
+--         ⊢assign✓ (⊢sub (ref-wt r) (<:-ty ℓ<:ℓ′ <:ᵣ-refl)) (⊢cast ⊢M) pc≼ℓ , ⊢μ ⟩
+-- preserve {Σ} (⊢cast-pc ⊢V _) ⊢μ pc≾gc (β-cast-pc v) =
+--   ⟨ Σ , ⊇-refl Σ , ⊢value-pc ⊢V v , ⊢μ ⟩
+-- preserve (⊢sub ⊢M A<:B) ⊢μ pc≾gc M→M′ =
+--   let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ pc≾gc M→M′ in
+--   ⟨ Σ′ , Σ′⊇Σ , ⊢sub ⊢M′ A<:B , ⊢μ′ ⟩
+-- preserve (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M→M′ =
+--   let ⟨ Σ′ , Σ′⊇Σ , ⊢M′ , ⊢μ′ ⟩ = preserve ⊢M ⊢μ (≾-<: pc≾gc gc<:gc′) M→M′ in
+--   ⟨ Σ′ , Σ′⊇Σ , ⊢sub-pc ⊢M′ gc<:gc′ , ⊢μ′ ⟩

@@ -6,6 +6,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; sub
 open import Syntax
 
 open import Types
+open import HeapContext
 open import CC
 
 module Preservation where
