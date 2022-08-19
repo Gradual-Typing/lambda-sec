@@ -23,6 +23,7 @@ _FreshIn_ : Addr → HeapContext → Set
 (a[ low  ] n) FreshIn ⟨ Σᴸ , Σᴴ ⟩ = n ≡ length Σᴸ
 (a[ high ] n) FreshIn ⟨ Σᴸ , Σᴴ ⟩ = n ≡ length Σᴴ
 
+
 infix 4 _⊇_
 
 _⊇_ : ∀ (Σ′ Σ : HeapContext) → Set
@@ -35,6 +36,12 @@ _⊇_ : ∀ (Σ′ Σ : HeapContext) → Set
 ext-Σ : StaticLabel → RawType → HeapContext → HeapContext
 ext-Σ low  T ⟨ Σᴸ , Σᴴ ⟩ = ⟨ Σᴸ ∷ʳ T , Σᴴ ⟩
 ext-Σ high T ⟨ Σᴸ , Σᴴ ⟩ = ⟨ Σᴸ , Σᴴ ∷ʳ T ⟩
+
+lookup-ext : ∀ {n} ℓ T Σ
+  → (a[ ℓ ] n) FreshIn Σ
+  → lookup-Σ (ext-Σ ℓ T Σ) (a[ ℓ ] n) ≡ just T
+lookup-ext low  T ⟨ Σᴸ , Σᴴ ⟩ fresh rewrite fresh = snoc-here T Σᴸ
+lookup-ext high T ⟨ Σᴸ , Σᴴ ⟩ fresh rewrite fresh = snoc-here T Σᴴ
 
 ⊇-ext : ∀ ℓ T Σ → ext-Σ ℓ T Σ ⊇ Σ
 ⊇-ext low  T ⟨ _ ∷ Σᴸ , Σᴴ ⟩ (a[ low ] 0) eq = eq

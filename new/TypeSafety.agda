@@ -201,25 +201,24 @@ preserve {Σ} (⊢let ⊢V ⊢N) ⊢μ pc≾gc (β-let v) =
   ⟨ Σ , ⊇-refl Σ , substitution-pres ⊢N (⊢value-pc ⊢V v) , ⊢μ ⟩
 preserve {Σ} (⊢ref ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) ref-static =
   ⟨ Σ , ⊇-refl Σ , ⊢ref✓ ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
-preserve {Σ} (⊢ref✓ {T = T} {ℓ} ⊢V pc≼ℓ) ⊢μ pc≾gc (ref v fresh {- a is fresh -}) = {!!}
---  ⟨ Σ ∷ʳ ⟨ T , ℓ ⟩ , ? {- ⊇-snoc Σ ⟨ T , ℓ ⟩ -} , ⊢addr (snoc-here ⟨ T , ℓ ⟩ Σ) , ⊢μ-new (⊢value-pc ⊢V v) v ⊢μ refl ⟩
+preserve {Σ} (⊢ref✓ {T = T} {ℓ} ⊢V pc≼ℓ) ⊢μ pc≾gc (ref v fresh) =
+  ⟨ ext-Σ ℓ T Σ , ⊇-ext ℓ T Σ ,
+    ⊢addr (lookup-ext ℓ T Σ fresh) , ⊢μ-new (⊢value-pc ⊢V v) v ⊢μ fresh ⟩
 preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-ok pc≼ℓ) =
   ⟨ Σ , ⊇-refl Σ , ⊢ref✓ ⊢M pc≼ℓ , ⊢μ ⟩
 preserve {Σ} (⊢ref? ⊢M) ⊢μ pc≾gc (ref?-fail pc⋠ℓ) =
   ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
-preserve {Σ} (⊢deref ⊢a) ⊢μ pc≾gc (deref {ℓ = ℓ} {ℓ₁} eq) = {!!}
-  -- case canonical-ref ⊢a V-addr of λ where
-  -- (Ref-addr {g = l ℓ′} eq₁ (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
-  --   case <:-antisym A′<:A A<:A′ of λ where
-  --   refl →
-  --     let ⟨ V₁ , v₁ , eq′ , ⊢V₁ ⟩ = ⊢μ _ _ eq₁ in
-  --     case trans (sym eq) eq′ of λ where
-  --     refl →
-  --       let leq : ℓ₁ ⋎ (ℓ₁ ⋎ ℓ) ≼ ℓ₁ ⋎ ℓ′
-  --           leq = subst (λ □ → □ ≼ _) (sym ℓ₁⋎[ℓ₁⋎ℓ]≡ℓ₁⋎ℓ) (join-≼′ ≼-refl ℓ≼ℓ′)
-  --           in
-  --       ⟨ Σ , ⊇-refl Σ ,
-  --         ⊢sub (⊢prot (⊢value-pc ⊢V₁ v₁)) (<:-ty (<:-l leq) <:ᵣ-refl) , ⊢μ ⟩
+preserve {Σ} (⊢deref ⊢a) ⊢μ pc≾gc (deref {ℓ = ℓ} {ℓ₁} eq) =
+  case canonical-ref ⊢a V-addr of λ where
+  (Ref-addr {n = n} {g = l ℓ′} {ℓ₁ = ℓ₁} eq₁ (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
+    case <:-antisym A′<:A A<:A′ of λ where
+    refl →
+      let ⟨ V₁ , v₁ , eq′ , ⊢V₁ ⟩ = ⊢μ n ℓ₁ eq₁ in
+      case trans (sym eq) eq′ of λ where
+      refl →
+        let leq : ℓ₁ ⋎ (ℓ₁ ⋎ ℓ) ≼ ℓ₁ ⋎ ℓ′
+            leq = subst (λ □ → □ ≼ _) (sym ℓ₁⋎[ℓ₁⋎ℓ]≡ℓ₁⋎ℓ) (join-≼′ ≼-refl ℓ≼ℓ′) in
+        ⟨ Σ , ⊇-refl Σ ,  ⊢sub (⊢prot (⊢value-pc ⊢V₁ v₁)) (<:-ty (<:-l leq) <:ᵣ-refl) , ⊢μ ⟩
 preserve {Σ} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ (≾-l pc≼pc′) assign-static =
   ⟨ Σ , ⊇-refl Σ , ⊢assign✓ ⊢L ⊢M (≼-trans pc≼pc′ pc′≼ℓ) , ⊢μ ⟩
 preserve {Σ} (⊢assign✓ {ℓ = ℓ′} ⊢a ⊢V pc≼ℓ′) ⊢μ pc≾gc (assign {ℓ = ℓ} {ℓ₁} v) =
