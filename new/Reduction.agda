@@ -78,13 +78,13 @@ data _∣_∣_∣_—→_∣_ : Term → Heap → HeapContext → StaticLabel �
     → ref?[ ℓ ] M ∣ μ ∣ Σ ∣ pc —→ error nsu-error ∣ μ
 
   ref : ∀ {V μ Σ pc n ℓ}
-    → Value V
+    → (v : Value V)
     → a[ ℓ ] n FreshIn Σ  {- address is fresh -}
       -------------------------------------------------------------------------------- Ref
-    → ref✓[ ℓ ] V ∣ μ ∣ Σ ∣ pc —→ addr (a[ ℓ ] n) of low ∣ cons-μ (a[ ℓ ] n) V μ
+    → ref✓[ ℓ ] V ∣ μ ∣ Σ ∣ pc —→ addr (a[ ℓ ] n) of low ∣ cons-μ (a[ ℓ ] n) V v μ
 
-  deref : ∀ {V μ Σ pc n ℓ ℓ₁}
-    → lookup-μ μ (a[ ℓ₁ ] n) ≡ just V
+  deref : ∀ {V μ Σ pc v n ℓ ℓ₁}
+    → lookup-μ μ (a[ ℓ₁ ] n) ≡ just ⟨ V , v ⟩
       --------------------------------------------------------------------- Deref
     → ! (addr (a[ ℓ₁ ] n) of ℓ) ∣ μ ∣ Σ ∣ pc —→ prot (ℓ₁ ⋎ ℓ) V ∣ μ
 
@@ -103,9 +103,9 @@ data _∣_∣_∣_—→_∣_ : Term → Heap → HeapContext → StaticLabel �
     → (addr (a[ ℓ₁ ] n) of ℓ) :=? M ∣ μ ∣ Σ ∣ pc —→ error nsu-error ∣ μ
 
   assign : ∀ {V μ Σ pc n ℓ ℓ₁}
-    → Value V
+    → (v : Value V)
       ---------------------------------------------------------------------------------------------- Assign
-    → (addr (a[ ℓ₁ ] n) of ℓ) :=✓ V ∣ μ ∣ Σ ∣ pc —→ $ tt of low ∣ cons-μ (a[ ℓ₁ ] n) V μ
+    → (addr (a[ ℓ₁ ] n) of ℓ) :=✓ V ∣ μ ∣ Σ ∣ pc —→ $ tt of low ∣ cons-μ (a[ ℓ₁ ] n) V v μ
 
   {- Reduction rules about casts, active and inert: -}
   cast : ∀ {A B V μ Σ pc} {c : Cast A ⇒ B}

@@ -21,12 +21,9 @@ open import CC
 infix 4 _⊢_
 
 _⊢_ : HeapContext → Heap → Set
--- Σ ⊢ μ = ∀ a {T ℓ}
---   → nth Σ a ≡ just ⟨ T , ℓ ⟩
---   → ∃[ V ] Value V × (key _≟_ μ a ≡ just ⟨ V , ℓ ⟩) × ([] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ)
 Σ ⊢ μ = ∀ n ℓ {T}
   → lookup-Σ Σ (a[ ℓ ] n) ≡ just T
-  → ∃[ V ] Value V × (lookup-μ μ (a[ ℓ ] n) ≡ just V) × ([] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ)
+  → ∃[ V ] ∃[ v ] lookup-μ μ (a[ ℓ ] n) ≡ just ⟨ V , v ⟩ × [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
 
 
 relax-Σ : ∀ {Γ Σ Σ′ gc pc M A}
@@ -60,29 +57,13 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
 ⊢μ-nil n low  ()
 ⊢μ-nil n high ()
 
--- ⊢μ-new : ∀ {Σ V a T ℓ μ}
---   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
---   → Value V
---   → Σ ⊢ μ
---   → a ≡ length Σ  {- a is fresh -}
---     -----------------------------------------------
---   → Σ ∷ʳ ⟨ T , ℓ ⟩ ⊢ ⟨ a , V , ℓ ⟩ ∷ μ
--- ⊢μ-new {Σ} {V₁} {a₁} {T₁} {ℓ₁} {μ} ⊢V₁ v₁ ⊢μ refl a {T} {ℓ} eq
---   with a ≟ length Σ
--- ... | yes refl =
---   case trans (sym eq) (snoc-here ⟨ T₁ , ℓ₁ ⟩ Σ) of λ where
---   refl → ⟨ V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-snoc Σ ⟨ T₁ , ℓ₁ ⟩) ⟩
--- ... | no neq =
---   let ⟨ V , v , eq′ , ⊢V ⟩ = ⊢μ a (snoc-there ⟨ T , ℓ ⟩ Σ eq neq) in
---     ⟨ V , v , eq′ , relax-Σ ⊢V (⊇-snoc Σ ⟨ T₁ , ℓ₁ ⟩) ⟩
-
 ⊢μ-new : ∀ {Σ V n T ℓ μ}
   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
-  → Value V
+  → (v : Value V)
   → Σ ⊢ μ
   → (a[ ℓ ] n) FreshIn Σ
     -----------------------------------------------
-  → ext-Σ ℓ T Σ ⊢ cons-μ (a[ ℓ ] n) V μ
+  → ext-Σ ℓ T Σ ⊢ cons-μ (a[ ℓ ] n) V v μ
 ⊢μ-new {⟨ Σᴸ , Σᴴ ⟩} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ refl n low {T} eq
   with n ≟ length Σᴸ
 ... | yes refl =
@@ -108,11 +89,11 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
 
 ⊢μ-update : ∀ {Σ V n T ℓ μ}
   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
-  → Value V
+  → (v : Value V)
   → Σ ⊢ μ
   → lookup-Σ Σ (a[ ℓ ] n) ≡ just T  {- updating a -}
     -----------------------------------------------
-  → Σ ⊢ cons-μ (a[ ℓ ] n) V μ
+  → Σ ⊢ cons-μ (a[ ℓ ] n) V v μ
 ⊢μ-update {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ eq₁ n low eq with n ≟ n₁
 ... | yes refl =
   case trans (sym eq) eq₁ of λ where

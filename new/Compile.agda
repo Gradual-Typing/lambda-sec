@@ -68,7 +68,7 @@ compile (L := M at p) (⊢assign {gc = gc} {A = A} {T} {g} {g₁} ⊢L ⊢M A≲
 
 compile-preserve : ∀ {Γ gc A} (M : Term)
   → (⊢M : Γ ; gc ⊢ᴳ M ⦂ A)
-  → (∀ {pc} → Γ ; [] ; gc ; pc ⊢ compile M ⊢M ⦂ A)
+  → (∀ {pc} → Γ ; ∅ ; gc ; pc ⊢ compile M ⊢M ⦂ A)
 compile-preserve ($ᴳ k of ℓ) ⊢const = ⊢const
 compile-preserve (`ᴳ x) (⊢var Γ∋x) = ⊢var Γ∋x
 compile-preserve (ƛᴳ[ pc ] A ˙ N of ℓ) (⊢lam ⊢N) = ⊢lam (compile-preserve N ⊢N)
@@ -115,5 +115,5 @@ compile-preserve (L := M at p) (⊢assign {gc = gc} {g = g} {g₁} ⊢L ⊢M A�
 {- Compilation from Surface to CC is type-preserving. -}
 compilation-preserves-type : ∀ {Γ gc A} (M : Term)
   → (⊢M : Γ ; gc ⊢ᴳ M ⦂ A)
-  → Γ ; [] ; gc ; low ⊢ compile M ⊢M ⦂ A
+  → Γ ; ∅ ; gc ; low ⊢ compile M ⊢M ⦂ A
 compilation-preserves-type M ⊢M = compile-preserve M ⊢M {low}
