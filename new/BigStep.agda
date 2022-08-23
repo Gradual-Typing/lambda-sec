@@ -66,7 +66,6 @@ data _∣_∣_⊢_⇓_∣_∣_ : Heap → HeapContext → StaticLabel → Term �
     → μ ∣ Σ ∣ pc ⊢ M ⇓ addr (a[ ℓ₁ ] n) of ℓ ∣ V-addr ∣ μ₁
     → lookup-μ μ (a[ ℓ₁ ] n) ≡ just ⟨ V , v ⟩
       ---------------------------------------------------------------------------- Deref
-    -- FIXME: our heap model probably need to store a proof of value
     → μ ∣ Σ ∣ pc ⊢ ! M ⇓ stamp-val V v (ℓ₁ ⋎ ℓ) ∣ stamp-val-value v ∣ μ₁
 
   ⇓-assign? : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V v n ℓ ℓ₁}
