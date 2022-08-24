@@ -61,3 +61,22 @@ data _∣_∣_⊢_⇓ₑ_∣_∣_ : HalfHeap → HalfHeapContext → StaticLabel
     → n ≡ length Σ
       -------------------------------------------------------------------------------------- Ref
     → μ ∣ Σ ∣ pc ⊢ ref[ low ] M ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ ⟨ n , V , v ⟩ ∷ μ₁
+
+  ⇓ₑ-deref : ∀ {μ μ₁ Σ pc M V v n}
+    → μ ∣ Σ ∣ pc ⊢ M ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ μ₁
+    → find _≟_ μ n ≡ just ⟨ V , v ⟩
+      ---------------------------------- Deref
+    → μ ∣ Σ ∣ pc ⊢ ! M ⇓ₑ V ∣ v ∣ μ₁
+
+  ⇓ₑ-assign? : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V v n}
+    → μ  ∣ Σ  ∣ pc ⊢ L ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ μ₁
+    → μ₁ ∣ Σ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v ∣ μ₂
+    → pc ≼ low
+      -------------------------------------------------------------------------- AssignNSU
+    → μ ∣ Σ ∣ pc ⊢ L :=? M ⇓ₑ $ tt of low ∣ V-const ∣ ⟨ n , V , v ⟩ ∷ μ₂
+
+  ⇓ₑ-assign : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V v n}
+    → μ  ∣ Σ  ∣ pc ⊢ L ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ μ₁
+    → μ₁ ∣ Σ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v ∣ μ₂
+      -------------------------------------------------------------------------- Assign
+    → μ ∣ Σ ∣ pc ⊢ L := M ⇓ₑ $ tt of low ∣ V-const ∣ ⟨ n , V , v ⟩ ∷ μ₂
