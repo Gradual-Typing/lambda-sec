@@ -31,6 +31,12 @@ data _∣_∣_⊢_⇓ₑ_∣_∣_ : HalfHeap → HalfHeapContext → StaticLabel
       ---------------------------------------- Application
     → μ  ∣ Σ  ∣ pc ⊢ L · M   ⇓ₑ W ∣ w ∣ μ₃
 
+  ⇓ₑ-app-● : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V v}
+    → μ  ∣ Σ  ∣ pc ⊢ L       ⇓ₑ ● ∣ V-● ∣ μ₁
+    → μ₁ ∣ Σ₁ ∣ pc ⊢ M       ⇓ₑ V ∣ v   ∣ μ₂
+      ---------------------------------------- Application●
+    → μ  ∣ Σ  ∣ pc ⊢ L · M   ⇓ₑ ● ∣ V-● ∣ μ₂
+
   ⇓ₑ-if-true : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M N V v A}
     → μ  ∣ Σ  ∣ pc ⊢ L ⇓ₑ $ true of low ∣ V-const ∣ μ₁
     → μ₁ ∣ Σ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v ∣ μ₂
@@ -42,6 +48,11 @@ data _∣_∣_⊢_⇓ₑ_∣_∣_ : HalfHeap → HalfHeapContext → StaticLabel
     → μ₁ ∣ Σ₁ ∣ pc ⊢ N ⇓ₑ V ∣ v ∣ μ₂
       ------------------------------------------------ IfFalse
     → μ  ∣ Σ  ∣ pc ⊢ if L A M N ⇓ₑ V ∣ v ∣ μ₂
+
+  ⇓ₑ-if-● : ∀ {μ μ₁ Σ pc L M N A}
+    → μ  ∣ Σ  ∣ pc ⊢ L          ⇓ₑ ● ∣ V-● ∣ μ₁
+      ------------------------------------------------ If●
+    → μ  ∣ Σ  ∣ pc ⊢ if L A M N ⇓ₑ ● ∣ V-● ∣ μ₁
 
   ⇓ₑ-let : ∀ {μ μ₁ μ₂ Σ Σ₁ pc M N V W v w}
     → μ  ∣ Σ  ∣ pc ⊢ M        ⇓ₑ V ∣ v ∣ μ₁
@@ -68,6 +79,11 @@ data _∣_∣_⊢_⇓ₑ_∣_∣_ : HalfHeap → HalfHeapContext → StaticLabel
       ---------------------------------- Deref
     → μ ∣ Σ ∣ pc ⊢ ! M ⇓ₑ V ∣ v ∣ μ₁
 
+  ⇓ₑ-deref-● : ∀ {μ μ₁ Σ pc M}
+    → μ ∣ Σ ∣ pc ⊢ M   ⇓ₑ ● ∣ V-● ∣ μ₁
+      ----------------------------------------- Deref●
+    → μ ∣ Σ ∣ pc ⊢ ! M ⇓ₑ ● ∣ V-● ∣ μ₁
+
   ⇓ₑ-assign? : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V v n}
     → μ  ∣ Σ  ∣ pc ⊢ L ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ μ₁
     → μ₁ ∣ Σ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v ∣ μ₂
@@ -75,8 +91,20 @@ data _∣_∣_⊢_⇓ₑ_∣_∣_ : HalfHeap → HalfHeapContext → StaticLabel
       -------------------------------------------------------------------------- AssignNSU
     → μ ∣ Σ ∣ pc ⊢ L :=? M ⇓ₑ $ tt of low ∣ V-const ∣ ⟨ n , V , v ⟩ ∷ μ₂
 
+  ⇓ₑ-assign?-● : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V v}
+    → μ  ∣ Σ  ∣ pc ⊢ L ⇓ₑ ● ∣ V-● ∣ μ₁
+    → μ₁ ∣ Σ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v   ∣ μ₂
+      -------------------------------------------------------- AssignNSU●
+    → μ ∣ Σ ∣ pc ⊢ L :=? M ⇓ₑ $ tt of low ∣ V-const ∣ μ₂ {- skip assignment -}
+
   ⇓ₑ-assign : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V v n}
     → μ  ∣ Σ  ∣ pc ⊢ L ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ μ₁
     → μ₁ ∣ Σ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v ∣ μ₂
       -------------------------------------------------------------------------- Assign
     → μ ∣ Σ ∣ pc ⊢ L := M ⇓ₑ $ tt of low ∣ V-const ∣ ⟨ n , V , v ⟩ ∷ μ₂
+
+  ⇓ₑ-assign-● : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V v}
+    → μ  ∣ Σ  ∣ pc ⊢ L ⇓ₑ ● ∣ V-● ∣ μ₁
+    → μ₁ ∣ Σ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v   ∣ μ₂
+      -------------------------------------------------------- Assign●
+    → μ ∣ Σ ∣ pc ⊢ L := M ⇓ₑ $ tt of low ∣ V-const ∣ μ₂ {- skip assignment -}
