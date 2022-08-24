@@ -7,7 +7,7 @@ open import Data.List hiding ([_])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym)
 
 open import Utils
 open import Heap
@@ -24,7 +24,11 @@ sim : ∀ {Σ gc pc A M V v μ μ′}
     ----------------------------------------------------------------------------------
   → erase-μ μ ∣ proj₁ Σ ∣ pc ⊢ erase M ⇓ₑ erase V ∣ erase-val-value v ∣ erase-μ μ′
 sim ⊢M ⇓-val = ⇓ₑ-val
-sim ⊢M (⇓-app M⇓V M⇓V₁ M⇓V₂) = {!!}
+sim ⊢M (⇓-app {ℓ = low} L⇓ƛN M⇓V N[V]⇓W) = {!!}
+sim (⊢app ⊢L ⊢M) (⇓-app {w = w} {ℓ = high} L⇓ƛN M⇓V N[V]⇓W) =
+  -- let ϵL⇓● = sim ⊢L L⇓ƛN in
+  -- let ϵM⇓ϵV = sim ⊢M M⇓V in
+  {!!}
 sim ⊢M (⇓-if-true M⇓V M⇓V₁) = {!!}
 sim ⊢M (⇓-if-false M⇓V M⇓V₁) = {!!}
 sim ⊢M (⇓-let M⇓V M⇓V₁) = {!!}
@@ -40,4 +44,6 @@ sim ⊢M (⇓-fun-cast i M⇓V M⇓V₁ M⇓V₂) = {!!}
 sim ⊢M (⇓-deref-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M (⇓-assign?-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M (⇓-assign-cast i M⇓V M⇓V₁) = {!!}
+sim (⊢sub ⊢M A<:B) M⇓V = sim ⊢M M⇓V
+sim (⊢sub-pc ⊢M gc<:gc′) M⇓V = sim ⊢M M⇓V
 
