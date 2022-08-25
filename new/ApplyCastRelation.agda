@@ -94,3 +94,24 @@ data ApplyCast_,_↝_ : ∀ {A B} (V : Term) → (c : Cast A ⇒ B) → Term →
     → let c₁  = cast (Ref A of l ℓ₁) (Ref B of ⋆   ) p c~  in
        let c₂  = cast (Ref C of ⋆   ) (Ref D of l ℓ₄) q d~  in
          ApplyCast V ⟨ c₁ ⟩ , c₂ ↝ error (blame q)
+
+  cast-ref-ref-id⋆ : ∀ {V T₁ T₂ T₃ T₄ g₁ g₂ g₃ g₄ ℓ p q c~ d~ c~′ d~′}
+    → let c₁  = cast (Ref (T₁ of l ℓ) of g₁) (Ref (T₂ of ⋆  ) of g₂) p c~  in
+       let c₂  = cast (Ref (T₃ of ⋆  ) of g₃) (Ref (T₄ of ⋆  ) of g₄) q d~  in
+       let c₁′ = cast (Ref (T₁ of l ℓ) of g₁) (Ref (T₂ of l ℓ) of g₂) p c~′ in
+       let c₂′ = cast (Ref (T₃ of l ℓ) of g₃) (Ref (T₄ of ⋆  ) of g₄) q d~′ in
+         ApplyCast V ⟨ c₁ ⟩ , c₂ ↝ V ⟨ c₁′ ⟩ ⟨ c₂′ ⟩
+
+  cast-ref-ref-proj : ∀ {V T₁ T₂ T₃ T₄ g₁ g₂ g₃ g₄ ℓ₁ ℓ₄ p q c~ d~ c~′ d~′}
+    → ℓ₁ ≡ ℓ₄
+    → let c₁  = cast (Ref (T₁ of l ℓ₁) of g₁) (Ref (T₂ of ⋆   ) of g₂) p c~  in
+       let c₂  = cast (Ref (T₃ of ⋆   ) of g₃) (Ref (T₄ of l ℓ₄) of g₄) q d~  in
+       let c₁′ = cast (Ref (T₁ of l ℓ₄) of g₁) (Ref (T₂ of l ℓ₄) of g₂) p c~′ in
+       let c₂′ = cast (Ref (T₃ of l ℓ₄) of g₃) (Ref (T₄ of l ℓ₄) of g₄) q d~′ in
+         ApplyCast V ⟨ c₁ ⟩ , c₂ ↝ V ⟨ c₁′ ⟩ ⟨ c₂′ ⟩
+
+  cast-ref-ref-proj-blame : ∀ {V T₁ T₂ T₃ T₄ g₁ g₂ g₃ g₄ ℓ₁ ℓ₄ p q c~ d~}
+    → ¬ ℓ₁ ≡ ℓ₄
+    → let c₁  = cast (Ref (T₁ of l ℓ₁) of g₁) (Ref (T₂ of ⋆   ) of g₂) p c~  in
+       let c₂  = cast (Ref (T₃ of ⋆   ) of g₃) (Ref (T₄ of l ℓ₄) of g₄) q d~  in
+         ApplyCast V ⟨ c₁ ⟩ , c₂ ↝ error (blame q)
