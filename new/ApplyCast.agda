@@ -1,3 +1,6 @@
+{- DEPRECATED!! -}
+
+
 module ApplyCast where
 
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
