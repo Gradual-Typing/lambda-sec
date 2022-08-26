@@ -30,10 +30,10 @@ applycast-wt ⊢V v (A-fun .(cast ([ _ ] _ ⇒ _ of ⋆) ([ _ ] _ ⇒ _ of ⋆) 
 applycast-wt ⊢V v (A-fun .(cast ([ _ ] _ ⇒ _ of ⋆) ([ _ ] _ ⇒ _ of l _) _ _) A-proj) (cast-fun-proj ℓ₁≼ℓ₄) = {!!}
 applycast-wt ⊢V v a (cast-fun-proj-blame _) = ⊢err
 applycast-wt ⊢V v (A-fun-pc (cast ([ ⋆ ] C₁ ⇒ C₂ of l ℓ₁) ([ ⋆ ] D₁ ⇒ D₂ of g₂) p _) A-id⋆ I-label) cast-fun-pc-id⋆ =
-  case canonical-pc⋆ ⊢V v of λ where
-  ⟨ _ , _ , cast ([ l pc′ ] A₁ ⇒ A₂ of g₁′) ([ ⋆ ] B₁ ⇒ B₂ of g₂′) q (~-ty g₁′~g₂′ (~-fun _ A₁~B₁ A₂~B₂)) ,
+  case ⟨ v , canonical-pc⋆ ⊢V v ⟩ of λ where
+  ⟨ V-cast w _ , _ , _ , cast ([ l pc′ ] A₁ ⇒ A₂ of g₁′) ([ ⋆ ] B₁ ⇒ B₂ of g₂′) q (~-ty g₁′~g₂′ (~-fun _ A₁~B₁ A₂~B₂)) ,
     W , refl , I-fun _ I-label I-label , ⊢W , <:-ty g₂′<:g₁ (<:-fun <:-⋆ C₁<:B₁ B₂<:C₂) ⟩ →
-      ⊢cast (⊢sub (⊢cast (⊢value-pc ⊢W {!!})) (<:-ty g₂′<:g₁ (<:-fun <:ₗ-refl C₁<:B₁ B₂<:C₂)))
+      ⊢cast (⊢sub (⊢cast (⊢value-pc ⊢W w)) (<:-ty g₂′<:g₁ (<:-fun <:ₗ-refl C₁<:B₁ B₂<:C₂)))
 applycast-wt ⊢V v a (cast-fun-pc-proj x) = {!!}
 applycast-wt ⊢V v a (cast-fun-pc-proj-blame _) = ⊢err
 applycast-wt ⊢V v a cast-ref-id⋆ = {!!}
