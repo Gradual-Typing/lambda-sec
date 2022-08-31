@@ -146,7 +146,9 @@ progress pc (M ⟨ c ⟩) (⊢cast ⊢M) μ ⊢μ =
   (step M→M′) → step (ξ {F = □⟨ c ⟩} M→M′)
   (done v) →
     case active-or-inert c of λ where
-    (inj₁ a) → step (cast (⊢value-pc ⊢M v) v a)
+    (inj₁ a) →
+      case applycast-progress (⊢value-pc ⊢M v) v a of λ where
+      ⟨ N , M⟨c⟩↝N ⟩ → step (cast v a M⟨c⟩↝N)
     (inj₂ i) → done (V-cast v i)
   (err (E-error {e})) → step (ξ-err {F = □⟨ c ⟩} {e = e})
 progress pc (cast-pc g M) (⊢cast-pc ⊢M pc~g) μ ⊢μ =
@@ -233,8 +235,8 @@ preserve {Σ} (⊢assign? ⊢a ⊢M) ⊢μ pc≾gc (assign?-ok pc≼ℓ₁) =
    refl → ⟨ Σ , ⊇-refl Σ , ⊢assign✓ ⊢a ⊢M pc≼ℓ₁ , ⊢μ ⟩
 preserve {Σ} ⊢M ⊢μ pc≾gc (assign?-fail pc⋠ℓ₁) =
   ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
-preserve {Σ} (⊢cast ⊢V) ⊢μ pc≾gc (cast ⊢V† v a) =
-  ⟨ Σ , ⊇-refl Σ , apply-cast-wt ⊢V† v a , ⊢μ ⟩
+preserve {Σ} (⊢cast ⊢V) ⊢μ pc≾gc (cast v a V⟨c⟩↝M) =
+  ⟨ Σ , ⊇-refl Σ , applycast-pres (⊢value-pc ⊢V v) v a V⟨c⟩↝M , ⊢μ ⟩
 preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc (if-cast-true i) with i
 ... | (I-base-inj (cast (` Bool of l ℓ′) (` Bool of ⋆) p _)) =
   case canonical-const ⊢L (V-cast V-const i) of λ where

@@ -3,6 +3,7 @@ module ApplyCastRelation where
 open import Data.Bool renaming (Bool to 𝔹)
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Relation.Nullary using (¬_; Dec; yes; no)
+open import Relation.Nullary.Negation using (contradiction)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 open import Function using (case_of_)
 

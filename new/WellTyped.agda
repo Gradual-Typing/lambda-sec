@@ -81,7 +81,7 @@ plug-inversion (⊢sub-pc ⊢plug gc<:gc′) pc≾gc =
 
 
 {- Applying cast is well-typed -}
-open import ApplyCastWT using (applycast-wt) public
+open import ApplyCastWT using (applycast-progress; applycast-pres) public
 -- apply-cast-wt : ∀ {Σ gc pc A B V} {c : Cast A ⇒ B}
 --   → (⊢V : [] ; Σ ; l low ; low ⊢ V ⦂ A)
 --   → (v : Value V)

@@ -108,12 +108,12 @@ data _∣_∣_∣_—→_∣_ : Term → Heap → HeapContext → StaticLabel �
     → (addr (a[ ℓ₁ ] n) of ℓ) :=✓ V ∣ μ ∣ Σ ∣ pc —→ $ tt of low ∣ cons-μ (a[ ℓ₁ ] n) V v μ
 
   {- Reduction rules about casts, active and inert: -}
-  cast : ∀ {A B V μ Σ pc} {c : Cast A ⇒ B}
-    → (⊢V : [] ; Σ ; l low ; low ⊢ V ⦂ A)
+  cast : ∀ {A B V M μ Σ pc} {c : Cast A ⇒ B}
     → (v : Value V)
     → (a : Active c)
+    → ApplyCast V , c ↝ M
       -------------------------------------------------- Cast
-    → V ⟨ c ⟩ ∣ μ ∣ Σ ∣ pc —→ apply-cast V ⊢V v c a ∣ μ
+    → V ⟨ c ⟩ ∣ μ ∣ Σ ∣ pc —→ M ∣ μ
 
   if-cast-true : ∀ {M N μ Σ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
