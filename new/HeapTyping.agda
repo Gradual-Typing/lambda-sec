@@ -110,22 +110,34 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
   ⟨ wfᴸ n<len , V , v , eq′ , ⊢V ⟩ →
     ⟨ wfᴸ n<len , V , v , eq′ , relax-Σ ⊢V (⊇-fresh (a[ high ] n₁) T₁ ⊢μ refl) ⟩
 
--- ⊢μ-update : ∀ {Σ V n T ℓ μ}
---   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
---   → (v : Value V)
---   → Σ ⊢ μ
---   → lookup-Σ Σ (a[ ℓ ] n) ≡ just T  {- updating a -}
---     -----------------------------------------------
---   → Σ ⊢ cons-μ (a[ ℓ ] n) V v μ
--- ⊢μ-update {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ eq₁ n low eq with n ≟ n₁
--- ... | yes refl =
---   case trans (sym eq) eq₁ of λ where
---     refl → ⟨ V₁ , v₁ , refl , ⊢V₁ ⟩
--- ... | no  _ = ⊢μ n low eq
--- ⊢μ-update {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ eq₁ n high = ⊢μ n high
--- ⊢μ-update {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ eq₁ n high eq with n ≟ n₁
--- ... | yes refl =
---   case trans (sym eq) eq₁ of λ where
---     refl → ⟨ V₁ , v₁ , refl , ⊢V₁ ⟩
--- ... | no  _ = ⊢μ n high eq
--- ⊢μ-update {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ eq₁ n low = ⊢μ n low
+⊢μ-update : ∀ {Σ V n T ℓ μ}
+  → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
+  → (v : Value V)
+  → Σ ⊢ μ
+  → lookup-Σ Σ (a[ ℓ ] n) ≡ just T  {- updating a -}
+    -----------------------------------------------
+  → Σ ⊢ cons-μ (a[ ℓ ] n) V v μ
+⊢μ-update {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ eq₁ n low eq with n ≟ n₁
+... | yes refl =
+  case trans (sym eq) eq₁ of λ where
+    refl →
+      let ⟨ wf , _ ⟩ = ⊢μ n₁ low eq₁ in
+      ⟨ wf-relaxᴸ wf , V₁ , v₁ , refl , ⊢V₁ ⟩
+... | no  _ =
+  case ⊢μ n low eq of λ where
+  ⟨ wf , rest ⟩ → ⟨ wf-relaxᴸ wf , rest ⟩
+⊢μ-update {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ eq₁ n high eq =
+  case ⊢μ n high eq of λ where
+  ⟨ wfᴴ n<len , rest ⟩ → ⟨ wfᴴ n<len , rest ⟩
+⊢μ-update {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ eq₁ n high eq with n ≟ n₁
+... | yes refl =
+  case trans (sym eq) eq₁ of λ where
+    refl →
+      let ⟨ wf , _ ⟩ = ⊢μ n₁ high eq₁ in
+      ⟨ wf-relaxᴴ wf , V₁ , v₁ , refl , ⊢V₁ ⟩
+... | no  _ =
+  case ⊢μ n high eq of λ where
+  ⟨ wf , rest ⟩ → ⟨ wf-relaxᴴ wf , rest ⟩
+⊢μ-update {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ eq₁ n low eq =
+  case ⊢μ n low eq of λ where
+  ⟨ wfᴸ n<len , rest ⟩ → ⟨ wfᴸ n<len , rest ⟩
