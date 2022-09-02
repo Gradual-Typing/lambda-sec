@@ -18,156 +18,156 @@ module Reduction where
 
 open import Frame public
 
-infix 2 _∣_∣_∣_—→_∣_
+infix 2 _∣_∣_—→_∣_
 
-data _∣_∣_∣_—→_∣_ : Term → Heap → HeapContext → StaticLabel → Term → Heap → Set where
+data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → Set where
 
-  ξ : ∀ {M M′ F μ μ′ Σ pc}
-    → M        ∣ μ ∣ Σ ∣ pc —→ M′        ∣ μ′
+  ξ : ∀ {M M′ F μ μ′ pc}
+    → M        ∣ μ ∣ pc —→ M′        ∣ μ′
       ---------------------------------------------- ξ
-    → plug M F ∣ μ ∣ Σ ∣ pc —→ plug M′ F ∣ μ′
+    → plug M F ∣ μ ∣ pc —→ plug M′ F ∣ μ′
 
-  ξ-err : ∀ {F μ Σ pc e}
+  ξ-err : ∀ {F μ pc e}
       ---------------------------------------------- ξ-error
-    → plug (error e) F ∣ μ ∣ Σ ∣ pc —→ error e ∣ μ
+    → plug (error e) F ∣ μ ∣ pc —→ error e ∣ μ
 
-  prot-val : ∀ {V μ Σ pc ℓ}
+  prot-val : ∀ {V μ pc ℓ}
     → (v : Value V)
       --------------------------------------------------- ProtectVal
-    → prot ℓ V ∣ μ ∣ Σ ∣ pc —→ stamp-val V v ℓ ∣ μ
+    → prot ℓ V ∣ μ ∣ pc —→ stamp-val V v ℓ ∣ μ
 
-  prot-ctx : ∀ {M M′ μ μ′ Σ pc ℓ}
-    → M        ∣ μ ∣ Σ ∣ pc ⋎ ℓ —→ M′        ∣ μ′
+  prot-ctx : ∀ {M M′ μ μ′ pc ℓ}
+    → M        ∣ μ ∣ pc ⋎ ℓ —→ M′        ∣ μ′
       --------------------------------------------------- ProtectContext
-    → prot ℓ M ∣ μ ∣ Σ ∣ pc     —→ prot ℓ M′ ∣ μ′
+    → prot ℓ M ∣ μ ∣ pc     —→ prot ℓ M′ ∣ μ′
 
-  prot-err : ∀ {μ Σ pc ℓ e}
+  prot-err : ∀ {μ pc ℓ e}
       --------------------------------------------------- ProtectContext
-    → prot ℓ (error e) ∣ μ ∣ Σ ∣ pc —→ error e ∣ μ
+    → prot ℓ (error e) ∣ μ ∣ pc —→ error e ∣ μ
 
-  β : ∀ {V N μ Σ pc pc′ A ℓ}
+  β : ∀ {V N μ pc pc′ A ℓ}
     → Value V
       ------------------------------------------------------------------- β
-    → (ƛ[ pc′ ] A ˙ N of ℓ) · V ∣ μ ∣ Σ ∣ pc —→ prot ℓ (N [ V ]) ∣ μ
+    → (ƛ[ pc′ ] A ˙ N of ℓ) · V ∣ μ ∣ pc —→ prot ℓ (N [ V ]) ∣ μ
 
-  β-if-true : ∀ {M N μ Σ pc A ℓ}
+  β-if-true : ∀ {M N μ pc A ℓ}
       ----------------------------------------------------------------------- IfTrue
-    → if ($ true of ℓ) A M N ∣ μ ∣ Σ ∣ pc —→ prot ℓ M ∣ μ
+    → if ($ true of ℓ) A M N ∣ μ ∣ pc —→ prot ℓ M ∣ μ
 
-  β-if-false : ∀ {M N μ Σ pc A ℓ}
+  β-if-false : ∀ {M N μ pc A ℓ}
       ----------------------------------------------------------------------- IfFalse
-    → if ($ false of ℓ) A M N ∣ μ ∣ Σ ∣ pc —→ prot ℓ N ∣ μ
+    → if ($ false of ℓ) A M N ∣ μ ∣ pc —→ prot ℓ N ∣ μ
 
-  β-let : ∀ {V N μ Σ pc}
+  β-let : ∀ {V N μ pc}
     → Value V
       -------------------------------------- Let
-    → `let V N ∣ μ ∣ Σ ∣ pc —→ N [ V ] ∣ μ
+    → `let V N ∣ μ ∣ pc —→ N [ V ] ∣ μ
 
-  ref-static : ∀ {M μ Σ pc ℓ}
+  ref-static : ∀ {M μ pc ℓ}
       ------------------------------------------------- RefStatic
-    → ref[ ℓ ] M ∣ μ ∣ Σ ∣ pc —→ ref✓[ ℓ ] M ∣ μ
+    → ref[ ℓ ] M ∣ μ ∣ pc —→ ref✓[ ℓ ] M ∣ μ
 
-  ref?-ok : ∀ {M μ Σ pc ℓ}
+  ref?-ok : ∀ {M μ pc ℓ}
     → pc ≼ ℓ
       ------------------------------------------------- RefNSUSuccess
-    → ref?[ ℓ ] M ∣ μ ∣ Σ ∣ pc —→ ref✓[ ℓ ] M ∣ μ
+    → ref?[ ℓ ] M ∣ μ ∣ pc —→ ref✓[ ℓ ] M ∣ μ
 
-  ref?-fail : ∀ {M μ Σ pc ℓ}
+  ref?-fail : ∀ {M μ pc ℓ}
     → ¬ pc ≼ ℓ
       ------------------------------------------------- RefNSUFail
-    → ref?[ ℓ ] M ∣ μ ∣ Σ ∣ pc —→ error nsu-error ∣ μ
+    → ref?[ ℓ ] M ∣ μ ∣ pc —→ error nsu-error ∣ μ
 
-  ref : ∀ {V μ Σ pc n ℓ}
+  ref : ∀ {V μ pc n ℓ}
     → (v : Value V)
-    → a[ ℓ ] n FreshIn Σ  {- address is fresh -}
+    → a[ ℓ ] n FreshIn μ  {- address is fresh -}
       -------------------------------------------------------------------------------- Ref
-    → ref✓[ ℓ ] V ∣ μ ∣ Σ ∣ pc —→ addr (a[ ℓ ] n) of low ∣ cons-μ (a[ ℓ ] n) V v μ
+    → ref✓[ ℓ ] V ∣ μ ∣ pc —→ addr (a[ ℓ ] n) of low ∣ cons-μ (a[ ℓ ] n) V v μ
 
-  deref : ∀ {V μ Σ pc v n ℓ ℓ₁}
+  deref : ∀ {V μ pc v n ℓ ℓ₁}
     → lookup-μ μ (a[ ℓ₁ ] n) ≡ just ⟨ V , v ⟩
       --------------------------------------------------------------------- Deref
-    → ! (addr (a[ ℓ₁ ] n) of ℓ) ∣ μ ∣ Σ ∣ pc —→ prot (ℓ₁ ⋎ ℓ) V ∣ μ
+    → ! (addr (a[ ℓ₁ ] n) of ℓ) ∣ μ ∣ pc —→ prot (ℓ₁ ⋎ ℓ) V ∣ μ
 
-  assign-static : ∀ {L M μ Σ pc}
+  assign-static : ∀ {L M μ pc}
       ------------------------------------------------------- AssignStatic
-    → L := M ∣ μ ∣ Σ ∣ pc —→ L :=✓ M ∣ μ
+    → L := M ∣ μ ∣ pc —→ L :=✓ M ∣ μ
 
-  assign?-ok : ∀ {M μ Σ pc n ℓ ℓ₁}
+  assign?-ok : ∀ {M μ pc n ℓ ℓ₁}
     → pc ≼ ℓ₁
       ----------------------------------------------------------------------------- AssignNSUSuccess
-    → (addr (a[ ℓ₁ ] n) of ℓ) :=? M ∣ μ ∣ Σ ∣ pc —→ (addr (a[ ℓ₁ ] n) of ℓ) :=✓ M ∣ μ
+    → (addr (a[ ℓ₁ ] n) of ℓ) :=? M ∣ μ ∣ pc —→ (addr (a[ ℓ₁ ] n) of ℓ) :=✓ M ∣ μ
 
-  assign?-fail : ∀ {M μ Σ pc n ℓ ℓ₁}
+  assign?-fail : ∀ {M μ pc n ℓ ℓ₁}
     → ¬ pc ≼ ℓ₁
       ----------------------------------------------------------------------------- AssignNSUFail
-    → (addr (a[ ℓ₁ ] n) of ℓ) :=? M ∣ μ ∣ Σ ∣ pc —→ error nsu-error ∣ μ
+    → (addr (a[ ℓ₁ ] n) of ℓ) :=? M ∣ μ ∣ pc —→ error nsu-error ∣ μ
 
-  assign : ∀ {V μ Σ pc n ℓ ℓ₁}
+  assign : ∀ {V μ pc n ℓ ℓ₁}
     → (v : Value V)
       ---------------------------------------------------------------------------------------------- Assign
-    → (addr (a[ ℓ₁ ] n) of ℓ) :=✓ V ∣ μ ∣ Σ ∣ pc —→ $ tt of low ∣ cons-μ (a[ ℓ₁ ] n) V v μ
+    → (addr (a[ ℓ₁ ] n) of ℓ) :=✓ V ∣ μ ∣ pc —→ $ tt of low ∣ cons-μ (a[ ℓ₁ ] n) V v μ
 
   {- Reduction rules about casts, active and inert: -}
-  cast : ∀ {A B V M μ Σ pc} {c : Cast A ⇒ B}
+  cast : ∀ {A B V M μ pc} {c : Cast A ⇒ B}
     → (v : Value V)
     → (a : Active c)
     → ApplyCast V , c ↝ M
       -------------------------------------------------- Cast
-    → V ⟨ c ⟩ ∣ μ ∣ Σ ∣ pc —→ M ∣ μ
+    → V ⟨ c ⟩ ∣ μ ∣ pc —→ M ∣ μ
 
-  if-cast-true : ∀ {M N μ Σ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
+  if-cast-true : ∀ {M N μ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
       --------------------------------------------------------------------------------------------- IfCastTrue
-    → if ($ true of ℓ ⟨ c ⟩) A M N ∣ μ ∣ Σ ∣ pc —→ prot ℓ (cast-pc ⋆ M) ⟨ branch/c A ℓ c ⟩ ∣ μ
+    → if ($ true of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot ℓ (cast-pc ⋆ M) ⟨ branch/c A ℓ c ⟩ ∣ μ
 
-  if-cast-false : ∀ {M N μ Σ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
+  if-cast-false : ∀ {M N μ pc A g ℓ} {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → Inert c
       --------------------------------------------------------------------------------------------- IfCastFalse
-    → if ($ false of ℓ ⟨ c ⟩) A M N ∣ μ ∣ Σ ∣ pc —→ prot ℓ (cast-pc ⋆ N) ⟨ branch/c A ℓ c ⟩ ∣ μ
+    → if ($ false of ℓ ⟨ c ⟩) A M N ∣ μ ∣ pc —→ prot ℓ (cast-pc ⋆ N) ⟨ branch/c A ℓ c ⟩ ∣ μ
 
-  fun-cast : ∀ {V W μ Σ pc A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
+  fun-cast : ∀ {V W μ pc A B C D gc₁ gc₂ g₁ g₂} {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
     → Value V → Value W
     → (i : Inert c)
       ---------------------------------------------------------------- FunCast
-    → (V ⟨ c ⟩) · W ∣ μ ∣ Σ ∣ pc —→ elim-fun-proxy V W i pc ∣ μ
+    → (V ⟨ c ⟩) · W ∣ μ ∣ pc —→ elim-fun-proxy V W i pc ∣ μ
 
-  deref-cast : ∀ {V μ Σ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
+  deref-cast : ∀ {V μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → Value V
     → Inert c
       ------------------------------------------------------ DerefCast
-    → ! (V ⟨ c ⟩) ∣ μ ∣ Σ ∣ pc —→ ! V ⟨ out/c c ⟩ ∣ μ
+    → ! (V ⟨ c ⟩) ∣ μ ∣ pc —→ ! V ⟨ out/c c ⟩ ∣ μ
 
-  assign?-cast : ∀ {V M μ Σ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
+  assign?-cast : ∀ {V M μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → Value V
     → (i : Inert c)
       ----------------------------------------------------------------------------- AssignNSUCast
-    → (V ⟨ c ⟩) :=? M ∣ μ ∣ Σ ∣ pc —→ elim-ref-proxy V M i _:=?_ ∣ μ
+    → (V ⟨ c ⟩) :=? M ∣ μ ∣ pc —→ elim-ref-proxy V M i _:=?_ ∣ μ
 
-  assign-cast : ∀ {V W μ Σ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
+  assign-cast : ∀ {V W μ pc A B g₁ g₂} {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → Value V → Value W
     → (i : Inert c)
       --------------------------------------------------------------------------------------------- AssignCast
-    → (V ⟨ c ⟩) :=✓ W ∣ μ ∣ Σ ∣ pc —→ elim-ref-proxy V W i _:=✓_ {- V := (W ⟨ in/c c ⟩) -} ∣ μ
+    → (V ⟨ c ⟩) :=✓ W ∣ μ ∣ pc —→ elim-ref-proxy V W i _:=✓_ {- V := (W ⟨ in/c c ⟩) -} ∣ μ
 
-  β-cast-pc : ∀ {V μ Σ pc g}
+  β-cast-pc : ∀ {V μ pc g}
     → Value V
       ------------------------------------- CastPC
-    → cast-pc g V ∣ μ ∣ Σ ∣ pc —→ V ∣ μ
+    → cast-pc g V ∣ μ ∣ pc —→ V ∣ μ
 
 
 {- Multi-step reduction -}
-infix  2 _∣_∣_∣_—↠_∣_
-infixr 2 _∣_∣_∣_—→⟨_⟩_
-infix  3 _∣_∣_∣_∎
+infix  2 _∣_∣_—↠_∣_
+infixr 2 _∣_∣_—→⟨_⟩_
+infix  3 _∣_∣_∎
 
-data _∣_∣_∣_—↠_∣_ : Term → Heap → HeapContext → StaticLabel → Term → Heap → Set where
+data _∣_∣_—↠_∣_ : Term → Heap → StaticLabel → Term → Heap → Set where
 
-    _∣_∣_∣_∎ : ∀ M μ Σ pc
+    _∣_∣_∎ : ∀ M μ pc
         -----------------------------------
-      → M ∣ μ ∣ Σ ∣ pc —↠ M ∣ μ
+      → M ∣ μ ∣ pc —↠ M ∣ μ
 
-    _∣_∣_∣_—→⟨_⟩_ : ∀ L μ Σ pc {M N μ′ μ″ Σ′}
-      → L ∣ μ  ∣ Σ  ∣ pc —→ M ∣ μ′
-      → M ∣ μ′ ∣ Σ′ ∣ pc —↠ N ∣ μ″
+    _∣_∣_—→⟨_⟩_ : ∀ L μ pc {M N μ′ μ″}
+      → L ∣ μ  ∣ pc —→ M ∣ μ′
+      → M ∣ μ′ ∣ pc —↠ N ∣ μ″
         -----------------------------------
-      → L ∣ μ  ∣ Σ  ∣ pc —↠ N ∣ μ″
+      → L ∣ μ  ∣ pc —↠ N ∣ μ″
