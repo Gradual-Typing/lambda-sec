@@ -17,13 +17,15 @@ module HeapTyping where
 open import Utils
 open import Heap
 open import CC
+open import WFAddr public
 
 infix 4 _⊢_
 
 _⊢_ : HeapContext → Heap → Set
 Σ ⊢ μ = ∀ n ℓ {T}
   → lookup-Σ Σ (a[ ℓ ] n) ≡ just T
-  → ∃[ V ] ∃[ v ] lookup-μ μ (a[ ℓ ] n) ≡ just ⟨ V , v ⟩ × [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
+  → (WFAddr a[ ℓ ] n In μ) ×
+     (∃[ V ] ∃[ v ] lookup-μ μ (a[ ℓ ] n) ≡ just ⟨ V , v ⟩ × [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ)
 
 
 relax-Σ : ∀ {Γ Σ Σ′ gc pc M A}
@@ -52,6 +54,27 @@ relax-Σ ⊢err Σ′⊇Σ = ⊢err
 relax-Σ (⊢sub ⊢M A<:B) Σ′⊇Σ = ⊢sub (relax-Σ ⊢M Σ′⊇Σ) A<:B
 relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′⊇Σ) gc<:gc′
 
+⊇-fresh : ∀ {Σ μ} a T → Σ ⊢ μ → a FreshIn μ → cons-Σ a T Σ ⊇ Σ
+⊇-fresh {Σ} {⟨ μᴸ , μᴴ ⟩} (a[ high ] n₁) T ⊢μ fresh (a[ high ] n) eq
+  with n ≟ n₁
+... | yes refl =
+  case ⊢μ n high eq of λ where
+  ⟨ wfᴴ n<len , _ ⟩ →
+    let len<len = subst (λ □ → □ < length μᴴ) fresh n<len in
+    contradiction len<len (n≮n _)
+... | no _ = eq
+⊇-fresh {Σ} {μ} (a[ high ] n₁) T ⊢μ fresh (a[ low ] n) eq = eq
+⊇-fresh {Σ} {⟨ μᴸ , μᴴ ⟩} (a[ low ] n₁) T ⊢μ fresh (a[ low ] n) eq
+  with n ≟ n₁
+... | yes refl =
+  case ⊢μ n low eq of λ where
+  ⟨ wfᴸ n<len , _ ⟩ →
+    let len<len = subst (λ □ → □ < length μᴸ) fresh n<len in
+    contradiction len<len (n≮n _)
+... | no _ = eq
+⊇-fresh {Σ} {μ} (a[ low ] n₁) T ⊢μ fresh (a[ high ] n) eq = eq
+
+
 {- Properties about Σ ⊢ μ : -}
 ⊢μ-nil : ∅ ⊢ ∅
 ⊢μ-nil n low  ()
@@ -61,48 +84,48 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
   → (v : Value V)
   → Σ ⊢ μ
-  → (a[ ℓ ] n) FreshIn Σ
+  → (a[ ℓ ] n) FreshIn μ
     -----------------------------------------------
-  → ext-Σ ℓ T Σ ⊢ cons-μ (a[ ℓ ] n) V v μ
-⊢μ-new {⟨ Σᴸ , Σᴴ ⟩} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ refl n low {T} eq
-  with n ≟ length Σᴸ
+  → cons-Σ (a[ ℓ ] n) T Σ ⊢ cons-μ (a[ ℓ ] n) V v μ
+⊢μ-new {⟨ Σᴸ , Σᴴ ⟩} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ refl n low {T} eq with n ≟ n₁
 ... | yes refl =
-  case trans (sym eq) (snoc-here T₁ Σᴸ) of λ where
-  refl {- T₁ ≡ T -} → ⟨ V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-ext low T ⟨ Σᴸ , Σᴴ ⟩) ⟩
-... | no neq =
-  let ⟨ V , v , eq′ , ⊢V ⟩ = ⊢μ n low (snoc-there T Σᴸ eq neq) in
-  ⟨ V , v , eq′ , relax-Σ ⊢V (⊇-ext low T₁ ⟨ Σᴸ , Σᴴ ⟩) ⟩
+  case eq of λ where
+  refl → ⟨ wfᴸ ≤-refl , V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-fresh (a[ low ] n₁) T ⊢μ refl) ⟩
+... | no  _    =
+  let ⟨ wf , V , v , eq′ , ⊢V ⟩ = ⊢μ n low eq in
+  ⟨ wf-relaxᴸ wf , V , v , eq′ , relax-Σ ⊢V (⊇-fresh (a[ low ] n₁) T₁ ⊢μ refl) ⟩
 ⊢μ-new {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ refl n high {T} eq =
-  let ⟨ V , v , eq′ , ⊢V ⟩ = ⊢μ n high eq in
-  ⟨ V , v , eq′ , relax-Σ ⊢V (⊇-ext low T₁ Σ) ⟩
-⊢μ-new {⟨ Σᴸ , Σᴴ ⟩} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ refl n high {T} eq
-  with n ≟ length Σᴴ
+  case ⊢μ n high eq of λ where
+  ⟨ wfᴴ n<len , V , v , eq′ , ⊢V ⟩ →
+    ⟨ wfᴴ n<len , V , v , eq′ , relax-Σ ⊢V (⊇-fresh (a[ low ] n₁) T₁ ⊢μ refl) ⟩
+⊢μ-new {⟨ Σᴸ , Σᴴ ⟩} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ refl n high {T} eq with n ≟ n₁
 ... | yes refl =
-  case trans (sym eq) (snoc-here T₁ Σᴴ) of λ where
-  refl {- T₁ ≡ T -} → ⟨ V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-ext high T ⟨ Σᴸ , Σᴴ ⟩) ⟩
-... | no neq =
-  let ⟨ V , v , eq′ , ⊢V ⟩ = ⊢μ n high (snoc-there T Σᴴ eq neq) in
-  ⟨ V , v , eq′ , relax-Σ ⊢V (⊇-ext high T₁ ⟨ Σᴸ , Σᴴ ⟩) ⟩
+  case eq of λ where
+  refl → ⟨ wfᴴ ≤-refl , V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-fresh (a[ high ] n₁) T ⊢μ refl) ⟩
+... | no  _    =
+  let ⟨ wf , V , v , eq′ , ⊢V ⟩ = ⊢μ n high eq in
+  ⟨ wf-relaxᴴ wf , V , v , eq′ , relax-Σ ⊢V (⊇-fresh (a[ high ] n₁) T₁ ⊢μ refl) ⟩
 ⊢μ-new {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ refl n low {T} eq =
-  let ⟨ V , v , eq′ , ⊢V ⟩ = ⊢μ n low eq in
-  ⟨ V , v , eq′ , relax-Σ ⊢V (⊇-ext high T₁ Σ) ⟩
+  case ⊢μ n low eq of λ where
+  ⟨ wfᴸ n<len , V , v , eq′ , ⊢V ⟩ →
+    ⟨ wfᴸ n<len , V , v , eq′ , relax-Σ ⊢V (⊇-fresh (a[ high ] n₁) T₁ ⊢μ refl) ⟩
 
-⊢μ-update : ∀ {Σ V n T ℓ μ}
-  → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
-  → (v : Value V)
-  → Σ ⊢ μ
-  → lookup-Σ Σ (a[ ℓ ] n) ≡ just T  {- updating a -}
-    -----------------------------------------------
-  → Σ ⊢ cons-μ (a[ ℓ ] n) V v μ
-⊢μ-update {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ eq₁ n low eq with n ≟ n₁
-... | yes refl =
-  case trans (sym eq) eq₁ of λ where
-    refl → ⟨ V₁ , v₁ , refl , ⊢V₁ ⟩
-... | no  _ = ⊢μ n low eq
-⊢μ-update {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ eq₁ n high = ⊢μ n high
-⊢μ-update {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ eq₁ n high eq with n ≟ n₁
-... | yes refl =
-  case trans (sym eq) eq₁ of λ where
-    refl → ⟨ V₁ , v₁ , refl , ⊢V₁ ⟩
-... | no  _ = ⊢μ n high eq
-⊢μ-update {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ eq₁ n low = ⊢μ n low
+-- ⊢μ-update : ∀ {Σ V n T ℓ μ}
+--   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
+--   → (v : Value V)
+--   → Σ ⊢ μ
+--   → lookup-Σ Σ (a[ ℓ ] n) ≡ just T  {- updating a -}
+--     -----------------------------------------------
+--   → Σ ⊢ cons-μ (a[ ℓ ] n) V v μ
+-- ⊢μ-update {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ eq₁ n low eq with n ≟ n₁
+-- ... | yes refl =
+--   case trans (sym eq) eq₁ of λ where
+--     refl → ⟨ V₁ , v₁ , refl , ⊢V₁ ⟩
+-- ... | no  _ = ⊢μ n low eq
+-- ⊢μ-update {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ eq₁ n high = ⊢μ n high
+-- ⊢μ-update {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ eq₁ n high eq with n ≟ n₁
+-- ... | yes refl =
+--   case trans (sym eq) eq₁ of λ where
+--     refl → ⟨ V₁ , v₁ , refl , ⊢V₁ ⟩
+-- ... | no  _ = ⊢μ n high eq
+-- ⊢μ-update {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ eq₁ n low = ⊢μ n low
