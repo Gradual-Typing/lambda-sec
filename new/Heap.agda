@@ -30,3 +30,7 @@ infix 10 _FreshIn_
 _FreshIn_ : Addr → Heap → Set
 (a[ low  ] n) FreshIn ⟨ μᴸ , μᴴ ⟩ = n ≡ length μᴸ
 (a[ high ] n) FreshIn ⟨ μᴸ , μᴴ ⟩ = n ≡ length μᴴ
+
+gen-fresh : ∀ μ {ℓ} → ∃[ n ] (a[ ℓ ] n FreshIn μ)
+gen-fresh ⟨ μᴸ , μᴴ ⟩ {low } = ⟨ length μᴸ , refl ⟩
+gen-fresh ⟨ μᴸ , μᴴ ⟩ {high} = ⟨ length μᴴ , refl ⟩
