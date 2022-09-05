@@ -51,14 +51,14 @@ data _∣_⊢_⇓_∣_∣_ : Heap → StaticLabel → Term → (V : Term) → Va
 
   ⇓-ref? : ∀ {μ μ₁ pc M V v n ℓ}
     → μ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₁
-    → a[ ℓ ] n FreshIn μ
+    → a[ ℓ ] n FreshIn μ₁
     → pc ≼ ℓ
       -------------------------------------------------------------------------------------- RefNSU
     → μ ∣ pc ⊢ ref?[ ℓ ] M ⇓ addr (a[ ℓ ] n) of low ∣ V-addr ∣ cons-μ (a[ ℓ ] n) V v μ₁
 
   ⇓-ref : ∀ {μ μ₁ pc M V v n ℓ}
     → μ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₁
-    → a[ ℓ ] n FreshIn μ
+    → a[ ℓ ] n FreshIn μ₁
       -------------------------------------------------------------------------------------- Ref
     → μ ∣ pc ⊢ ref[ ℓ ] M ⇓ addr (a[ ℓ ] n) of low ∣ V-addr ∣ cons-μ (a[ ℓ ] n) V v μ₁
 
