@@ -15,127 +15,127 @@ open import Types
 open import TypeBasedCast
 open import CC
 
-infix 2 _∣_∣_⊢_⇓_∣_∣_
+infix 2 _∣_⊢_⇓_∣_∣_
 
 {- only consider evaluation to values -}
-data _∣_∣_⊢_⇓_∣_∣_ : Heap → HeapContext → StaticLabel → Term → (V : Term) → Value V → Heap → Set where
+data _∣_⊢_⇓_∣_∣_ : Heap → StaticLabel → Term → (V : Term) → Value V → Heap → Set where
 
-  ⇓-val : ∀ {μ Σ pc V v}
+  ⇓-val : ∀ {μ pc V v}
       --------------------------- Value
-    → μ ∣ Σ ∣ pc ⊢ V ⇓ V ∣ v ∣ μ
+    → μ ∣ pc ⊢ V ⇓ V ∣ v ∣ μ
 
-  ⇓-app : ∀ {μ μ₁ μ₂ μ₃ Σ Σ₁ Σ₂ pc pc′ L M N V W v w A ℓ}
-    → μ  ∣ Σ  ∣ pc     ⊢ L       ⇓ ƛ[ pc′ ] A ˙ N of ℓ ∣ V-ƛ ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc     ⊢ M       ⇓ V ∣ v ∣ μ₂
-    → μ₂ ∣ Σ₂ ∣ pc ⋎ ℓ ⊢ N [ V ] ⇓ W ∣ w ∣ μ₃
+  ⇓-app : ∀ {μ μ₁ μ₂ μ₃ pc pc′ L M N V W v w A ℓ}
+    → μ  ∣ pc     ⊢ L       ⇓ ƛ[ pc′ ] A ˙ N of ℓ ∣ V-ƛ ∣ μ₁
+    → μ₁ ∣ pc     ⊢ M       ⇓ V ∣ v ∣ μ₂
+    → μ₂ ∣ pc ⋎ ℓ ⊢ N [ V ] ⇓ W ∣ w ∣ μ₃
       ---------------------------------------------------------------------- Application
-    → μ  ∣ Σ  ∣ pc ⊢ L · M ⇓ stamp-val W w ℓ ∣ stamp-val-value w ∣ μ₃
+    → μ  ∣ pc     ⊢ L · M   ⇓ stamp-val W w ℓ ∣ stamp-val-value w ∣ μ₃
 
-  ⇓-if-true : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M N V v A ℓ}
-    → μ  ∣ Σ  ∣ pc     ⊢ L ⇓ $ true of ℓ ∣ V-const ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⋎ ℓ ⊢ M ⇓ V ∣ v ∣ μ₂
+  ⇓-if-true : ∀ {μ μ₁ μ₂ pc L M N V v A ℓ}
+    → μ  ∣ pc     ⊢ L ⇓ $ true of ℓ ∣ V-const ∣ μ₁
+    → μ₁ ∣ pc ⋎ ℓ ⊢ M ⇓ V ∣ v ∣ μ₂
       ---------------------------------------------------------------------- IfTrue
-    → μ ∣ Σ ∣ pc ⊢ if L A M N ⇓ stamp-val V v ℓ ∣ stamp-val-value v ∣ μ₂
+    → μ  ∣ pc     ⊢ if L A M N ⇓ stamp-val V v ℓ ∣ stamp-val-value v ∣ μ₂
 
-  ⇓-if-false : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M N V v A ℓ}
-    → μ  ∣ Σ  ∣ pc     ⊢ L ⇓ $ false of ℓ ∣ V-const ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⋎ ℓ ⊢ N ⇓ V ∣ v ∣ μ₂
+  ⇓-if-false : ∀ {μ μ₁ μ₂ pc L M N V v A ℓ}
+    → μ  ∣ pc     ⊢ L ⇓ $ false of ℓ ∣ V-const ∣ μ₁
+    → μ₁ ∣ pc ⋎ ℓ ⊢ N ⇓ V ∣ v ∣ μ₂
       ---------------------------------------------------------------------- IfFalse
-    → μ ∣ Σ ∣ pc ⊢ if L A M N ⇓ stamp-val V v ℓ ∣ stamp-val-value v ∣ μ₂
+    → μ  ∣ pc     ⊢ if L A M N ⇓ stamp-val V v ℓ ∣ stamp-val-value v ∣ μ₂
 
-  ⇓-let : ∀ {μ μ₁ μ₂ Σ Σ₁ pc M N V W v w}
-    → μ  ∣ Σ  ∣ pc ⊢ M       ⇓ V ∣ v ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⊢ N [ V ] ⇓ W ∣ w ∣ μ₂
+  ⇓-let : ∀ {μ μ₁ μ₂ pc M N V W v w}
+    → μ  ∣ pc ⊢ M       ⇓ V ∣ v ∣ μ₁
+    → μ₁ ∣ pc ⊢ N [ V ] ⇓ W ∣ w ∣ μ₂
       ----------------------------------------- Let
-    → μ  ∣ Σ  ∣ pc ⊢ `let M N ⇓ W ∣ w ∣ μ₂
+    → μ  ∣ pc ⊢ `let M N ⇓ W ∣ w ∣ μ₂
 
-  ⇓-ref? : ∀ {μ μ₁ Σ pc M V v n ℓ}
-    → μ ∣ Σ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₁
-    → a[ ℓ ] n FreshIn Σ
+  ⇓-ref? : ∀ {μ μ₁ pc M V v n ℓ}
+    → μ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₁
+    → a[ ℓ ] n FreshIn μ
     → pc ≼ ℓ
       -------------------------------------------------------------------------------------- RefNSU
-    → μ ∣ Σ ∣ pc ⊢ ref?[ ℓ ] M ⇓ addr (a[ ℓ ] n) of low ∣ V-addr ∣ cons-μ (a[ ℓ ] n) V v μ₁
+    → μ ∣ pc ⊢ ref?[ ℓ ] M ⇓ addr (a[ ℓ ] n) of low ∣ V-addr ∣ cons-μ (a[ ℓ ] n) V v μ₁
 
-  ⇓-ref : ∀ {μ μ₁ Σ pc M V v n ℓ}
-    → μ ∣ Σ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₁
-    → a[ ℓ ] n FreshIn Σ
+  ⇓-ref : ∀ {μ μ₁ pc M V v n ℓ}
+    → μ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₁
+    → a[ ℓ ] n FreshIn μ
       -------------------------------------------------------------------------------------- Ref
-    → μ ∣ Σ ∣ pc ⊢ ref[ ℓ ] M ⇓ addr (a[ ℓ ] n) of low ∣ V-addr ∣ cons-μ (a[ ℓ ] n) V v μ₁
+    → μ ∣ pc ⊢ ref[ ℓ ] M ⇓ addr (a[ ℓ ] n) of low ∣ V-addr ∣ cons-μ (a[ ℓ ] n) V v μ₁
 
-  ⇓-deref : ∀ {μ μ₁ Σ pc M V v n ℓ ℓ₁}
-    → μ ∣ Σ ∣ pc ⊢ M ⇓ addr (a[ ℓ₁ ] n) of ℓ ∣ V-addr ∣ μ₁
+  ⇓-deref : ∀ {μ μ₁ pc M V v n ℓ ℓ₁}
+    → μ ∣ pc ⊢ M ⇓ addr (a[ ℓ₁ ] n) of ℓ ∣ V-addr ∣ μ₁
     → lookup-μ μ (a[ ℓ₁ ] n) ≡ just ⟨ V , v ⟩
       ---------------------------------------------------------------------------- Deref
-    → μ ∣ Σ ∣ pc ⊢ ! M ⇓ stamp-val V v (ℓ₁ ⋎ ℓ) ∣ stamp-val-value v ∣ μ₁
+    → μ ∣ pc ⊢ ! M ⇓ stamp-val V v (ℓ₁ ⋎ ℓ) ∣ stamp-val-value v ∣ μ₁
 
-  ⇓-assign? : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V v n ℓ ℓ₁}
-    → μ  ∣ Σ  ∣ pc ⊢ L ⇓ addr (a[ ℓ₁ ] n) of ℓ ∣ V-addr ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₂
+  ⇓-assign? : ∀ {μ μ₁ μ₂ pc L M V v n ℓ ℓ₁}
+    → μ  ∣ pc ⊢ L ⇓ addr (a[ ℓ₁ ] n) of ℓ ∣ V-addr ∣ μ₁
+    → μ₁ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₂
     → pc ≼ ℓ₁
       -------------------------------------------------------------------------- AssignNSU
-    → μ ∣ Σ ∣ pc ⊢ L :=? M ⇓ $ tt of low ∣ V-const ∣ cons-μ (a[ ℓ₁ ] n) V v μ₂
+    → μ ∣ pc ⊢ L :=? M ⇓ $ tt of low ∣ V-const ∣ cons-μ (a[ ℓ₁ ] n) V v μ₂
 
-  ⇓-assign : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V v n ℓ ℓ₁}
-    → μ  ∣ Σ  ∣ pc ⊢ L ⇓ addr (a[ ℓ₁ ] n) of ℓ ∣ V-addr ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₂
+  ⇓-assign : ∀ {μ μ₁ μ₂ pc L M V v n ℓ ℓ₁}
+    → μ  ∣ pc ⊢ L ⇓ addr (a[ ℓ₁ ] n) of ℓ ∣ V-addr ∣ μ₁
+    → μ₁ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₂
       -------------------------------------------------------------------------- Assign
-    → μ ∣ Σ ∣ pc ⊢ L := M ⇓ $ tt of low ∣ V-const ∣ cons-μ (a[ ℓ₁ ] n) V v μ₂
+    → μ  ∣ pc ⊢ L := M ⇓ $ tt of low ∣ V-const ∣ cons-μ (a[ ℓ₁ ] n) V v μ₂
 
-  ⇓-cast : ∀ {μ μ₁ μ₂ Σ Σ₁ pc M V W v w A B} {c : Cast A ⇒ B}
+  ⇓-cast : ∀ {μ μ₁ μ₂ pc M N V W v w A B} {c : Cast A ⇒ B}
     → (a : Active c)
-    → μ ∣ Σ ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₁
-    → (⊢V : [] ; Σ ; l low ; low ⊢ V ⦂ A)
-    → μ₁ ∣ Σ₁ ∣ pc ⊢ apply-cast V ⊢V v c a ⇓ W ∣ w ∣ μ₂
+    → μ  ∣ pc ⊢ M ⇓ V ∣ v ∣ μ₁
+    → ApplyCast V , c ↝ N
+    → μ₁ ∣ pc ⊢ N ⇓ W ∣ w ∣ μ₂
       --------------------------------------------------------- Cast
-    → μ ∣ Σ ∣ pc ⊢ M ⟨ c ⟩ ⇓ W ∣ w ∣ μ₂
+    → μ  ∣ pc ⊢ M ⟨ c ⟩ ⇓ W ∣ w ∣ μ₂
 
-  ⇓-if-cast-true : ∀ {μ μ₁ μ₂ μ₃ Σ Σ₁ Σ₂ pc L M N V W v w A g ℓ}
+  ⇓-if-cast-true : ∀ {μ μ₁ μ₂ μ₃ pc L M N V W v w A g ℓ}
                       {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → (i : Inert c)
-    → μ  ∣ Σ  ∣ pc     ⊢ L ⇓ $ true of ℓ ⟨ c ⟩ ∣ V-cast V-const i ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⋎ ℓ ⊢ M ⇓ V ∣ v ∣ μ₂    {- don't need casting PC to ⋆ in big step -}
-    → μ₂ ∣ Σ₂ ∣ pc     ⊢ V ⟨ branch/c A ℓ c ⟩ ⇓ W ∣ w ∣ μ₃
+    → μ  ∣ pc     ⊢ L ⇓ $ true of ℓ ⟨ c ⟩ ∣ V-cast V-const i ∣ μ₁
+    → μ₁ ∣ pc ⋎ ℓ ⊢ M ⇓ V ∣ v ∣ μ₂    {- don't need casting PC to ⋆ in big step -}
+    → μ₂ ∣ pc     ⊢ V ⟨ branch/c A ℓ c ⟩ ⇓ W ∣ w ∣ μ₃
       --------------------------------------------------------- IfCastTrue
-    → μ  ∣ Σ  ∣ pc     ⊢ if L A M N ⇓ W ∣ w ∣ μ₃
+    → μ  ∣ pc     ⊢ if L A M N ⇓ W ∣ w ∣ μ₃
 
-  ⇓-if-cast-false : ∀ {μ μ₁ μ₂ μ₃ Σ Σ₁ Σ₂ pc L M N V W v w A g ℓ}
+  ⇓-if-cast-false : ∀ {μ μ₁ μ₂ μ₃ pc L M N V W v w A g ℓ}
                        {c : Cast (` Bool of g) ⇒ (` Bool of ⋆)}
     → (i : Inert c)
-    → μ  ∣ Σ  ∣ pc     ⊢ L ⇓ $ false of ℓ ⟨ c ⟩ ∣ V-cast V-const i ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⋎ ℓ ⊢ N ⇓ V ∣ v ∣ μ₂
-    → μ₂ ∣ Σ₂ ∣ pc     ⊢ V ⟨ branch/c A ℓ c ⟩ ⇓ W ∣ w ∣ μ₃
+    → μ  ∣ pc     ⊢ L ⇓ $ false of ℓ ⟨ c ⟩ ∣ V-cast V-const i ∣ μ₁
+    → μ₁ ∣ pc ⋎ ℓ ⊢ N ⇓ V ∣ v ∣ μ₂
+    → μ₂ ∣ pc     ⊢ V ⟨ branch/c A ℓ c ⟩ ⇓ W ∣ w ∣ μ₃
       --------------------------------------------------------- IfCastFalse
-    → μ  ∣ Σ  ∣ pc     ⊢ if L A M N ⇓ W ∣ w ∣ μ₃
+    → μ  ∣ pc     ⊢ if L A M N ⇓ W ∣ w ∣ μ₃
 
-  ⇓-fun-cast : ∀ {μ μ₁ μ₂ μ₃ Σ Σ₁ Σ₂ pc L M V V′ W v v′ w A B C D gc₁ gc₂ g₁ g₂}
+  ⇓-fun-cast : ∀ {μ μ₁ μ₂ μ₃ pc L M V V′ W v v′ w A B C D gc₁ gc₂ g₁ g₂}
                   {c : Cast ([ gc₁ ] A ⇒ B of g₁) ⇒ ([ gc₂ ] C ⇒ D of g₂)}
     → (i : Inert c)
-    → μ  ∣ Σ  ∣ pc ⊢ L ⇓ V ⟨ c ⟩ ∣ V-cast v i ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⊢ M ⇓ W ∣ w ∣ μ₂
-    → μ₂ ∣ Σ₂ ∣ pc ⊢ elim-fun-proxy V W i pc ⇓ V′ ∣ v′ ∣ μ₃
+    → μ  ∣ pc ⊢ L ⇓ V ⟨ c ⟩ ∣ V-cast v i ∣ μ₁
+    → μ₁ ∣ pc ⊢ M ⇓ W ∣ w ∣ μ₂
+    → μ₂ ∣ pc ⊢ elim-fun-proxy V W i pc ⇓ V′ ∣ v′ ∣ μ₃
       --------------------------------------------------------- FunCast
-    → μ  ∣ Σ  ∣ pc ⊢ L · M ⇓ V′ ∣ v′ ∣ μ₃
+    → μ  ∣ pc ⊢ L · M ⇓ V′ ∣ v′ ∣ μ₃
 
-  ⇓-deref-cast : ∀ {μ μ₁ μ₂ Σ Σ₁ pc M V W v w A B g₁ g₂}
+  ⇓-deref-cast : ∀ {μ μ₁ μ₂ pc M V W v w A B g₁ g₂}
                     {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → (i : Inert c)
-    → μ  ∣ Σ  ∣ pc ⊢ M ⇓ V ⟨ c ⟩ ∣ V-cast v i ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⊢ ! V ⟨ out/c c ⟩ ⇓ W ∣ w ∣ μ₂
+    → μ  ∣ pc ⊢ M ⇓ V ⟨ c ⟩ ∣ V-cast v i ∣ μ₁
+    → μ₁ ∣ pc ⊢ ! V ⟨ out/c c ⟩ ⇓ W ∣ w ∣ μ₂
       --------------------------------------------------------- DerefCast
-    → μ  ∣ Σ  ∣ pc ⊢ ! M ⇓ W ∣ w ∣ μ₂
+    → μ  ∣ pc ⊢ ! M ⇓ W ∣ w ∣ μ₂
 
-  ⇓-assign?-cast : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V W v w A B g₁ g₂}
+  ⇓-assign?-cast : ∀ {μ μ₁ μ₂ pc L M V W v w A B g₁ g₂}
                       {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → (i : Inert c)
-    → μ  ∣ Σ  ∣ pc ⊢ L ⇓ V ⟨ c ⟩ ∣ V-cast v i ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⊢ elim-ref-proxy V M i _:=?_ ⇓ W ∣ w ∣ μ₂
+    → μ  ∣ pc ⊢ L ⇓ V ⟨ c ⟩ ∣ V-cast v i ∣ μ₁
+    → μ₁ ∣ pc ⊢ elim-ref-proxy V M i _:=?_ ⇓ W ∣ w ∣ μ₂
       ----------------------------------------------------------- AssignNSUCast
-    → μ  ∣ Σ  ∣ pc ⊢ L :=? M ⇓ W ∣ w ∣ μ₂
+    → μ  ∣ pc ⊢ L :=? M ⇓ W ∣ w ∣ μ₂
 
-  ⇓-assign-cast : ∀ {μ μ₁ μ₂ Σ Σ₁ pc L M V W v w A B g₁ g₂}
+  ⇓-assign-cast : ∀ {μ μ₁ μ₂ pc L M V W v w A B g₁ g₂}
                      {c : Cast (Ref A of g₁) ⇒ (Ref B of g₂)}
     → (i : Inert c)
-    → μ  ∣ Σ  ∣ pc ⊢ L ⇓ V ⟨ c ⟩ ∣ V-cast v i ∣ μ₁
-    → μ₁ ∣ Σ₁ ∣ pc ⊢ elim-ref-proxy V M i _:=_ ⇓ W ∣ w ∣ μ₂
+    → μ  ∣ pc ⊢ L ⇓ V ⟨ c ⟩ ∣ V-cast v i ∣ μ₁
+    → μ₁ ∣ pc ⊢ elim-ref-proxy V M i _:=_ ⇓ W ∣ w ∣ μ₂
       ----------------------------------------------------------- AssignCast
-    → μ  ∣ Σ  ∣ pc ⊢ L := M ⇓ W ∣ w ∣ μ₂
+    → μ  ∣ pc ⊢ L := M ⇓ W ∣ w ∣ μ₂
