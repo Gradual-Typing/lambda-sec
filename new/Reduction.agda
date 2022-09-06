@@ -109,8 +109,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
 
   {- Reduction rules about casts, active and inert: -}
   cast : ∀ {A B V M μ pc} {c : Cast A ⇒ B}
-    → (v : Value V)
-    → (a : Active c)
+    → Value V → Active c
     → ApplyCast V , c ↝ M
       -------------------------------------------------- Cast
     → V ⟨ c ⟩ ∣ μ ∣ pc —→ M ∣ μ
