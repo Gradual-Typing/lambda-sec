@@ -16,7 +16,7 @@ open import TypeBasedCast
 open import CC
 
 infix 2 _∣_⊢_⇓_∣_
-data _∣_⊢_⇓_∣_ : Heap → StaticLabel → Term → (V : Term) → Heap → Set
+data _∣_⊢_⇓_∣_ : Heap → StaticLabel → (M V : Term) → Heap → Set
 
 ⇓-value : ∀ {μ μ′ pc M V} → μ ∣ pc ⊢ M ⇓ V ∣ μ′ → Value V
 
