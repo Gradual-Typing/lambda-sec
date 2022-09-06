@@ -25,10 +25,14 @@ sim : ∀ {Σ gc pc A M V v μ μ′}
   → erase-μ μ ∣ pc ⊢ erase M ⇓ₑ erase V ∣ erase-val-value v ∣ erase-μ μ′
 sim ⊢M ⇓-val = ⇓ₑ-val
 sim ⊢M (⇓-app {ℓ = low} L⇓ƛN M⇓V N[V]⇓W) = {!!}
-sim (⊢app ⊢L ⊢M) (⇓-app {w = w} {ℓ = high} L⇓ƛN M⇓V N[V]⇓W) =
+sim {pc = pc} {μ = μ} {μ′} (⊢app {L = L} {M} ⊢L ⊢M) (⇓-app {w = w} {ℓ = high} L⇓ƛN M⇓V N[V]⇓W) =
   let ϵL⇓● = sim ⊢L L⇓ƛN in
   let ϵM⇓ϵV = sim ⊢M M⇓V in
   {!!}
+  where
+  ϵL·ϵM⇓● : erase-μ μ ∣ pc ⊢ (erase L) · (erase M) ⇓ₑ ● ∣ V-● ∣ erase-μ μ′
+  ϵL·ϵM⇓● = ⇓ₑ-app-● (sim ⊢L L⇓ƛN) {!!}
+  {- in this case we need to show if μ ∣ high ⊢ M ⇓ V ∣ μ′ then ϵ(μ) ≡ ϵ(μ′) -}
 sim ⊢M (⇓-if-true M⇓V M⇓V₁) = {!!}
 sim ⊢M (⇓-if-false M⇓V M⇓V₁) = {!!}
 sim ⊢M (⇓-let M⇓V M⇓V₁) = {!!}
