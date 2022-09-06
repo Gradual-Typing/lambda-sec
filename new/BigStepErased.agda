@@ -15,96 +15,117 @@ open import Types
 open import TypeBasedCast
 open import CC
 
-infix 2 _∣_⊢_⇓ₑ_∣_∣_
+infix 2 _∣_⊢_⇓ₑ_∣_
+data _∣_⊢_⇓ₑ_∣_ : HalfHeap → StaticLabel → (M V : Term) → HalfHeap → Set
+
+⇓ₑ-value : ∀ {μ μ′ pc M V} → μ ∣ pc ⊢ M ⇓ₑ V ∣ μ′ → Value V
 
 {- runs on erased terms -}
-data _∣_⊢_⇓ₑ_∣_∣_ : HalfHeap → StaticLabel → Term → (V : Term) → Value V → HalfHeap → Set where
+data _∣_⊢_⇓ₑ_∣_ where
 
-  ⇓ₑ-val : ∀ {μ pc V v}
+  ⇓ₑ-val : ∀ {μ pc V}
+    → Value V
       --------------------------- Value
-    → μ ∣ pc ⊢ V ⇓ₑ V ∣ v ∣ μ
+    → μ ∣ pc ⊢ V ⇓ₑ V ∣ μ
 
-  ⇓ₑ-app : ∀ {μ μ₁ μ₂ μ₃ pc pc′ L M N V W v w A}
-    → μ  ∣ pc ⊢ L       ⇓ₑ ƛ[ pc′ ] A ˙ N of low ∣ V-ƛ ∣ μ₁
-    → μ₁ ∣ pc ⊢ M       ⇓ₑ V ∣ v ∣ μ₂
-    → μ₂ ∣ pc ⊢ N [ V ] ⇓ₑ W ∣ w ∣ μ₃
+  ⇓ₑ-app : ∀ {μ μ₁ μ₂ μ₃ pc pc′ L M N V W A}
+    → μ  ∣ pc ⊢ L       ⇓ₑ ƛ[ pc′ ] A ˙ N of low ∣ μ₁
+    → μ₁ ∣ pc ⊢ M       ⇓ₑ V ∣ μ₂
+    → μ₂ ∣ pc ⊢ N [ V ] ⇓ₑ W ∣ μ₃
       ---------------------------------------- Application
-    → μ  ∣ pc ⊢ L · M   ⇓ₑ W ∣ w ∣ μ₃
+    → μ  ∣ pc ⊢ L · M   ⇓ₑ W ∣ μ₃
 
-  ⇓ₑ-app-● : ∀ {μ μ₁ μ₂ pc L M V v}
-    → μ  ∣ pc ⊢ L       ⇓ₑ ● ∣ V-● ∣ μ₁
-    → μ₁ ∣ pc ⊢ M       ⇓ₑ V ∣ v   ∣ μ₂
+  ⇓ₑ-app-● : ∀ {μ μ₁ μ₂ pc L M V}
+    → μ  ∣ pc ⊢ L       ⇓ₑ ● ∣ μ₁
+    → μ₁ ∣ pc ⊢ M       ⇓ₑ V  ∣ μ₂
       ---------------------------------------- Application●
-    → μ  ∣ pc ⊢ L · M   ⇓ₑ ● ∣ V-● ∣ μ₂
+    → μ  ∣ pc ⊢ L · M   ⇓ₑ ● ∣ μ₂
 
-  ⇓ₑ-if-true : ∀ {μ μ₁ μ₂ pc L M N V v A}
-    → μ  ∣ pc ⊢ L ⇓ₑ $ true of low ∣ V-const ∣ μ₁
-    → μ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v ∣ μ₂
+  ⇓ₑ-if-true : ∀ {μ μ₁ μ₂ pc L M N V A}
+    → μ  ∣ pc ⊢ L          ⇓ₑ $ true of low ∣ μ₁
+    → μ₁ ∣ pc ⊢ M          ⇓ₑ V ∣ μ₂
       ------------------------------------------------ IfTrue
-    → μ  ∣ pc ⊢ if L A M N ⇓ₑ V ∣ v ∣ μ₂
+    → μ  ∣ pc ⊢ if L A M N ⇓ₑ V ∣ μ₂
 
-  ⇓ₑ-if-false : ∀ {μ μ₁ μ₂ pc L M N V v A}
-    → μ  ∣ pc ⊢ L ⇓ₑ $ false of low ∣ V-const ∣ μ₁
-    → μ₁ ∣ pc ⊢ N ⇓ₑ V ∣ v ∣ μ₂
+  ⇓ₑ-if-false : ∀ {μ μ₁ μ₂ pc L M N V A}
+    → μ  ∣ pc ⊢ L          ⇓ₑ $ false of low ∣ μ₁
+    → μ₁ ∣ pc ⊢ N          ⇓ₑ V ∣ μ₂
       ------------------------------------------------ IfFalse
-    → μ  ∣ pc ⊢ if L A M N ⇓ₑ V ∣ v ∣ μ₂
+    → μ  ∣ pc ⊢ if L A M N ⇓ₑ V ∣ μ₂
 
   ⇓ₑ-if-● : ∀ {μ μ₁ pc L M N A}
-    → μ  ∣ pc ⊢ L          ⇓ₑ ● ∣ V-● ∣ μ₁
+    → μ  ∣ pc ⊢ L          ⇓ₑ ● ∣ μ₁
       ------------------------------------------------ If●
-    → μ  ∣ pc ⊢ if L A M N ⇓ₑ ● ∣ V-● ∣ μ₁
+    → μ  ∣ pc ⊢ if L A M N ⇓ₑ ● ∣ μ₁
 
-  ⇓ₑ-let : ∀ {μ μ₁ μ₂ pc M N V W v w}
-    → μ  ∣ pc ⊢ M        ⇓ₑ V ∣ v ∣ μ₁
-    → μ₁ ∣ pc ⊢ N [ V ]  ⇓ₑ W ∣ w ∣ μ₂
+  ⇓ₑ-let : ∀ {μ μ₁ μ₂ pc M N V W}
+    → μ  ∣ pc ⊢ M        ⇓ₑ V ∣ μ₁
+    → μ₁ ∣ pc ⊢ N [ V ]  ⇓ₑ W ∣ μ₂
       ----------------------------------------- Let
-    → μ  ∣ pc ⊢ `let M N ⇓ₑ W ∣ w ∣ μ₂
+    → μ  ∣ pc ⊢ `let M N ⇓ₑ W ∣ μ₂
 
-  ⇓ₑ-ref? : ∀ {μ μ₁ pc M V v n}
-    → μ ∣ pc ⊢ M ⇓ₑ V ∣ v ∣ μ₁
+  ⇓ₑ-ref? : ∀ {μ μ₁ pc M V n}
+    → (⇓V : μ ∣ pc ⊢ M ⇓ₑ V ∣ μ₁)
     → n ≡ length μ₁
     → pc ≼ low
       -------------------------------------------------------------------------------------- RefNSU
-    → μ ∣ pc ⊢ ref?[ low ] M ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ ⟨ n , V , v ⟩ ∷ μ₁
+    → μ ∣ pc ⊢ ref?[ low ] M ⇓ₑ addr (a[ low ] n) of low ∣ ⟨ n , V , ⇓ₑ-value ⇓V ⟩ ∷ μ₁
 
-  ⇓ₑ-ref : ∀ {μ μ₁ pc M V v n}
-    → μ ∣ pc ⊢ M ⇓ₑ V ∣ v ∣ μ₁
+  ⇓ₑ-ref : ∀ {μ μ₁ pc M V n}
+    → (⇓V : μ ∣ pc ⊢ M ⇓ₑ V ∣ μ₁)
     → n ≡ length μ₁
       -------------------------------------------------------------------------------------- Ref
-    → μ ∣ pc ⊢ ref[ low ] M ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ ⟨ n , V , v ⟩ ∷ μ₁
+    → μ ∣ pc ⊢ ref[ low ] M ⇓ₑ addr (a[ low ] n) of low ∣ ⟨ n , V , ⇓ₑ-value ⇓V ⟩ ∷ μ₁
 
   ⇓ₑ-deref : ∀ {μ μ₁ pc M V v n}
-    → μ ∣ pc ⊢ M ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ μ₁
+    → μ ∣ pc ⊢ M ⇓ₑ addr (a[ low ] n) of low ∣ μ₁
     → find _≟_ μ₁ n ≡ just ⟨ V , v ⟩
       ---------------------------------- Deref
-    → μ ∣ pc ⊢ ! M ⇓ₑ V ∣ v ∣ μ₁
+    → μ ∣ pc ⊢ ! M ⇓ₑ V ∣ μ₁
 
   ⇓ₑ-deref-● : ∀ {μ μ₁ pc M}
-    → μ ∣ pc ⊢ M   ⇓ₑ ● ∣ V-● ∣ μ₁
+    → μ ∣ pc ⊢ M   ⇓ₑ ● ∣ μ₁
       ----------------------------------------- Deref●
-    → μ ∣ pc ⊢ ! M ⇓ₑ ● ∣ V-● ∣ μ₁
+    → μ ∣ pc ⊢ ! M ⇓ₑ ● ∣ μ₁
 
-  ⇓ₑ-assign? : ∀ {μ μ₁ μ₂ pc L M V v n}
-    → μ  ∣ pc ⊢ L ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ μ₁
-    → μ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v ∣ μ₂
+  ⇓ₑ-assign? : ∀ {μ μ₁ μ₂ pc L M V n}
+    → μ  ∣ pc ⊢ L      ⇓ₑ addr (a[ low ] n) of low ∣ μ₁
+    → (⇓V : μ₁ ∣ pc ⊢ M ⇓ₑ V ∣ μ₂)
     → pc ≼ low
       -------------------------------------------------------------------------- AssignNSU
-    → μ ∣ pc ⊢ L :=? M ⇓ₑ $ tt of low ∣ V-const ∣ ⟨ n , V , v ⟩ ∷ μ₂
+    → μ ∣ pc ⊢ L :=? M ⇓ₑ $ tt of low ∣ ⟨ n , V , ⇓ₑ-value ⇓V ⟩ ∷ μ₂
 
-  ⇓ₑ-assign?-● : ∀ {μ μ₁ μ₂ pc L M V v}
-    → μ  ∣ pc ⊢ L ⇓ₑ ● ∣ V-● ∣ μ₁
-    → μ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v   ∣ μ₂
+  ⇓ₑ-assign?-● : ∀ {μ μ₁ μ₂ pc L M V}
+    → μ  ∣ pc ⊢ L       ⇓ₑ ● ∣ μ₁
+    → μ₁ ∣ pc ⊢ M       ⇓ₑ V  ∣ μ₂
       -------------------------------------------------------- AssignNSU●
-    → μ  ∣ pc ⊢ L :=? M ⇓ₑ $ tt of low ∣ V-const ∣ μ₂ {- skip assignment -}
+    → μ  ∣ pc ⊢ L :=? M ⇓ₑ $ tt of low ∣ μ₂ {- skip assignment -}
 
-  ⇓ₑ-assign : ∀ {μ μ₁ μ₂ pc L M V v n}
-    → μ  ∣ pc ⊢ L ⇓ₑ addr (a[ low ] n) of low ∣ V-addr ∣ μ₁
-    → μ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v ∣ μ₂
+  ⇓ₑ-assign : ∀ {μ μ₁ μ₂ pc L M V n}
+    → μ  ∣ pc ⊢ L      ⇓ₑ addr (a[ low ] n) of low ∣ μ₁
+    → (⇓V : μ₁ ∣ pc ⊢ M ⇓ₑ V ∣ μ₂)
       -------------------------------------------------------------------------- Assign
-    → μ  ∣ pc ⊢ L := M ⇓ₑ $ tt of low ∣ V-const ∣ ⟨ n , V , v ⟩ ∷ μ₂
+    → μ  ∣ pc ⊢ L := M ⇓ₑ $ tt of low ∣ ⟨ n , V , ⇓ₑ-value ⇓V ⟩ ∷ μ₂
 
-  ⇓ₑ-assign-● : ∀ {μ μ₁ μ₂ pc L M V v}
-    → μ  ∣ pc ⊢ L ⇓ₑ ● ∣ V-● ∣ μ₁
-    → μ₁ ∣ pc ⊢ M ⇓ₑ V ∣ v   ∣ μ₂
+  ⇓ₑ-assign-● : ∀ {μ μ₁ μ₂ pc L M V}
+    → μ  ∣ pc ⊢ L      ⇓ₑ ● ∣ μ₁
+    → μ₁ ∣ pc ⊢ M      ⇓ₑ V  ∣ μ₂
       -------------------------------------------------------- Assign●
-    → μ  ∣ pc ⊢ L := M ⇓ₑ $ tt of low ∣ V-const ∣ μ₂ {- skip assignment -}
+    → μ  ∣ pc ⊢ L := M ⇓ₑ $ tt of low ∣ μ₂ {- skip assignment -}
+
+
+⇓ₑ-value (⇓ₑ-val v) = v
+⇓ₑ-value (⇓ₑ-app _ _ ⇓V) = ⇓ₑ-value ⇓V
+⇓ₑ-value (⇓ₑ-app-● _ _) = V-●
+⇓ₑ-value (⇓ₑ-if-true  _ ⇓V) = ⇓ₑ-value ⇓V
+⇓ₑ-value (⇓ₑ-if-false _ ⇓V) = ⇓ₑ-value ⇓V
+⇓ₑ-value (⇓ₑ-if-● ⇓V) = V-●
+⇓ₑ-value (⇓ₑ-let _ ⇓V) = ⇓ₑ-value ⇓V
+⇓ₑ-value (⇓ₑ-ref? _ _ _) = V-addr
+⇓ₑ-value (⇓ₑ-ref    _ _) = V-addr
+⇓ₑ-value (⇓ₑ-deref {v = v} _ _) = v
+⇓ₑ-value (⇓ₑ-deref-●        _) = V-●
+⇓ₑ-value (⇓ₑ-assign?     _ _ _) = V-const
+⇓ₑ-value (⇓ₑ-assign?-●    _ _) = V-const
+⇓ₑ-value (⇓ₑ-assign        _ _) = V-const
+⇓ₑ-value (⇓ₑ-assign-●     _ _) = V-const
