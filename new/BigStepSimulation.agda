@@ -36,47 +36,46 @@ postulate
 
 sim : ∀ {Σ gc pc A M V μ μ′}
   → [] ; Σ ; gc ; pc ⊢ M ⦂ A
+  → Σ ⊢ μ
+  → l pc ≾ gc
   → μ ∣ pc ⊢ M ⇓ V ∣ μ′
     ----------------------------------------------------------------------------------
   → erase-μ μ ∣ pc ⊢ erase M ⇓ₑ erase V ∣ erase-μ μ′
-sim ⊢M (⇓-val v) = (⇓ₑ-val (erase-val-value v))
-sim {pc = pc} (⊢app ⊢L ⊢M) (⇓-app {L = L} {M} {N} {V} {W} {ℓ = low} L⇓ƛN M⇓V N[V]⇓W)
+sim ⊢M ⊢μ pc≾gc (⇓-val v) = (⇓ₑ-val (erase-val-value v))
+sim {pc = pc} (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-app {L = L} {M} {N} {V} {W} {ℓ = low} L⇓ƛN M⇓V N[V]⇓W)
   rewrite stamp-val-low (⇓-value N[V]⇓W)
-  rewrite ℓ⋎low≡ℓ {pc} =
-  ⇓ₑ-app (sim ⊢L L⇓ƛN) (sim ⊢M M⇓V) ϵN[ϵV]⇓ϵW
+  rewrite ℓ⋎low≡ℓ {pc}
+  with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓ƛN
+... | ⟨ Σ₁ , Σ₁⊇Σ  , ⊢ƛN , ⊢μ₁ ⟩
+  with ⇓-preserve (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V
+... | ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢V  , ⊢μ₂ ⟩ =
+  ⇓ₑ-app (sim ⊢L ⊢μ pc≾gc L⇓ƛN) (sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V) ϵN[ϵV]⇓ϵW
   where
   ϵN[ϵV]⇓ϵW : _ ∣ pc ⊢ erase N [ erase V ] ⇓ₑ erase W ∣ _
   ϵN[ϵV]⇓ϵW rewrite sym (erase-substitution N V) =
-    let ⟨ Σ₁ , Σ₁⊇Σ  , ⊢ƛN , ⊢μ₁ ⟩ = ⇓-preserve ⊢L {!!} {!!} L⇓ƛN in
-    let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢V  , ⊢μ₂ ⟩ = ⇓-preserve (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ {!!} M⇓V in
     case canonical-fun ⊢ƛN V-ƛ of λ where
-    (Fun-ƛ ⊢N (<:-ty _ (<:-fun _ A₁<:A _))) →
-      sim (substitution-pres (relax-Σ ⊢N Σ₂⊇Σ₁) (⊢value-pc (⊢sub ⊢V A₁<:A) (⇓-value M⇓V))) N[V]⇓W
+    (Fun-ƛ ⊢N (<:-ty _ (<:-fun gc⋎g<:pc′ A₁<:A _))) →
+      sim (substitution-pres (relax-Σ ⊢N Σ₂⊇Σ₁) (⊢value-pc (⊢sub ⊢V A₁<:A) (⇓-value M⇓V))) ⊢μ₂ {!!} N[V]⇓W
   {- need to prove preservation -}
-sim {pc = pc} (⊢app {L = L} {M} ⊢L ⊢M) (⇓-app {ℓ = high} L⇓ƛN M⇓V N[V]⇓W)
+sim {pc = pc} (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-app {L = L} {M} {ℓ = high} L⇓ƛN M⇓V N[V]⇓W)
   rewrite erase-stamp-high (⇓-value N[V]⇓W) =
-  let ϵL⇓● = sim ⊢L L⇓ƛN in
-  let ϵM⇓ϵV = sim ⊢M M⇓V  in
-  ϵL·ϵM⇓●
-  where
-  ϵL·ϵM⇓● : _ ∣ pc ⊢ erase L · erase M ⇓ₑ ● ∣ _
-  ϵL·ϵM⇓● = ⇓ₑ-app-● (sim ⊢L L⇓ƛN) {!!}
+  ⇓ₑ-app-● (sim ⊢L ⊢μ pc≾gc L⇓ƛN) {!!}
   {- in this case we need to show if μ ∣ high ⊢ M ⇓ V ∣ μ′ then ϵ(μ) ≡ ϵ(μ′) -}
-sim ⊢M (⇓-if-true M⇓V M⇓V₁) = {!!}
-sim ⊢M (⇓-if-false M⇓V M⇓V₁) = {!!}
-sim ⊢M (⇓-let M⇓V M⇓V₁) = {!!}
-sim ⊢M (⇓-ref? M⇓V x x₁) = {!!}
-sim ⊢M (⇓-ref M⇓V x) = {!!}
-sim ⊢M (⇓-deref M⇓V x) = {!!}
-sim ⊢M (⇓-assign? M⇓V M⇓V₁ x) = {!!}
-sim ⊢M (⇓-assign M⇓V M⇓V₁) = {!!}
-sim ⊢M (⇓-cast a M⇓V ⊢V M⇓V₁) = {!!}
-sim ⊢M (⇓-if-cast-true i M⇓V M⇓V₁ M⇓V₂) = {!!}
-sim ⊢M (⇓-if-cast-false i M⇓V M⇓V₁ M⇓V₂) = {!!}
-sim ⊢M (⇓-fun-cast i M⇓V M⇓V₁ M⇓V₂) = {!!}
-sim ⊢M (⇓-deref-cast i M⇓V M⇓V₁) = {!!}
-sim ⊢M (⇓-assign?-cast i M⇓V M⇓V₁) = {!!}
-sim ⊢M (⇓-assign-cast i M⇓V M⇓V₁) = {!!}
-sim (⊢sub ⊢M A<:B) M⇓V = sim ⊢M M⇓V
-sim (⊢sub-pc ⊢M gc<:gc′) M⇓V = sim ⊢M M⇓V
+sim ⊢M ⊢μ pc≾gc (⇓-if-true M⇓V M⇓V₁) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-if-false M⇓V M⇓V₁) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-let M⇓V M⇓V₁) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-ref? M⇓V x x₁) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-ref M⇓V x) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-deref M⇓V x) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-assign? M⇓V M⇓V₁ x) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-assign M⇓V M⇓V₁) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-cast a M⇓V ⊢V M⇓V₁) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-if-cast-true i M⇓V M⇓V₁ M⇓V₂) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-if-cast-false i M⇓V M⇓V₁ M⇓V₂) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-fun-cast i M⇓V M⇓V₁ M⇓V₂) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-deref-cast i M⇓V M⇓V₁) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-assign?-cast i M⇓V M⇓V₁) = {!!}
+sim ⊢M ⊢μ pc≾gc (⇓-assign-cast i M⇓V M⇓V₁) = {!!}
+sim (⊢sub ⊢M A<:B) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ pc≾gc M⇓V
+sim (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ {!!} M⇓V
 
