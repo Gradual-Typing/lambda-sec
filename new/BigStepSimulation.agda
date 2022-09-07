@@ -55,8 +55,11 @@ sim {pc = pc} (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-app {L = L} {M} {N} {V} {W} 
   ϵN[ϵV]⇓ϵW rewrite sym (erase-substitution N V) =
     case canonical-fun ⊢ƛN V-ƛ of λ where
     (Fun-ƛ ⊢N (<:-ty _ (<:-fun gc⋎g<:pc′ A₁<:A _))) →
-      sim (substitution-pres (relax-Σ ⊢N Σ₂⊇Σ₁) (⊢value-pc (⊢sub ⊢V A₁<:A) (⇓-value M⇓V))) ⊢μ₂ {!!} N[V]⇓W
-  {- need to prove preservation -}
+      case ⟨ pc≾gc , consis-join-<:ₗ-inv gc⋎g<:pc′ ⟩ of λ where
+      ⟨ ≾-l pc≼gc , <:-l gc≼pc′ , _ ⟩ →
+        sim (substitution-pres (relax-Σ ⊢N Σ₂⊇Σ₁)
+                               (⊢value-pc (⊢sub ⊢V A₁<:A) (⇓-value M⇓V)))
+            ⊢μ₂ (≾-l (≼-trans pc≼gc gc≼pc′)) N[V]⇓W
 sim {pc = pc} (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-app {L = L} {M} {ℓ = high} L⇓ƛN M⇓V N[V]⇓W)
   rewrite erase-stamp-high (⇓-value N[V]⇓W) =
   ⇓ₑ-app-● (sim ⊢L ⊢μ pc≾gc L⇓ƛN) {!!}
