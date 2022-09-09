@@ -18,6 +18,7 @@ open import CC
 open import HeapTyping
 open import BigStep
 
+open import WellTyped public
 open import Preservation public
 
 postulate
