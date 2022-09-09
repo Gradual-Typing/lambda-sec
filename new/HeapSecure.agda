@@ -84,4 +84,4 @@ heap-relate ⊢M ⊢μ pc≾gc (⇓-deref-cast   i M⇓V⟨c⟩ V⟨oc⟩⇓W) =
 heap-relate ⊢M ⊢μ pc≾gc (⇓-assign?-cast i L⇓V⟨c⟩ elim⇓W) = {!!}
 heap-relate ⊢M ⊢μ pc≾gc (⇓-assign-cast  i L⇓V⟨c⟩ elim⇓W) = {!!}
 heap-relate (⊢sub ⊢M A<:B) ⊢μ pc≾gc M⇓V = heap-relate ⊢M ⊢μ pc≾gc M⇓V
-heap-relate (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M⇓V = heap-relate ⊢M ⊢μ {!!} M⇓V
+heap-relate (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M⇓V = heap-relate ⊢M ⊢μ (≾-<: pc≾gc gc<:gc′) M⇓V

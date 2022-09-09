@@ -71,5 +71,5 @@ sim ⊢M ⊢μ pc≾gc (⇓-deref-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign?-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign-cast i M⇓V M⇓V₁) = {!!}
 sim (⊢sub ⊢M A<:B) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ pc≾gc M⇓V
-sim (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ {!!} M⇓V
+sim (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ (≾-<: pc≾gc gc<:gc′) M⇓V
 
