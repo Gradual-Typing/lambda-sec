@@ -47,7 +47,9 @@ heap-relate ⊢M ⊢μ pc≾gc (⇓-let M⇓V N[V]⇓W) = {!!}
 heap-relate (⊢ref? ⊢M) ⊢μ pc≾gc (⇓-ref? M⇓V fresh h≼h {- ℓ ≡ high -})
   rewrite heap-relate ⊢M ⊢μ pc≾gc M⇓V =
   refl
-heap-relate ⊢M ⊢μ pc≾gc (⇓-ref M⇓V fresh) = {!!}
+heap-relate (⊢ref ⊢M h≼h {- ℓ ≡ high -}) ⊢μ (≾-l h≼h) (⇓-ref M⇓V fresh)
+  rewrite heap-relate ⊢M ⊢μ (≾-l h≼h) M⇓V =
+  refl
 heap-relate ⊢M ⊢μ pc≾gc (⇓-deref M⇓a eq) = {!!}
 heap-relate ⊢M ⊢μ pc≾gc (⇓-assign? L⇓a M⇓V pc≼ℓ₁) = {!!}
 heap-relate ⊢M ⊢μ pc≾gc (⇓-assign  L⇓a M⇓V) = {!!}
