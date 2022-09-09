@@ -41,8 +41,16 @@ heap-relate (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-app L⇓ƛN M⇓V N[V]⇓W) =
       let ϵμ₂≡ϵμ′ = heap-relate (substitution-pres (relax-Σ ⊢N Σ₂⊇Σ₁)
                                 (⊢value-pc (⊢sub ⊢V A₁<:A) (⇓-value M⇓V))) ⊢μ₂ pc≾gc N[V]⇓W in
       trans ϵμ≡ϵμ₁ (trans ϵμ₁≡ϵμ₂ ϵμ₂≡ϵμ′)
-heap-relate ⊢M ⊢μ pc≾gc (⇓-if-true  L⇓true  M⇓V) = {!!}
-heap-relate ⊢M ⊢μ pc≾gc (⇓-if-false L⇓false N⇓V) = {!!}
+heap-relate (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (⇓-if-true L⇓true M⇓V) =
+  let ⟨ Σ₁ , Σ₁⊇Σ  , ⊢true , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓true in
+  let ϵμ≡ϵμ₁  = heap-relate ⊢L ⊢μ pc≾gc L⇓true in
+  let ϵμ₁≡ϵμ′ = heap-relate (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ (consis-join-≾ pc≾gc (low≾ _)) M⇓V in
+  trans ϵμ≡ϵμ₁ ϵμ₁≡ϵμ′
+heap-relate (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (⇓-if-false L⇓false N⇓V) =
+  let ⟨ Σ₁ , Σ₁⊇Σ  , ⊢false , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓false in
+  let ϵμ≡ϵμ₁  = heap-relate ⊢L ⊢μ pc≾gc L⇓false in
+  let ϵμ₁≡ϵμ′ = heap-relate (relax-Σ ⊢N Σ₁⊇Σ) ⊢μ₁ (consis-join-≾ pc≾gc (low≾ _)) N⇓V in
+  trans ϵμ≡ϵμ₁ ϵμ₁≡ϵμ′
 heap-relate ⊢M ⊢μ pc≾gc (⇓-let M⇓V N[V]⇓W) = {!!}
 heap-relate (⊢ref? ⊢M) ⊢μ pc≾gc (⇓-ref? M⇓V fresh h≼h {- ℓ ≡ high -})
   rewrite heap-relate ⊢M ⊢μ pc≾gc M⇓V =
@@ -50,7 +58,8 @@ heap-relate (⊢ref? ⊢M) ⊢μ pc≾gc (⇓-ref? M⇓V fresh h≼h {- ℓ ≡ 
 heap-relate (⊢ref ⊢M h≼h {- ℓ ≡ high -}) ⊢μ (≾-l h≼h) (⇓-ref M⇓V fresh)
   rewrite heap-relate ⊢M ⊢μ (≾-l h≼h) M⇓V =
   refl
-heap-relate ⊢M ⊢μ pc≾gc (⇓-deref M⇓a eq) = {!!}
+heap-relate (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref M⇓a eq) =
+  heap-relate ⊢M ⊢μ pc≾gc M⇓a
 heap-relate (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (⇓-assign? L⇓a M⇓V h≼h)
   with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓a
 ... | ⟨ Σ₁ , Σ₁⊇Σ  , ⊢a , ⊢μ₁ ⟩
