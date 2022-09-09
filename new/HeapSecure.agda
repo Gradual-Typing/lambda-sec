@@ -51,8 +51,22 @@ heap-relate (⊢ref ⊢M h≼h {- ℓ ≡ high -}) ⊢μ (≾-l h≼h) (⇓-ref 
   rewrite heap-relate ⊢M ⊢μ (≾-l h≼h) M⇓V =
   refl
 heap-relate ⊢M ⊢μ pc≾gc (⇓-deref M⇓a eq) = {!!}
-heap-relate ⊢M ⊢μ pc≾gc (⇓-assign? L⇓a M⇓V pc≼ℓ₁) = {!!}
-heap-relate ⊢M ⊢μ pc≾gc (⇓-assign  L⇓a M⇓V) = {!!}
+heap-relate (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (⇓-assign? L⇓a M⇓V h≼h)
+  with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓a
+... | ⟨ Σ₁ , Σ₁⊇Σ  , ⊢a , ⊢μ₁ ⟩
+  rewrite heap-relate ⊢L ⊢μ pc≾gc L⇓a
+  rewrite heap-relate (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V =
+  refl
+heap-relate (⊢assign ⊢L ⊢M h≼h) ⊢μ (≾-l h≼h) (⇓-assign L⇓a M⇓V)
+  with ⇓-preserve ⊢L ⊢μ (≾-l h≼h) L⇓a
+... | ⟨ Σ₁ , Σ₁⊇Σ  , ⊢a , ⊢μ₁ ⟩
+  with canonical-ref ⊢a V-addr
+... | Ref-addr _ (<:-ty _ (<:-ref A<:B B<:A))
+  with <:-antisym A<:B B<:A
+... | refl {- ℓ₁ ≡ high , the reference points to a high cell -}
+  rewrite heap-relate ⊢L ⊢μ (≾-l h≼h) L⇓a
+  rewrite heap-relate (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ (≾-l h≼h) M⇓V =
+  refl
 heap-relate ⊢M ⊢μ pc≾gc (⇓-cast a M⇓V V⟨c⟩↝N N⇓W) = {!!}
 heap-relate ⊢M ⊢μ pc≾gc (⇓-if-cast-true  i L⇓true⟨c⟩  M⇓V V⟨bc⟩⇓W) = {!!}
 heap-relate ⊢M ⊢μ pc≾gc (⇓-if-cast-false i L⇓false⟨c⟩ N⇓V V⟨bc⟩⇓W) = {!!}
