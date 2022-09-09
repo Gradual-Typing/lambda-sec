@@ -207,7 +207,7 @@ erase-is-erased ● = e-●
 {- **** Heap erasure **** -}
 erase-μᴸ : HalfHeap → HalfHeap
 erase-μᴸ [] = []
-erase-μᴸ (⟨ a , V , v ⟩ ∷ μᴸ) = ⟨ a , erase V , erase-val-value v ⟩ ∷ erase-μᴸ μᴸ
+erase-μᴸ (⟨ n , V , v ⟩ ∷ μᴸ) = ⟨ n , erase V , erase-val-value v ⟩ ∷ erase-μᴸ μᴸ
 
 erase-μ : Heap → HalfHeap
 erase-μ ⟨ μᴸ , μᴴ ⟩ = erase-μᴸ μᴸ

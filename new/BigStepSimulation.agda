@@ -20,19 +20,10 @@ open import BigStep
 open import BigStepErased
 open import Erasure
 
+open import BigStepPreservation
+
 postulate
   erase-substitution : ∀ N M → erase (N [ M ]) ≡ erase N [ erase M ]
-
-{- replace this with `TypeSafety` in future -}
-open import Preservation
-postulate
-  ⇓-preserve : ∀ {Σ gc pc M V A μ μ′}
-    → [] ; Σ ; gc ; pc ⊢ M ⦂ A
-    → Σ ⊢ μ
-    → l pc ≾ gc
-    → μ ∣ pc ⊢ M ⇓ V ∣ μ′
-      ---------------------------------------------------------------
-    → ∃[ Σ′ ] (Σ′ ⊇ Σ) × ([] ; Σ′ ; gc ; pc ⊢ V ⦂ A) × (Σ′ ⊢ μ′)
 
 sim : ∀ {Σ gc pc A M V μ μ′}
   → [] ; Σ ; gc ; pc ⊢ M ⦂ A

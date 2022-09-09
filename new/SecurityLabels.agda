@@ -33,38 +33,38 @@ high =? low  = no λ ()
 infix 5 _≼_
 
 data _≼_ : StaticLabel → StaticLabel → Set where
-  l⊑l : low  ≼ low
-  l⊑h : low  ≼ high
-  h⊑h : high ≼ high
+  l≼l : low  ≼ low
+  l≼h : low  ≼ high
+  h≼h : high ≼ high
 
 low≼ : ∀ ℓ → low ≼ ℓ
-low≼ low  = l⊑l
-low≼ high = l⊑h
+low≼ low  = l≼l
+low≼ high = l≼h
 
 _≼high : ∀ ℓ → ℓ ≼ high
-low  ≼high = l⊑h
-high ≼high = h⊑h
+low  ≼high = l≼h
+high ≼high = h≼h
 
 ≼-refl : ∀ {ℓ} → ℓ ≼ ℓ
-≼-refl {high}  = h⊑h
-≼-refl {low}   = l⊑l
+≼-refl {high}  = h≼h
+≼-refl {low}   = l≼l
 
 ≼-trans : ∀ {ℓ₁ ℓ₂ ℓ₃}
   → ℓ₁ ≼ ℓ₂ → ℓ₂ ≼ ℓ₃ → ℓ₁ ≼ ℓ₃
-≼-trans l⊑l l⊑l = l⊑l
-≼-trans l⊑l l⊑h = l⊑h
-≼-trans l⊑h h⊑h = l⊑h
-≼-trans h⊑h h⊑h = h⊑h
+≼-trans l≼l l≼l = l≼l
+≼-trans l≼l l≼h = l≼h
+≼-trans l≼h h≼h = l≼h
+≼-trans h≼h h≼h = h≼h
 
 ≼-antisym : ∀ {ℓ₁ ℓ₂}
   → ℓ₁ ≼ ℓ₂ → ℓ₂ ≼ ℓ₁ → ℓ₁ ≡ ℓ₂
-≼-antisym l⊑l l⊑l = refl
-≼-antisym h⊑h h⊑h = refl
+≼-antisym l≼l l≼l = refl
+≼-antisym h≼h h≼h = refl
 
 _≼?_ : ∀ ℓ₁ ℓ₂ → Dec (ℓ₁ ≼ ℓ₂)
-low  ≼? low  = yes l⊑l
-low  ≼? high = yes l⊑h
-high ≼? high = yes h⊑h
+low  ≼? low  = yes l≼l
+low  ≼? high = yes l≼h
+high ≼? high = yes h≼h
 high ≼? low  = no λ ()
 
 
@@ -155,8 +155,8 @@ _≾high : ∀ g → g ≾ l high
 ~ₗ→≾ : ∀ {g₁ g₂} → g₁ ~ₗ g₂ → g₁ ≾ g₂ × g₂ ≾ g₁
 ~ₗ→≾ ⋆~ = ⟨ ≾-⋆l , ≾-⋆r ⟩
 ~ₗ→≾ ~⋆ = ⟨ ≾-⋆r , ≾-⋆l ⟩
-~ₗ→≾ (l~ {low}) = ⟨ ≾-l l⊑l , ≾-l l⊑l ⟩
-~ₗ→≾ (l~ {high}) = ⟨ ≾-l h⊑h , ≾-l h⊑h ⟩
+~ₗ→≾ (l~ {low}) = ⟨ ≾-l l≼l , ≾-l l≼l ⟩
+~ₗ→≾ (l~ {high}) = ⟨ ≾-l h≼h , ≾-l h≼h ⟩
 
 
 {- **** Label join **** -}
@@ -196,30 +196,30 @@ _    ⋏ _    = low
 join-≼ : ∀ {ℓ₁ ℓ₂ ℓ}
   → ℓ₁ ⋎ ℓ₂ ≼ ℓ
   → ℓ₁ ≼ ℓ × ℓ₂ ≼ ℓ
-join-≼ {high} {high} {high} _ = ⟨ h⊑h , h⊑h ⟩
-join-≼ {high} {low} {high} _ = ⟨ h⊑h , l⊑h ⟩
-join-≼ {low} {high} {high} _ = ⟨ l⊑h , h⊑h ⟩
-join-≼ {low} {low} {high} _ = ⟨ l⊑h , l⊑h ⟩
-join-≼ {low} {low} {low} _ = ⟨ l⊑l , l⊑l ⟩
+join-≼ {high} {high} {high} _ = ⟨ h≼h , h≼h ⟩
+join-≼ {high} {low} {high} _ = ⟨ h≼h , l≼h ⟩
+join-≼ {low} {high} {high} _ = ⟨ l≼h , h≼h ⟩
+join-≼ {low} {low} {high} _ = ⟨ l≼h , l≼h ⟩
+join-≼ {low} {low} {low} _ = ⟨ l≼l , l≼l ⟩
 
 meet-≼ : ∀ {ℓ₁ ℓ₂ ℓ}
   → ℓ ≼ ℓ₁ ⋏ ℓ₂
   → ℓ ≼ ℓ₁ × ℓ ≼ ℓ₂
-meet-≼ {high} {high} {high} _ = ⟨ h⊑h , h⊑h ⟩
-meet-≼ {high} {high} {low} _ = ⟨ l⊑h , l⊑h ⟩
-meet-≼ {high} {low} {low} _ = ⟨ l⊑h , l⊑l ⟩
-meet-≼ {low} {high} {low} _ = ⟨ l⊑l , l⊑h ⟩
-meet-≼ {low} {low} {low} _ = ⟨ l⊑l , l⊑l ⟩
+meet-≼ {high} {high} {high} _ = ⟨ h≼h , h≼h ⟩
+meet-≼ {high} {high} {low} _ = ⟨ l≼h , l≼h ⟩
+meet-≼ {high} {low} {low} _ = ⟨ l≼h , l≼l ⟩
+meet-≼ {low} {high} {low} _ = ⟨ l≼l , l≼h ⟩
+meet-≼ {low} {low} {low} _ = ⟨ l≼l , l≼l ⟩
 
 join-≼′ : ∀ {ℓ₁ ℓ₁′ ℓ₂ ℓ₂′}
   → ℓ₁ ≼ ℓ₁′ → ℓ₂ ≼ ℓ₂′ → (ℓ₁ ⋎ ℓ₂) ≼ (ℓ₁′ ⋎ ℓ₂′)
-join-≼′ l⊑l l⊑l = l⊑l
-join-≼′ l⊑l l⊑h = l⊑h
-join-≼′ l⊑l h⊑h = h⊑h
-join-≼′ l⊑h l⊑l = l⊑h
-join-≼′ l⊑h l⊑h = l⊑h
-join-≼′ l⊑h h⊑h = h⊑h
-join-≼′ h⊑h _ = h⊑h
+join-≼′ l≼l l≼l = l≼l
+join-≼′ l≼l l≼h = l≼h
+join-≼′ l≼l h≼h = h≼h
+join-≼′ l≼h l≼l = l≼h
+join-≼′ l≼h l≼h = l≼h
+join-≼′ l≼h h≼h = h≼h
+join-≼′ h≼h _ = h≼h
 
 
 {- **** Label consistent join **** -}
