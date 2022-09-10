@@ -61,6 +61,8 @@ high ≼high = h≼h
 ≼-antisym l≼l l≼l = refl
 ≼-antisym h≼h h≼h = refl
 
+infix 4 _≼?_
+
 _≼?_ : ∀ ℓ₁ ℓ₂ → Dec (ℓ₁ ≼ ℓ₂)
 low  ≼? low  = yes l≼l
 low  ≼? high = yes l≼h

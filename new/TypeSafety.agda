@@ -251,7 +251,7 @@ preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc 
       ⟨ Σ , ⊇-refl Σ ,
         ⊢sub (⊢cast (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
 ... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p c~) I-label I-label
-  with (pc ⋎ ℓ₁) ≼? pc₁
+  with pc ⋎ ℓ₁ ≼? pc₁
 ...   | yes pc⋎ℓ₁≼pc₁ =
   case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
   ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:⋆ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun ~⋆ _ _) ⟩ →

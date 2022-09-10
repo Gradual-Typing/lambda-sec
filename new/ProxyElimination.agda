@@ -24,7 +24,7 @@ elim-fun-proxy V W (I-fun c I-label I-label) pc =
   (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p _) →
     (V · (W ⟨ dom/c c ⟩)) ⟨ cod/c c ⟩
   (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p _) →
-    case (pc ⋎ ℓ₁) ≼? pc₁ of λ where
+    case pc ⋎ ℓ₁ ≼? pc₁ of λ where
     (yes _) → cast-pc (l pc) (V · (W ⟨ dom/c c ⟩)) ⟨ cod/c c ⟩
     (no  _) → error (blame p)
 
@@ -37,9 +37,9 @@ elim-ref-proxy : ∀ {A B g₁ g₂} {c : Cast Ref A of g₁ ⇒ Ref B of g₂}
   → (V M : Term) → Inert c → (_⦂=_ : Term → Term → Term) → Term
 elim-ref-proxy V M (I-ref c I-label I-label) _⦂=_ =
   case c of λ where
-  (cast (Ref (S of (l ℓ₁)) of (l ℓ)) (Ref (T of (l ℓ₂)) of g) p _) →
+  (cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of l ℓ₂) of g) p _) →
     V ⦂= (M ⟨ in/c c ⟩)
-  (cast (Ref (S of (l ℓ₁)) of (l ℓ)) (Ref (T of ⋆) of g) p _) →
+  (cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of ⋆) of g) p _) →
     case ℓ ≼? ℓ₁ of λ where
     (yes _) → V ⦂= (M ⟨ in/c c ⟩)
     (no  _) → error (blame p)
