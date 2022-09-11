@@ -237,30 +237,8 @@ preserve {Σ} {gc} {pc} (⊢if {A = A} {L} {M} {N} ⊢L ⊢M ⊢N) ⊢μ pc≾gc
     let ⊢N† : [] ; Σ ; ⋆ ; pc ⋎ ℓ ⊢ N ⦂ A
         ⊢N† = subst (λ □ → [] ; Σ ; □ ; pc ⋎ ℓ ⊢ N ⦂ A) g⋎̃⋆≡⋆ (⊢N {pc ⋎ ℓ}) in
     ⟨ Σ , ⊇-refl Σ , ⊢cast (⊢prot (⊢cast-pc ⊢N† ~⋆)) , ⊢μ ⟩
-preserve {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) ⊢μ pc≾gc (fun-cast {V} {W} {pc = pc} v w i) with i
-... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p c~) I-label I-label =
-  case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
-  ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:pc₂ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun l~ _ _) ⟩ →
-    -- doing some label arithmetic ...
-    case ⟨ g₁~g₂ , g₂<:g , consis-join-<:ₗ-inv gc⋎g<:pc₂ ⟩ of λ where
-    ⟨ l~ , <:-l g₂≼g , <:-l gc≼pc₂ , <:-l g≼pc₂ ⟩ →
-      let ⊢V = fun-wt {gc = gc} f
-          g₂≼pc₂ = ≼-trans g₂≼g g≼pc₂
-          gc⋎g₂≼pc₂ = subst (λ □ → _ ⋎ _ ≼ □) ℓ⋎ℓ≡ℓ (join-≼′ gc≼pc₂ g₂≼pc₂)
-          ⊢V† = ⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l gc⋎g₂≼pc₂) <:-refl <:-refl)) in
-      ⟨ Σ , ⊇-refl Σ ,
-        ⊢sub (⊢cast (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
-... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p c~) I-label I-label
-  with pc ⋎ ℓ₁ ≼? pc₁
-...   | yes pc⋎ℓ₁≼pc₁ =
-  case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
-  ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:⋆ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun ~⋆ _ _) ⟩ →
-    let ⊢V  = fun-wt {gc = gc} {pc = pc} f
-        ⊢V† = ⊢value-pc {gc′ = l pc} (⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l pc⋎ℓ₁≼pc₁) <:-refl <:-refl))) v in
-    ⟨ Σ , ⊇-refl Σ ,
-      ⊢sub (⊢cast (⊢cast-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C))) l~))
-           (stamp-<: D<:B₁ g₂<:g) , ⊢μ ⟩
-...   | no  _ = ⟨ Σ , ⊇-refl Σ , ⊢err , ⊢μ ⟩
+preserve {Σ} {gc} {pc} ⊢M ⊢μ pc≾gc (fun-cast {V} {W} {pc = pc} v w i) =
+  ⟨ Σ , ⊇-refl Σ , elim-fun-proxy-wt ⊢M v w i , ⊢μ ⟩
 preserve {Σ} (⊢deref {A = A′} ⊢M) ⊢μ pc≾gc (deref-cast v i) =
   case canonical-ref ⊢M (V-cast v i) of λ where
   (Ref-proxy r _ (<:-ty g₂<:g (<:-ref B<:A′ A′<:B))) →

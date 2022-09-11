@@ -4,7 +4,7 @@ open import Data.List hiding ([_])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Negation using (contradiction)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; subst; sym; trans; refl)
 open import Function using (case_of_)
 
 open import Utils
@@ -40,6 +40,39 @@ stamp-val-wt ⊢const V-const = ⊢const
 stamp-val-wt (⊢cast ⊢V) (V-cast v i) = ⊢cast (stamp-val-wt ⊢V v)
 stamp-val-wt (⊢sub ⊢V A<:B) v = ⊢sub (stamp-val-wt ⊢V v) (stamp-<: A<:B <:ₗ-refl)
 stamp-val-wt (⊢sub-pc ⊢V gc<:gc′) v = ⊢sub-pc (stamp-val-wt ⊢V v) gc<:gc′
+
+elim-fun-proxy-wt : ∀ {Σ gc pc V W A A′ B C D gc₁ gc₂ g₁ g₂}
+                      {c : Cast [ gc₁ ] A ⇒ B of g₁ ⇒ [ gc₂ ] C ⇒ D of g₂}
+  → [] ; Σ ; gc ; pc ⊢ (V ⟨ c ⟩) · W ⦂ A′
+  → Value V → Value W
+  → (i : Inert c)
+    ---------------------------------------------------
+  → [] ; Σ ; gc ; pc ⊢ elim-fun-proxy V W i pc ⦂ A′
+elim-fun-proxy-wt {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) v w i
+ with i
+... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ l pc₂ ] C ⇒ D of g₂) p c~) I-label I-label =
+  case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
+  ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:pc₂ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun l~ _ _) ⟩ →
+    -- doing label arithmetic
+    case ⟨ g₁~g₂ , g₂<:g , consis-join-<:ₗ-inv gc⋎g<:pc₂ ⟩ of λ where
+    ⟨ l~ , <:-l g₂≼g , <:-l gc≼pc₂ , <:-l g≼pc₂ ⟩ →
+      let ⊢V = fun-wt {gc = gc} f
+          g₂≼pc₂ = ≼-trans g₂≼g g≼pc₂
+          gc⋎g₂≼pc₂ = subst (λ □ → _ ⋎ _ ≼ □) ℓ⋎ℓ≡ℓ (join-≼′ gc≼pc₂ g₂≼pc₂)
+          ⊢V† = ⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l gc⋎g₂≼pc₂) <:-refl <:-refl)) in
+      ⊢sub (⊢cast (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C)))) (stamp-<: D<:B₁ g₂<:g)
+... | I-fun (cast ([ l pc₁ ] A ⇒ B of l ℓ₁) ([ ⋆ ] C ⇒ D of g₂) p c~) I-label I-label
+  with pc ⋎ ℓ₁ ≼? pc₁
+...   | yes pc⋎ℓ₁≼pc₁ =
+  case ⟨ canonical-fun ⊢Vc (V-cast v i) , c~ ⟩ of λ where
+  ⟨ Fun-proxy f _ (<:-ty g₂<:g (<:-fun gc⋎g<:⋆ A₁<:C D<:B₁)) , ~-ty g₁~g₂ (~-fun ~⋆ _ _) ⟩ →
+    let ⊢V  = fun-wt {gc = gc} {pc = pc} f
+        ⊢V† = ⊢value-pc {gc′ = l pc} (⊢sub ⊢V (<:-ty <:ₗ-refl (<:-fun (<:-l pc⋎ℓ₁≼pc₁) <:-refl <:-refl))) v in
+      ⊢sub (⊢cast (⊢cast-pc (⊢app ⊢V† (⊢cast (⊢sub (⊢value-pc ⊢W w) A₁<:C))) l~))
+           (stamp-<: D<:B₁ g₂<:g)
+...   | no  _ = ⊢err
+elim-fun-proxy-wt (⊢sub ⊢M A<:B) v w i = ⊢sub (elim-fun-proxy-wt ⊢M v w i) A<:B
+elim-fun-proxy-wt (⊢sub-pc ⊢M gc<:gc′) v w i = ⊢sub-pc (elim-fun-proxy-wt ⊢M v w i) gc<:gc′
 
 
 {- Plug inversion -}
