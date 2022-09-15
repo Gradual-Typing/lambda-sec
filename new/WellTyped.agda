@@ -29,6 +29,7 @@ ref-wt : ∀ {Σ V gc pc A g}
 ref-wt (Ref-addr eq sub)     = ⊢sub (⊢addr eq) sub
 ref-wt (Ref-proxy r i sub) = ⊢sub (⊢cast (ref-wt r)) sub
 
+
 {- Value stamping is well-typed -}
 stamp-val-wt : ∀ {Σ gc pc V A ℓ}
   → [] ; Σ ; gc ; pc ⊢ V ⦂ A
@@ -41,6 +42,8 @@ stamp-val-wt (⊢cast ⊢V) (V-cast v i) = ⊢cast (stamp-val-wt ⊢V v)
 stamp-val-wt (⊢sub ⊢V A<:B) v = ⊢sub (stamp-val-wt ⊢V v) (stamp-<: A<:B <:ₗ-refl)
 stamp-val-wt (⊢sub-pc ⊢V gc<:gc′) v = ⊢sub-pc (stamp-val-wt ⊢V v) gc<:gc′
 
+
+{- Proxy elimination preserves type -}
 elim-fun-proxy-wt : ∀ {Σ gc pc V W A A′ B C D gc₁ gc₂ g₁ g₂}
                       {c : Cast [ gc₁ ] A ⇒ B of g₁ ⇒ [ gc₂ ] C ⇒ D of g₂}
   → [] ; Σ ; gc ; pc ⊢ (V ⟨ c ⟩) · W ⦂ A′
@@ -73,6 +76,47 @@ elim-fun-proxy-wt {Σ} {gc} {pc} (⊢app ⊢Vc ⊢W) v w i
 ...   | no  _ = ⊢err
 elim-fun-proxy-wt (⊢sub ⊢M A<:B) v w i = ⊢sub (elim-fun-proxy-wt ⊢M v w i) A<:B
 elim-fun-proxy-wt (⊢sub-pc ⊢M gc<:gc′) v w i = ⊢sub-pc (elim-fun-proxy-wt ⊢M v w i) gc<:gc′
+
+elim-ref-proxy-wt : ∀ {Σ gc pc V W A A′ B g₁ g₂}
+                      {c : Cast Ref A of g₁ ⇒ Ref B of g₂}
+                      {_≔_ : Term → Term → Term}
+  → [] ; Σ ; gc ; pc ⊢ (V ⟨ c ⟩) ≔ W ⦂ A′
+  → Value V → (i : Inert c)
+  → RefAssign _≔_
+    ----------------------------------------------------
+  → [] ; Σ ; gc ; pc ⊢ elim-ref-proxy V W i _≔_ ⦂ A′
+elim-ref-proxy-wt (⊢assign ⊢L ⊢M pc′≼ℓ) v i static with i
+... | I-ref (cast _ _ _ c~) I-label I-label =
+  case canonical-ref ⊢L (V-cast v i) of λ where
+  (Ref-proxy r _ (<:-ty ℓ<:ℓ′ (<:-ref A<:B B<:A))) →
+    case ⟨ c~ , <:-antisym A<:B B<:A ⟩ of λ where
+    ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , refl ⟩ →
+      ⊢assign (⊢sub (ref-wt r) (<:-ty ℓ<:ℓ′ <:ᵣ-refl)) (⊢cast ⊢M) pc′≼ℓ
+elim-ref-proxy-wt (⊢assign? ⊢L ⊢M) v i unchecked with i
+... | I-ref (cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of l ℓ₂) of g) p c~) I-label I-label =
+  case canonical-ref ⊢L (V-cast v i) of λ where
+  (Ref-proxy r _ (<:-ty g<:g′ (<:-ref A<:B B<:A))) →
+    case ⟨ c~ , g<:g′ , <:-antisym A<:B B<:A ⟩ of λ where
+    ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , <:-l ℓ≼ℓ′ , refl ⟩ →
+      ⊢assign? (⊢sub (ref-wt r) (<:-ty (<:-l ℓ≼ℓ′) <:ᵣ-refl)) (⊢cast ⊢M)
+... | I-ref (cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of ⋆) of g) p c~) I-label I-label
+  with ℓ ≼? ℓ₁
+...   | yes ℓ≼ℓ₁ =
+  case canonical-ref ⊢L (V-cast v i) of λ where
+  (Ref-proxy r _ (<:-ty g<:g′ (<:-ref A<:B B<:A))) →
+    case ⟨ c~ , g<:g′ , <:-antisym A<:B B<:A ⟩ of λ where
+    ⟨ ~-ty ~⋆ (~-ref (~-ty ~⋆ _)) , <:-⋆ , refl ⟩ →
+      ⊢assign? (⊢sub (ref-wt r) (<:-ty (<:-l ℓ≼ℓ₁) <:ᵣ-refl)) (⊢cast ⊢M)
+...   | no  _ = ⊢err
+elim-ref-proxy-wt (⊢assign✓ ⊢L ⊢M pc≼ℓ) v i checked with i
+... | I-ref (cast _ _ _ c~) I-label I-label =
+  case canonical-ref ⊢L (V-cast v i) of λ where
+  (Ref-proxy r _ (<:-ty ℓ<:ℓ′ (<:-ref A<:B B<:A))) →
+    case ⟨ c~ , <:-antisym A<:B B<:A ⟩ of λ where
+    ⟨ ~-ty l~ (~-ref (~-ty l~ _)) , refl ⟩ →
+      ⊢assign✓ (⊢sub (ref-wt r) (<:-ty ℓ<:ℓ′ <:ᵣ-refl)) (⊢cast ⊢M) pc≼ℓ
+elim-ref-proxy-wt (⊢sub ⊢M A<:B) v i ref-op = ⊢sub (elim-ref-proxy-wt ⊢M v i ref-op) A<:B
+elim-ref-proxy-wt (⊢sub-pc ⊢M gc<:gc′) v i ref-op = ⊢sub-pc (elim-ref-proxy-wt ⊢M v i ref-op) gc<:gc′
 
 
 {- Plug inversion -}
