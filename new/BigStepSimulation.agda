@@ -21,6 +21,7 @@ open import BigStepErased
 open import Erasure
 
 open import BigStepPreservation
+open import HeapSecure
 
 postulate
   erase-substitution : ∀ N M → erase (N [ M ]) ≡ erase N [ erase M ]
@@ -51,10 +52,25 @@ sim {pc = pc} (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-app {L = L} {M} {N} {V} {W} 
         sim (substitution-pres (relax-Σ ⊢N Σ₂⊇Σ₁)
                                (⊢value-pc (⊢sub ⊢V A₁<:A) (⇓-value M⇓V)))
             ⊢μ₂ (≾-l (≼-trans pc≼gc gc≼pc′)) N[V]⇓W
-sim {pc = pc} (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-app {L = L} {M} {ℓ = high} L⇓ƛN M⇓V N[V]⇓W)
-  rewrite erase-stamp-high (⇓-value N[V]⇓W) =
-  ⇓ₑ-app-● (sim ⊢L ⊢μ pc≾gc L⇓ƛN) {!!}
-  {- in this case we need to show if μ ∣ high ⊢ M ⇓ V ∣ μ′ then ϵ(μ) ≡ ϵ(μ′) -}
+sim {pc = pc} {μ′ = μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-app {L = L} {M} {N} {V} {W} {ℓ = high} L⇓ƛN M⇓V N[V]⇓W)
+  rewrite erase-stamp-high (⇓-value N[V]⇓W)
+  with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓ƛN
+... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢ƛN , ⊢μ₁ ⟩
+  with ⇓-preserve (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V
+... | ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢V , ⊢μ₂ ⟩
+  rewrite ℓ⋎high≡high {pc} =
+  ⇓ₑ-app-● (sim ⊢L ⊢μ pc≾gc L⇓ƛN) ϵM⇓ϵV
+  where
+  ϵμ₂≡ϵμ′ =
+    case canonical-fun ⊢ƛN V-ƛ of λ where
+    (Fun-ƛ ⊢N (<:-ty (<:-l h≼h) (<:-fun gc⋎g<:pc′ A₁<:A _))) →
+      case consis-join-<:ₗ-inv gc⋎g<:pc′ of λ where
+      ⟨ <:-l gc≼pc′ , <:-l h≼h ⟩ →
+        heap-relate (substitution-pres (relax-Σ ⊢N Σ₂⊇Σ₁)
+                    (⊢value-pc (⊢sub ⊢V A₁<:A) (⇓-value M⇓V))) ⊢μ₂ (≾-l h≼h) N[V]⇓W
+  ϵM⇓ϵV : _ ∣ pc ⊢ erase M ⇓ₑ erase V ∣ erase-μ μ′
+  ϵM⇓ϵV = subst (λ □ → _ ∣ pc ⊢ erase M ⇓ₑ erase V ∣ □)
+             ϵμ₂≡ϵμ′ (sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V)
 sim ⊢M ⊢μ pc≾gc (⇓-if-true M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-if-false M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-let M⇓V M⇓V₁) = {!!}
