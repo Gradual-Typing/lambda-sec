@@ -115,8 +115,27 @@ heap-relate (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-fun-cast i L⇓V⟨c⟩ M⇓W 
     let ϵμ₁≡ϵμ₂ = heap-relate (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓W in
     let ϵμ₂≡ϵμ′ = heap-relate (elim-fun-proxy-wt (⊢app (relax-Σ ⊢V⟨c⟩ Σ₂⊇Σ₁) ⊢W) v w i) ⊢μ₂ pc≾gc elim⇓V′ in
     trans ϵμ≡ϵμ₁ (trans ϵμ₁≡ϵμ₂ ϵμ₂≡ϵμ′)
-heap-relate ⊢M ⊢μ pc≾gc (⇓-deref-cast   i M⇓V⟨c⟩ V⟨oc⟩⇓W) = {!!}
-heap-relate ⊢M ⊢μ pc≾gc (⇓-assign?-cast i L⇓V⟨c⟩ elim⇓W) = {!!}
-heap-relate ⊢M ⊢μ pc≾gc (⇓-assign-cast  i L⇓V⟨c⟩ elim⇓W) = {!!}
+heap-relate (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref-cast   i M⇓V⟨c⟩ !V⟨oc⟩⇓W) =
+  let ⟨ Σ₁ , Σ₁⊇Σ  , ⊢V⟨c⟩ , ⊢μ₁ ⟩ = ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V⟨c⟩ in
+  case canonical-ref ⊢V⟨c⟩ (⇓-value M⇓V⟨c⟩) of λ where
+  (Ref-proxy ref _ _) →
+    let ⊢V = ref-wt ref in
+    let ϵμ≡ϵμ₁  = heap-relate ⊢M ⊢μ pc≾gc M⇓V⟨c⟩ in
+    let ϵμ₁≡ϵμ′ = heap-relate (⊢cast (⊢deref ⊢V)) ⊢μ₁ pc≾gc !V⟨oc⟩⇓W in
+    trans ϵμ≡ϵμ₁ ϵμ₁≡ϵμ′
+heap-relate (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (⇓-assign?-cast i L⇓V⟨c⟩ elim⇓W) =
+  case ⇓-value L⇓V⟨c⟩ of λ where
+  (V-cast v _) →
+    let ⟨ Σ₁ , Σ₁⊇Σ  , ⊢V⟨c⟩ , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓V⟨c⟩ in
+    let ϵμ≡ϵμ₁  = heap-relate ⊢L ⊢μ pc≾gc L⇓V⟨c⟩ in
+    let ϵμ₁≡ϵμ′ = heap-relate (elim-ref-proxy-wt (⊢assign? ⊢V⟨c⟩ (relax-Σ ⊢M Σ₁⊇Σ)) v i unchecked) ⊢μ₁ pc≾gc elim⇓W in
+    trans ϵμ≡ϵμ₁ ϵμ₁≡ϵμ′
+heap-relate (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-assign-cast  i L⇓V⟨c⟩ elim⇓W) =
+  case ⇓-value L⇓V⟨c⟩ of λ where
+  (V-cast v _) →
+    let ⟨ Σ₁ , Σ₁⊇Σ  , ⊢V⟨c⟩ , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓V⟨c⟩ in
+    let ϵμ≡ϵμ₁  = heap-relate ⊢L ⊢μ pc≾gc L⇓V⟨c⟩ in
+    let ϵμ₁≡ϵμ′ = heap-relate (elim-ref-proxy-wt (⊢assign ⊢V⟨c⟩ (relax-Σ ⊢M Σ₁⊇Σ) pc′≼ℓ) v i static) ⊢μ₁ pc≾gc elim⇓W in
+    trans ϵμ≡ϵμ₁ ϵμ₁≡ϵμ′
 heap-relate (⊢sub ⊢M A<:B) ⊢μ pc≾gc M⇓V = heap-relate ⊢M ⊢μ pc≾gc M⇓V
 heap-relate (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M⇓V = heap-relate ⊢M ⊢μ (≾-<: pc≾gc gc<:gc′) M⇓V
