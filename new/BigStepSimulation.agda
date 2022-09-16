@@ -92,7 +92,15 @@ sim (⊢ref ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-ref {μ} {μ₁} {ℓ = low} M�
   ⇓ₑ-ref (sim ⊢M ⊢μ pc≾gc M⇓V) fresh
 sim (⊢ref ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-ref {ℓ = high} M⇓V fresh) =
   ⇓ₑ-ref-● (sim ⊢M ⊢μ pc≾gc M⇓V)
-sim ⊢M ⊢μ pc≾gc (⇓-deref M⇓V x) = {!!}
+sim (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {ℓ = low} {low} M⇓a eq) =
+  ⇓ₑ-deref (sim ⊢M ⊢μ pc≾gc M⇓a) {!!}
+  {- Nts: if μ(a[ low ] n) ≡ V then ϵμ(n) ≡ ϵV -}
+sim (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {v = v} {ℓ = low} {high} M⇓a eq)
+  rewrite erase-stamp-high v = ⇓ₑ-deref-● (sim ⊢M ⊢μ pc≾gc M⇓a)
+sim (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {v = v} {ℓ = high} {low} M⇓a eq)
+  rewrite erase-stamp-high v = ⇓ₑ-deref-● (sim ⊢M ⊢μ pc≾gc M⇓a)
+sim (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {v = v} {ℓ = high} {high} M⇓a eq)
+  rewrite erase-stamp-high v = ⇓ₑ-deref-● (sim ⊢M ⊢μ pc≾gc M⇓a)
 sim ⊢M ⊢μ pc≾gc (⇓-assign? M⇓V M⇓V₁ x) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-cast a M⇓V ⊢V M⇓V₁) = {!!}
