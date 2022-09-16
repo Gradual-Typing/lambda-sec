@@ -85,9 +85,13 @@ sim {pc = pc} (⊢let ⊢M ⊢N) ⊢μ pc≾gc (⇓-let {M = M} {N} {V} {W} M⇓
 sim (⊢ref? ⊢M) ⊢μ pc≾gc (⇓-ref? {μ} {μ₁} {ℓ = low} M⇓V fresh pc≼ℓ)
   rewrite erase-μᴸ-length (proj₁ μ₁) =
   ⇓ₑ-ref? (sim ⊢M ⊢μ pc≾gc M⇓V) fresh pc≼ℓ
-sim {μ = ⟨ μᴸ , μᴴ ⟩} (⊢ref? ⊢M) ⊢μ pc≾gc (⇓-ref? {ℓ = high} M⇓V fresh pc≼ℓ) =
+sim (⊢ref? ⊢M) ⊢μ pc≾gc (⇓-ref? {ℓ = high} M⇓V fresh pc≼ℓ) =
   ⇓ₑ-ref?-● (sim ⊢M ⊢μ pc≾gc M⇓V)
-sim ⊢M ⊢μ pc≾gc (⇓-ref M⇓V x) = {!!}
+sim (⊢ref ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-ref {μ} {μ₁} {ℓ = low} M⇓V fresh)
+  rewrite erase-μᴸ-length (proj₁ μ₁) =
+  ⇓ₑ-ref (sim ⊢M ⊢μ pc≾gc M⇓V) fresh
+sim (⊢ref ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-ref {ℓ = high} M⇓V fresh) =
+  ⇓ₑ-ref-● (sim ⊢M ⊢μ pc≾gc M⇓V)
 sim ⊢M ⊢μ pc≾gc (⇓-deref M⇓V x) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign? M⇓V M⇓V₁ x) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign M⇓V M⇓V₁) = {!!}
