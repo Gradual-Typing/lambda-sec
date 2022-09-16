@@ -21,6 +21,7 @@ open import Erasure
 
 open import BigStepPreservation
 
+{- Related heaps under high PC -}
 heap-relate : ∀ {Σ gc A M V μ μ′}
   → [] ; Σ ; gc ; high ⊢ M ⦂ A
   → Σ ⊢ μ

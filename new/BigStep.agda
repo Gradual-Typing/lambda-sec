@@ -68,7 +68,7 @@ data _∣_⊢_⇓_∣_ where
 
   ⇓-deref : ∀ {μ μ₁ pc M V v n ℓ ℓ₁}
     → μ ∣ pc ⊢ M ⇓ addr (a[ ℓ₁ ] n) of ℓ ∣ μ₁
-    → lookup-μ μ₁ (a[ ℓ₁ ] n) ≡ just ⟨ V , v ⟩
+    → lookup-μ μ₁ (a[ ℓ₁ ] n) ≡ just (V & v)
       ---------------------------------------------------------------------------- Deref
     → μ ∣ pc ⊢ ! M ⇓ stamp-val V v (ℓ₁ ⋎ ℓ) ∣ μ₁
 

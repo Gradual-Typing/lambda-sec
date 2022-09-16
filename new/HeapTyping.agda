@@ -25,7 +25,7 @@ _⊢_ : HeapContext → Heap → Set
 Σ ⊢ μ = ∀ n ℓ {T}
   → lookup-Σ Σ (a[ ℓ ] n) ≡ just T
   → (WFAddr a[ ℓ ] n In μ) ×
-     (∃[ V ] ∃[ v ] lookup-μ μ (a[ ℓ ] n) ≡ just ⟨ V , v ⟩ × [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ)
+     (∃[ V ] ∃[ v ] lookup-μ μ (a[ ℓ ] n) ≡ just (V & v) × [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ)
 
 
 relax-Σ : ∀ {Γ Σ Σ′ gc pc M A}
@@ -84,7 +84,7 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
   → [] ; Σ ; l low ; low ⊢ V ⦂ T of l ℓ
   → (v : Value V)
   → Σ ⊢ μ
-  → (a[ ℓ ] n) FreshIn μ
+  → a[ ℓ ] n FreshIn μ
     -----------------------------------------------
   → cons-Σ (a[ ℓ ] n) T Σ ⊢ cons-μ (a[ ℓ ] n) V v μ
 ⊢μ-new {⟨ Σᴸ , Σᴴ ⟩} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ refl n low {T} eq with n ≟ n₁
@@ -93,7 +93,7 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
   refl → ⟨ wfᴸ ≤-refl , V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-fresh (a[ low ] n₁) T ⊢μ refl) ⟩
 ... | no  _    =
   let ⟨ wf , V , v , eq′ , ⊢V ⟩ = ⊢μ n low eq in
-  ⟨ wf-relaxᴸ wf , V , v , eq′ , relax-Σ ⊢V (⊇-fresh (a[ low ] n₁) T₁ ⊢μ refl) ⟩
+  ⟨ wf-relaxᴸ V₁ v₁ wf , V , v , eq′ , relax-Σ ⊢V (⊇-fresh (a[ low ] n₁) T₁ ⊢μ refl) ⟩
 ⊢μ-new {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ refl n high {T} eq =
   case ⊢μ n high eq of λ where
   ⟨ wfᴴ n<len , V , v , eq′ , ⊢V ⟩ →
@@ -104,7 +104,7 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
   refl → ⟨ wfᴴ ≤-refl , V₁ , v₁ , refl , relax-Σ ⊢V₁ (⊇-fresh (a[ high ] n₁) T ⊢μ refl) ⟩
 ... | no  _    =
   let ⟨ wf , V , v , eq′ , ⊢V ⟩ = ⊢μ n high eq in
-  ⟨ wf-relaxᴴ wf , V , v , eq′ , relax-Σ ⊢V (⊇-fresh (a[ high ] n₁) T₁ ⊢μ refl) ⟩
+  ⟨ wf-relaxᴴ V₁ v₁ wf , V , v , eq′ , relax-Σ ⊢V (⊇-fresh (a[ high ] n₁) T₁ ⊢μ refl) ⟩
 ⊢μ-new {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ refl n low {T} eq =
   case ⊢μ n low eq of λ where
   ⟨ wfᴸ n<len , V , v , eq′ , ⊢V ⟩ →
@@ -122,10 +122,10 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
   case trans (sym eq) eq₁ of λ where
     refl →
       let ⟨ wf , _ ⟩ = ⊢μ n₁ low eq₁ in
-      ⟨ wf-relaxᴸ wf , V₁ , v₁ , refl , ⊢V₁ ⟩
+      ⟨ wf-relaxᴸ V₁ v₁ wf , V₁ , v₁ , refl , ⊢V₁ ⟩
 ... | no  _ =
   case ⊢μ n low eq of λ where
-  ⟨ wf , rest ⟩ → ⟨ wf-relaxᴸ wf , rest ⟩
+  ⟨ wf , rest ⟩ → ⟨ wf-relaxᴸ V₁ v₁ wf , rest ⟩
 ⊢μ-update {Σ} {V₁} {n₁} {T₁} {low} {μ} ⊢V₁ v₁ ⊢μ eq₁ n high eq =
   case ⊢μ n high eq of λ where
   ⟨ wfᴴ n<len , rest ⟩ → ⟨ wfᴴ n<len , rest ⟩
@@ -134,10 +134,10 @@ relax-Σ (⊢sub-pc ⊢M gc<:gc′) Σ′⊇Σ = ⊢sub-pc (relax-Σ ⊢M Σ′�
   case trans (sym eq) eq₁ of λ where
     refl →
       let ⟨ wf , _ ⟩ = ⊢μ n₁ high eq₁ in
-      ⟨ wf-relaxᴴ wf , V₁ , v₁ , refl , ⊢V₁ ⟩
+      ⟨ wf-relaxᴴ V₁ v₁ wf , V₁ , v₁ , refl , ⊢V₁ ⟩
 ... | no  _ =
   case ⊢μ n high eq of λ where
-  ⟨ wf , rest ⟩ → ⟨ wf-relaxᴴ wf , rest ⟩
+  ⟨ wf , rest ⟩ → ⟨ wf-relaxᴴ V₁ v₁ wf , rest ⟩
 ⊢μ-update {Σ} {V₁} {n₁} {T₁} {high} {μ} ⊢V₁ v₁ ⊢μ eq₁ n low eq =
   case ⊢μ n low eq of λ where
   ⟨ wfᴸ n<len , rest ⟩ → ⟨ wfᴸ n<len , rest ⟩

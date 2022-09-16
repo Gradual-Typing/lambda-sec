@@ -69,17 +69,27 @@ data _∣_⊢_⇓ₑ_∣_ where
     → n ≡ length μ₁
     → pc ≼ low
       -------------------------------------------------------------------------------------- RefNSU
-    → μ ∣ pc ⊢ ref?[ low ] M ⇓ₑ addr (a[ low ] n) of low ∣ ⟨ n , V , ⇓ₑ-value ⇓V ⟩ ∷ μ₁
+    → μ ∣ pc ⊢ ref?[ low ] M ⇓ₑ addr (a[ low ] n) of low ∣ ⟨ n , V & ⇓ₑ-value ⇓V ⟩ ∷ μ₁
+
+  ⇓ₑ-ref?-● : ∀ {μ μ₁ pc M V}
+    → (⇓V : μ ∣ pc ⊢ M ⇓ₑ V ∣ μ₁)
+      -------------------------------------------------------------------------------------- RefNSU●
+    → μ ∣ pc ⊢ ref?[ high ] M ⇓ₑ ● ∣ μ₁ {- skip creation -}
 
   ⇓ₑ-ref : ∀ {μ μ₁ pc M V n}
     → (⇓V : μ ∣ pc ⊢ M ⇓ₑ V ∣ μ₁)
     → n ≡ length μ₁
       -------------------------------------------------------------------------------------- Ref
-    → μ ∣ pc ⊢ ref[ low ] M ⇓ₑ addr (a[ low ] n) of low ∣ ⟨ n , V , ⇓ₑ-value ⇓V ⟩ ∷ μ₁
+    → μ ∣ pc ⊢ ref[ low ] M ⇓ₑ addr (a[ low ] n) of low ∣ ⟨ n , V & ⇓ₑ-value ⇓V ⟩ ∷ μ₁
+
+  ⇓ₑ-ref-● : ∀ {μ μ₁ pc M V}
+    → (⇓V : μ ∣ pc ⊢ M ⇓ₑ V ∣ μ₁)
+      -------------------------------------------------------------------------------------- Ref●
+    → μ ∣ pc ⊢ ref[ high ] M ⇓ₑ ● ∣ μ₁ {- skip creation -}
 
   ⇓ₑ-deref : ∀ {μ μ₁ pc M V v n}
     → μ ∣ pc ⊢ M ⇓ₑ addr (a[ low ] n) of low ∣ μ₁
-    → find _≟_ μ₁ n ≡ just ⟨ V , v ⟩
+    → find _≟_ μ₁ n ≡ just (V & v)
       ---------------------------------- Deref
     → μ ∣ pc ⊢ ! M ⇓ₑ V ∣ μ₁
 
@@ -93,7 +103,7 @@ data _∣_⊢_⇓ₑ_∣_ where
     → (⇓V : μ₁ ∣ pc ⊢ M ⇓ₑ V ∣ μ₂)
     → pc ≼ low
       -------------------------------------------------------------------------- AssignNSU
-    → μ ∣ pc ⊢ L :=? M ⇓ₑ $ tt of low ∣ ⟨ n , V , ⇓ₑ-value ⇓V ⟩ ∷ μ₂
+    → μ ∣ pc ⊢ L :=? M ⇓ₑ $ tt of low ∣ ⟨ n , V & ⇓ₑ-value ⇓V ⟩ ∷ μ₂
 
   ⇓ₑ-assign?-● : ∀ {μ μ₁ μ₂ pc L M V}
     → μ  ∣ pc ⊢ L       ⇓ₑ ● ∣ μ₁
@@ -105,7 +115,7 @@ data _∣_⊢_⇓ₑ_∣_ where
     → μ  ∣ pc ⊢ L      ⇓ₑ addr (a[ low ] n) of low ∣ μ₁
     → (⇓V : μ₁ ∣ pc ⊢ M ⇓ₑ V ∣ μ₂)
       -------------------------------------------------------------------------- Assign
-    → μ  ∣ pc ⊢ L := M ⇓ₑ $ tt of low ∣ ⟨ n , V , ⇓ₑ-value ⇓V ⟩ ∷ μ₂
+    → μ  ∣ pc ⊢ L := M ⇓ₑ $ tt of low ∣ ⟨ n , V & ⇓ₑ-value ⇓V ⟩ ∷ μ₂
 
   ⇓ₑ-assign-● : ∀ {μ μ₁ μ₂ pc L M V}
     → μ  ∣ pc ⊢ L      ⇓ₑ ● ∣ μ₁
@@ -122,7 +132,9 @@ data _∣_⊢_⇓ₑ_∣_ where
 ⇓ₑ-value (⇓ₑ-if-● ⇓V) = V-●
 ⇓ₑ-value (⇓ₑ-let _ ⇓V) = ⇓ₑ-value ⇓V
 ⇓ₑ-value (⇓ₑ-ref? _ _ _) = V-addr
+⇓ₑ-value (⇓ₑ-ref?-● _) = V-●
 ⇓ₑ-value (⇓ₑ-ref    _ _) = V-addr
+⇓ₑ-value (⇓ₑ-ref-● _) = V-●
 ⇓ₑ-value (⇓ₑ-deref {v = v} _ _) = v
 ⇓ₑ-value (⇓ₑ-deref-●        _) = V-●
 ⇓ₑ-value (⇓ₑ-assign?     _ _ _) = V-const

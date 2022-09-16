@@ -1,7 +1,7 @@
 module Erasure where
 
 open import Data.Nat
-open import Data.List using (List; _∷_; [])
+open import Data.List hiding ([_])
 open import Data.Product renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
@@ -207,7 +207,11 @@ erase-is-erased ● = e-●
 {- **** Heap erasure **** -}
 erase-μᴸ : HalfHeap → HalfHeap
 erase-μᴸ [] = []
-erase-μᴸ (⟨ n , V , v ⟩ ∷ μᴸ) = ⟨ n , erase V , erase-val-value v ⟩ ∷ erase-μᴸ μᴸ
+erase-μᴸ (⟨ n , V & v ⟩ ∷ μᴸ) = ⟨ n , erase V & erase-val-value v ⟩ ∷ erase-μᴸ μᴸ
 
 erase-μ : Heap → HalfHeap
 erase-μ ⟨ μᴸ , μᴴ ⟩ = erase-μᴸ μᴸ
+
+erase-μᴸ-length : ∀ μᴸ → length μᴸ ≡ length (erase-μᴸ μᴸ)
+erase-μᴸ-length [] = refl
+erase-μᴸ-length (⟨ n , V & v ⟩ ∷ μᴸ) = cong suc (erase-μᴸ-length μᴸ)

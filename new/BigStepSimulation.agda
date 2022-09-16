@@ -82,7 +82,11 @@ sim {pc = pc} (⊢let ⊢M ⊢N) ⊢μ pc≾gc (⇓-let {M = M} {N} {V} {W} M⇓
   ϵN[ϵV]⇓ϵW rewrite sym (erase-substitution N V) =
     let v = ⇓-value M⇓V in
     sim (substitution-pres (relax-Σ ⊢N Σ₁⊇Σ) (⊢value-pc ⊢V v)) ⊢μ₁ pc≾gc N[V]⇓W
-sim ⊢M ⊢μ pc≾gc (⇓-ref? M⇓V fresh pc≼ℓ) = {!!}
+sim (⊢ref? ⊢M) ⊢μ pc≾gc (⇓-ref? {μ} {μ₁} {ℓ = low} M⇓V fresh pc≼ℓ)
+  rewrite erase-μᴸ-length (proj₁ μ₁) =
+  ⇓ₑ-ref? (sim ⊢M ⊢μ pc≾gc M⇓V) fresh pc≼ℓ
+sim {μ = ⟨ μᴸ , μᴴ ⟩} (⊢ref? ⊢M) ⊢μ pc≾gc (⇓-ref? {ℓ = high} M⇓V fresh pc≼ℓ) =
+  ⇓ₑ-ref?-● (sim ⊢M ⊢μ pc≾gc M⇓V)
 sim ⊢M ⊢μ pc≾gc (⇓-ref M⇓V x) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-deref M⇓V x) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign? M⇓V M⇓V₁ x) = {!!}

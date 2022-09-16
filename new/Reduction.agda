@@ -84,7 +84,7 @@ data _∣_∣_—→_∣_ : Term → Heap → StaticLabel → Term → Heap → 
     → ref✓[ ℓ ] V ∣ μ ∣ pc —→ addr (a[ ℓ ] n) of low ∣ cons-μ (a[ ℓ ] n) V v μ
 
   deref : ∀ {V μ pc v n ℓ ℓ₁}
-    → lookup-μ μ (a[ ℓ₁ ] n) ≡ just ⟨ V , v ⟩
+    → lookup-μ μ (a[ ℓ₁ ] n) ≡ just (V & v)
       --------------------------------------------------------------------- Deref
     → ! (addr (a[ ℓ₁ ] n) of ℓ) ∣ μ ∣ pc —→ prot (ℓ₁ ⋎ ℓ) V ∣ μ
 

@@ -90,7 +90,7 @@ progress pc (! M) (⊢deref ⊢M) μ ⊢μ =
     case canonical-ref ⊢M v of λ where
     (Ref-addr {n = n} {ℓ₁ = ℓ₁} eq _) →
       let ⟨ wf , V₁ , v₁ , eq , ⊢V₁ ⟩ = ⊢μ n ℓ₁ eq in
-      step (deref eq)
+      step (deref {v = v₁} eq)
     (Ref-proxy r i _) → step (deref-cast (ref-is-value r) i)
   (err (E-error {e})) → step (ξ-err {F = !□} {e = e})
 progress pc (L := M) (⊢assign ⊢L ⊢M pc′≼ℓ) μ ⊢μ =
