@@ -73,8 +73,16 @@ sim {pc = pc} {μ′ = μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-app {L = L} 
              ϵμ₂≡ϵμ′ (sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V)
 sim ⊢M ⊢μ pc≾gc (⇓-if-true M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-if-false M⇓V M⇓V₁) = {!!}
-sim ⊢M ⊢μ pc≾gc (⇓-let M⇓V M⇓V₁) = {!!}
-sim ⊢M ⊢μ pc≾gc (⇓-ref? M⇓V x x₁) = {!!}
+sim {pc = pc} (⊢let ⊢M ⊢N) ⊢μ pc≾gc (⇓-let {M = M} {N} {V} {W} M⇓V N[V]⇓W)
+  with ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V
+... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢V , ⊢μ₁ ⟩ =
+  ⇓ₑ-let (sim ⊢M ⊢μ pc≾gc M⇓V) ϵN[ϵV]⇓ϵW
+  where
+  ϵN[ϵV]⇓ϵW : _ ∣ pc ⊢ erase N [ erase V ] ⇓ₑ erase W ∣ _
+  ϵN[ϵV]⇓ϵW rewrite sym (erase-substitution N V) =
+    let v = ⇓-value M⇓V in
+    sim (substitution-pres (relax-Σ ⊢N Σ₁⊇Σ) (⊢value-pc ⊢V v)) ⊢μ₁ pc≾gc N[V]⇓W
+sim ⊢M ⊢μ pc≾gc (⇓-ref? M⇓V fresh pc≼ℓ) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-ref M⇓V x) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-deref M⇓V x) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign? M⇓V M⇓V₁ x) = {!!}
