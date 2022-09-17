@@ -215,3 +215,12 @@ erase-μ ⟨ μᴸ , μᴴ ⟩ = erase-μᴸ μᴸ
 erase-μᴸ-length : ∀ μᴸ → length μᴸ ≡ length (erase-μᴸ μᴸ)
 erase-μᴸ-length [] = refl
 erase-μᴸ-length (⟨ n , V & v ⟩ ∷ μᴸ) = cong suc (erase-μᴸ-length μᴸ)
+
+erase-μ-lookup-low : ∀ {μᴸ μᴴ n V v}
+  → lookup-μ ⟨ μᴸ , μᴴ ⟩ (a[ low ] n) ≡ just (V & v)
+    ------------------------------------------------------------------------
+  → find _≟_ (erase-μ ⟨ μᴸ , μᴴ ⟩) n ≡ just (erase V & erase-val-value v)
+erase-μ-lookup-low {⟨ n₁ , V₁ & v₁ ⟩ ∷ μᴸ} {μᴴ} {n} {V} {v}
+  with n ≟ n₁
+... | yes refl = λ { refl → refl }
+... | no _ = λ eq → erase-μ-lookup-low {μᴸ} {μᴴ} {v = v} eq

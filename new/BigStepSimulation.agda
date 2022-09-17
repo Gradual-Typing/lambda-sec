@@ -92,9 +92,10 @@ sim (⊢ref ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-ref {μ} {μ₁} {ℓ = low} M�
   ⇓ₑ-ref (sim ⊢M ⊢μ pc≾gc M⇓V) fresh
 sim (⊢ref ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-ref {ℓ = high} M⇓V fresh) =
   ⇓ₑ-ref-● (sim ⊢M ⊢μ pc≾gc M⇓V)
-sim (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {ℓ = low} {low} M⇓a eq) =
-  ⇓ₑ-deref (sim ⊢M ⊢μ pc≾gc M⇓a) {!!}
-  {- Nts: if μ(a[ low ] n) ≡ V then ϵμ(n) ≡ ϵV -}
+sim {μ′ = ⟨ μᴸ , μᴴ ⟩} (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {v = v} {ℓ = low} {low} M⇓a eq)
+  rewrite stamp-val-low v =
+  ⇓ₑ-deref {v = erase-val-value v} (sim ⊢M ⊢μ pc≾gc M⇓a)
+            (erase-μ-lookup-low {μᴸ} {μᴴ} {v = v} eq)
 sim (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {v = v} {ℓ = low} {high} M⇓a eq)
   rewrite erase-stamp-high v = ⇓ₑ-deref-● (sim ⊢M ⊢μ pc≾gc M⇓a)
 sim (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {v = v} {ℓ = high} {low} M⇓a eq)
