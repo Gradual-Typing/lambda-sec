@@ -146,6 +146,7 @@ data _∣_⊢_⇓_∣_ where
     → μ  ∣ pc ⊢ L := M                    ⇓ W ∣ μ₂
 
 
+{- If M ⇓ V then V is Value -}
 ⇓-value (⇓-val v) = v
 ⇓-value (⇓-app _ _ ⇓W) = stamp-val-value (⇓-value ⇓W)
 ⇓-value (⇓-if-true  _ ⇓V) = stamp-val-value (⇓-value ⇓V)
@@ -163,3 +164,7 @@ data _∣_⊢_⇓_∣_ where
 ⇓-value (⇓-deref-cast      _ _ ⇓V) = ⇓-value ⇓V
 ⇓-value (⇓-assign?-cast    _ _ ⇓V) = ⇓-value ⇓V
 ⇓-value (⇓-assign-cast     _ _ ⇓V) = ⇓-value ⇓V
+
+{- If M ⇓ V then M is not Error -}
+error-not-⇓ : ∀ {μ μ′ pc M V} → μ ∣ pc ⊢ M ⇓ V ∣ μ′ → ¬ Err M
+error-not-⇓ (⇓-val ()) E-error

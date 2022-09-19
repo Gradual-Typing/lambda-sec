@@ -22,6 +22,7 @@ open import Erasure
 
 open import BigStepPreservation
 open import HeapSecure
+open import ApplyCastErasure
 
 postulate
   erase-substitution : ∀ N M → erase (N [ M ]) ≡ erase N [ erase M ]
@@ -104,7 +105,18 @@ sim (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {v = v} {ℓ = high} {high} M⇓a e
   rewrite erase-stamp-high v = ⇓ₑ-deref-● (sim ⊢M ⊢μ pc≾gc M⇓a)
 sim ⊢M ⊢μ pc≾gc (⇓-assign? M⇓V M⇓V₁ x) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign M⇓V M⇓V₁) = {!!}
-sim ⊢M ⊢μ pc≾gc (⇓-cast a M⇓V ⊢V M⇓V₁) = {!!}
+sim {pc = pc} (⊢cast ⊢M) ⊢μ pc≾gc (⇓-cast {M = M} {N} {V} {W} {c = c} a M⇓V V⟨c⟩↝N N⇓W)
+  with ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V
+... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢V , ⊢μ₁ ⟩ =
+  ⇓ₑ-trans ϵM⇓ϵV ϵV⇓ϵW
+  where
+  ϵV≡ϵN : erase V ≡ erase N
+  ϵV≡ϵN = applycast-erase V⟨c⟩↝N (error-not-⇓ N⇓W)
+  v = ⇓-value M⇓V
+  ϵM⇓ϵV = sim ⊢M ⊢μ pc≾gc M⇓V
+  ϵN⇓ϵW = sim (applycast-pres (⊢value-pc ⊢V v) v a V⟨c⟩↝N) ⊢μ₁ pc≾gc N⇓W
+  ϵV⇓ϵW : _ ∣ pc ⊢ erase V ⇓ₑ erase W ∣ _
+  ϵV⇓ϵW rewrite ϵV≡ϵN = ϵN⇓ϵW
 sim ⊢M ⊢μ pc≾gc (⇓-if-cast-true i M⇓V M⇓V₁ M⇓V₂) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-if-cast-false i M⇓V M⇓V₁ M⇓V₂) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-fun-cast i M⇓V M⇓V₁ M⇓V₂) = {!!}
