@@ -100,7 +100,19 @@ sim (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {v = v} {ℓ = high} {low} M⇓a eq
   rewrite erase-stamp-high v = ⇓ₑ-deref-● (sim ⊢M ⊢μ pc≾gc M⇓a)
 sim (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {v = v} {ℓ = high} {high} M⇓a eq)
   rewrite erase-stamp-high v = ⇓ₑ-deref-● (sim ⊢M ⊢μ pc≾gc M⇓a)
-sim ⊢M ⊢μ pc≾gc (⇓-assign? M⇓V M⇓V₁ x) = {!!}
+sim (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (⇓-assign? {ℓ = low} {low} L⇓a M⇓V pc≼ℓ₁)
+  with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓a
+... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢a , ⊢μ₁ ⟩ =
+  ⇓ₑ-assign? ϵL⇓a ϵM⇓ϵV pc≼ℓ₁
+  where
+  ϵL⇓a = sim ⊢L ⊢μ pc≾gc L⇓a
+  ϵM⇓ϵV = sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V
+sim (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (⇓-assign? {ℓ = low} {high} L⇓a M⇓V pc≼ℓ₁) =
+  {!!}
+sim (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (⇓-assign? {ℓ = high} {low} L⇓a M⇓V pc≼ℓ₁) =
+  {!!}
+sim (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (⇓-assign? {ℓ = high} {high} L⇓a M⇓V pc≼ℓ₁) =
+  {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign M⇓V M⇓V₁) = {!!}
 sim {pc = pc} (⊢cast ⊢M) ⊢μ pc≾gc (⇓-cast {M = M} {N} {V} {W} {c = c} a M⇓V V⟨c⟩↝N N⇓W)
   with ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V
