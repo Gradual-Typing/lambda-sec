@@ -116,7 +116,21 @@ sim (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (⇓-assign? {ℓ = ℓ} {ℓ₁} L⇓a
    refl → contradiction ℓ≼ℓ′ λ ()  {- high ⋠ low -}
 ...   | high | high =
   ⇓ₑ-assign?-● (sim ⊢L ⊢μ pc≾gc L⇓a) (sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V)
-sim ⊢M ⊢μ pc≾gc (⇓-assign M⇓V M⇓V₁) = {!!}
+sim (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-assign {ℓ = ℓ} {ℓ₁} L⇓a M⇓V)
+  with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓a
+... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢a , ⊢μ₁ ⟩
+  with ℓ | ℓ₁
+...   | low | low =
+  ⇓ₑ-assign (sim ⊢L ⊢μ pc≾gc L⇓a) (sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V)
+...   | low | high =
+  ⇓ₑ-assign-● (sim ⊢L ⊢μ pc≾gc L⇓a) (sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V)
+...   | high | low =  {- impossible -}
+ case canonical-ref ⊢a V-addr of λ where
+ (Ref-addr eq₁ (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
+   case <:-antisym A′<:A A<:A′ of λ where
+   refl → contradiction ℓ≼ℓ′ λ ()  {- high ⋠ low -}
+...   | high | high =
+  ⇓ₑ-assign-● (sim ⊢L ⊢μ pc≾gc L⇓a) (sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V)
 sim {pc = pc} (⊢cast ⊢M) ⊢μ pc≾gc (⇓-cast {M = M} {N} {V} {W} {c = c} a M⇓V V⟨c⟩↝N N⇓W)
   with ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V
 ... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢V , ⊢μ₁ ⟩ =
