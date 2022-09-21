@@ -116,8 +116,12 @@ sim {pc = pc} (⊢cast ⊢M) ⊢μ pc≾gc (⇓-cast {M = M} {N} {V} {W} {c = c}
   ϵN⇓ϵW = sim (applycast-pres (⊢value-pc ⊢V v) v a V⟨c⟩↝N) ⊢μ₁ pc≾gc N⇓W
   ϵV⇓ϵW : _ ∣ pc ⊢ erase V ⇓ₑ erase W ∣ _
   ϵV⇓ϵW rewrite ϵV≡ϵN = ϵN⇓ϵW
-sim ⊢M ⊢μ pc≾gc (⇓-if-cast-true {ℓ = low} i L⇓true⟨c⟩ M⇓V V⋎ℓ⟨bc⟩⇓W) =
-  {!!}
+sim {gc = gc} {pc} {μ = μ} {μ′} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc
+    (⇓-if-cast-true {L = L} {M} {N} {V} {W} {ℓ = low} i L⇓true⟨c⟩ M⇓V V⋎ℓ⟨bc⟩⇓W) =
+  ⇓ₑ-if-true ϵL⇓true {!!}
+  where
+  ϵL⇓true : _ ∣ pc ⊢ erase L ⇓ₑ $ true of low ∣ _
+  ϵL⇓true = sim ⊢L ⊢μ pc≾gc L⇓true⟨c⟩
 sim {gc = gc} {pc} {μ = μ} {μ′} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc
     (⇓-if-cast-true {μ₁ = μ₁} {μ₂} {L = L} {M} {N} {V} {W} {ℓ = high} i L⇓true⟨c⟩ M⇓V V⋎ℓ⟨bc⟩⇓W)
   with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓true⟨c⟩
