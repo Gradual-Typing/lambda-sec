@@ -28,10 +28,12 @@ data ErasedFun : Term → Set where
 canonical-fun-erase : ∀ {Σ gc gc′ pc A B g V}
   → [] ; Σ ; gc ; pc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
   → Value V
-  → ErasedFun (erase V)
-canonical-fun-erase {gc = gc} {pc = pc} ⊢V v with canonical-fun ⊢V v
-... | Fun-ƛ {ℓ = low}  _ _ = ϵ-fun-ƛ
-... | Fun-ƛ {ℓ = high} _ _ = ϵ-fun-●
-... | Fun-proxy fun i sub =
-  case v of λ where
-  (V-cast w _) → canonical-fun-erase {gc = gc} {pc = pc} (fun-wt fun) w
+  → ∃[ V′ ] V′ ≡ erase V × ErasedFun V′
+canonical-fun-erase {gc = gc} {pc = pc} ⊢V v =
+  case canonical-fun ⊢V v of λ where
+  (Fun-ƛ {ℓ = low}  _ _) → ⟨ _ , refl , ϵ-fun-ƛ ⟩
+  (Fun-ƛ {ℓ = high} _ _) → ⟨ _ , refl , ϵ-fun-● ⟩
+  (Fun-proxy fun i sub) →
+    case v of λ where
+    (V-cast w _) →
+      canonical-fun-erase {gc = gc} {pc = pc} (fun-wt fun) w
