@@ -219,7 +219,12 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc
   ... | ⟨ ●≡ϵW , ϵμ₂≡ϵμ′ ⟩
     rewrite sym ●≡ϵW | sym ϵμ₂≡ϵμ′ | sym ϵμ₁≡ϵμ₂ =
     ⇓ₑ-if-● ϵL⇓●
-sim ⊢M ⊢μ pc≾gc (⇓-fun-cast i M⇓V M⇓V₁ M⇓V₂) = {!!}
+sim {gc = gc} {pc} {μ = μ} {μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
+    (⇓-fun-cast {L = L} {M} {V} {V′} {W} i L⇓V⟨c⟩ M⇓W elim⇓V′) =
+  ?
+  where
+  ϵL⇓ϵV : _ ∣ pc ⊢ erase L ⇓ₑ erase V ∣ _
+  ϵL⇓ϵV = sim ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
 sim ⊢M ⊢μ pc≾gc (⇓-deref-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign?-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign-cast i M⇓V M⇓V₁) = {!!}
