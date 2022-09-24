@@ -230,8 +230,9 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
   with canonical-fun-erase ⊢V⟨c⟩ (⇓-value L⇓V⟨c⟩)
 ... | ⟨ _ , eq , ϵ-fun-ƛ ⟩ = {!!}
 ... | ⟨ _ , eq {- ● ≡ ϵV -} , ϵ-fun-● ⟩ =
-  {!!}
+  subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym ϵV′≡●) ϵL·ϵM⇓●
   where
+  w = ⇓-value M⇓W
   ϵL⇓ϵV : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ erase V ∣ erase-μ μ₁
   ϵL⇓ϵV = sim ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
   ϵL⇓● : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ ● ∣ erase-μ μ₁
@@ -240,13 +241,17 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
   ϵelim⇓ϵV′ =
     case ⇓-value L⇓V⟨c⟩ of λ where
     (V-cast v _) →
-      let w = ⇓-value M⇓W in
       sim (elim-fun-proxy-wt (⊢app (relax-Σ ⊢V⟨c⟩ Σ₂⊇Σ₁) ⊢W) v w i) ⊢μ₂ pc≾gc elim⇓V′
   ϵV·ϵW⇓ϵV′ : erase-μ μ₂ ∣ pc ⊢ erase V · erase W ⇓ₑ erase V′ ∣ erase-μ μ′
-  ϵV·ϵW⇓ϵV′ rewrite sym (elim-fun-proxy-erase V W i pc refl (error-not-⇓ elim⇓V′)) =
-    ϵelim⇓ϵV′
+  ϵV·ϵW⇓ϵV′ rewrite sym (elim-fun-proxy-erase V W i pc refl (error-not-⇓ elim⇓V′)) = ϵelim⇓ϵV′
   ●·ϵW⇓ϵV′ : erase-μ μ₂ ∣ pc ⊢ ● · erase W ⇓ₑ erase V′ ∣ erase-μ μ′
   ●·ϵW⇓ϵV′ = subst (λ □ → _ ∣ _ ⊢ □ · _ ⇓ₑ _ ∣ _) (sym eq) ϵV·ϵW⇓ϵV′
+  ϵV′≡●   = proj₁ (app-●-inv ●·ϵW⇓ϵV′ (erase-val-value w))
+  ϵμ₂≡ϵμ′ = proj₂ (app-●-inv ●·ϵW⇓ϵV′ (erase-val-value w))
+  ϵM⇓ϵW : erase-μ μ₁ ∣ pc ⊢ erase M ⇓ₑ erase W ∣ erase-μ μ₂
+  ϵM⇓ϵW = sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓W
+  ϵL·ϵM⇓● : erase-μ μ ∣ pc ⊢ erase L · erase M ⇓ₑ ● ∣ erase-μ μ′
+  ϵL·ϵM⇓● rewrite sym ϵμ₂≡ϵμ′ = ⇓ₑ-app-● ϵL⇓● ϵM⇓ϵW
 sim ⊢M ⊢μ pc≾gc (⇓-deref-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign?-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign-cast i M⇓V M⇓V₁) = {!!}
