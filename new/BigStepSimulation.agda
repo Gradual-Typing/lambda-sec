@@ -24,6 +24,7 @@ open import Erasure
 open import BigStepPreservation
 open import HeapSecure
 open import ApplyCastErasure
+open import ProxyEliminationErasure
 open import CanonicalErased
 
 postulate
@@ -221,25 +222,31 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc
     rewrite sym ●≡ϵW | sym ϵμ₂≡ϵμ′ | sym ϵμ₁≡ϵμ₂ =
     ⇓ₑ-if-● ϵL⇓●
 sim {gc = gc} {pc} {μ = μ} {μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
-    (⇓-fun-cast {L = L} {M} {V} {V′} {W} i L⇓V⟨c⟩ M⇓W elim⇓V′)
+    (⇓-fun-cast {μ₁ = μ₁} {μ₂} {L = L} {M} {V} {V′} {W} i L⇓V⟨c⟩ M⇓W elim⇓V′)
   with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
 ... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢V⟨c⟩ , ⊢μ₁ ⟩
   with ⇓-preserve (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓W
 ... | ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢W , ⊢μ₂ ⟩
   with canonical-fun-erase ⊢V⟨c⟩ (⇓-value L⇓V⟨c⟩)
 ... | ⟨ _ , eq , ϵ-fun-ƛ ⟩ = {!!}
-... | ⟨ _ , eq , ϵ-fun-● ⟩ = {!!}
+... | ⟨ _ , eq {- ● ≡ ϵV -} , ϵ-fun-● ⟩ =
+  {!!}
   where
-  ϵL⇓ϵV : _ ∣ pc ⊢ erase L ⇓ₑ erase V ∣ _
+  ϵL⇓ϵV : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ erase V ∣ erase-μ μ₁
   ϵL⇓ϵV = sim ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
-  ϵL⇓● : _ ∣ pc ⊢ erase L ⇓ₑ ● ∣ _
+  ϵL⇓● : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ ● ∣ erase-μ μ₁
   ϵL⇓● = subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym eq) ϵL⇓ϵV
-  ϵelim⇓ϵV′ : _ ∣ pc ⊢ erase (elim-fun-proxy V W i pc) ⇓ₑ erase V′ ∣ _
+  ϵelim⇓ϵV′ : erase-μ μ₂ ∣ pc ⊢ erase (elim-fun-proxy V W i pc) ⇓ₑ erase V′ ∣ erase-μ μ′
   ϵelim⇓ϵV′ =
     case ⇓-value L⇓V⟨c⟩ of λ where
     (V-cast v _) →
       let w = ⇓-value M⇓W in
       sim (elim-fun-proxy-wt (⊢app (relax-Σ ⊢V⟨c⟩ Σ₂⊇Σ₁) ⊢W) v w i) ⊢μ₂ pc≾gc elim⇓V′
+  ϵV·ϵW⇓ϵV′ : erase-μ μ₂ ∣ pc ⊢ erase V · erase W ⇓ₑ erase V′ ∣ erase-μ μ′
+  ϵV·ϵW⇓ϵV′ rewrite sym (elim-fun-proxy-erase V W i pc refl (error-not-⇓ elim⇓V′)) =
+    ϵelim⇓ϵV′
+  ●·ϵW⇓ϵV′ : erase-μ μ₂ ∣ pc ⊢ ● · erase W ⇓ₑ erase V′ ∣ erase-μ μ′
+  ●·ϵW⇓ϵV′ = subst (λ □ → _ ∣ _ ⊢ □ · _ ⇓ₑ _ ∣ _) (sym eq) ϵV·ϵW⇓ϵV′
 sim ⊢M ⊢μ pc≾gc (⇓-deref-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign?-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign-cast i M⇓V M⇓V₁) = {!!}

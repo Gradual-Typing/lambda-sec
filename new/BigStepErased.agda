@@ -145,13 +145,24 @@ data _∣_⊢_⇓ₑ_∣_ where
 V⇓ₑV : ∀ {μ μ′ pc V W}
   → μ ∣ pc ⊢ V ⇓ₑ W ∣ μ′
   → Value V
-  → (V ≡ W) × (μ ≡ μ′)
+    ---------------------------
+  → V ≡ W × μ ≡ μ′
 V⇓ₑV (⇓ₑ-val _) v = ⟨ refl , refl ⟩
 
 {- ⇓ₑ is transitive -}
 ⇓ₑ-trans : ∀ {μ μ₁ μ₂ pc M V W}
   → μ  ∣ pc ⊢ M ⇓ₑ V ∣ μ₁
   → μ₁ ∣ pc ⊢ V ⇓ₑ W ∣ μ₂
+    ---------------------------
   → μ  ∣ pc ⊢ M ⇓ₑ W ∣ μ₂
 ⇓ₑ-trans M⇓V V⇓W with V⇓ₑV V⇓W (⇓ₑ-value M⇓V)
 ... | ⟨ refl , refl ⟩ = M⇓V
+
+app-●-inv : ∀ {μ μ′ pc V W}
+  → μ ∣ pc ⊢ ● · V ⇓ₑ W ∣ μ′
+  → Value V
+    ---------------------------
+  → W ≡ ● × μ ≡ μ′
+app-●-inv (⇓ₑ-app-● ●⇓● V⇓V) v
+  with V⇓ₑV ●⇓● V-● | V⇓ₑV V⇓V v
+... | ⟨ refl , refl ⟩ | ⟨ refl , refl ⟩ = ⟨ refl , refl ⟩
