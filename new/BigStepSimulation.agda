@@ -228,7 +228,15 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
   with ⇓-preserve (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓W
 ... | ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢W , ⊢μ₂ ⟩
   with canonical-fun-erase ⊢V⟨c⟩ (⇓-value L⇓V⟨c⟩)
-... | ⟨ _ , eq , ϵ-fun-ƛ ⟩ = {!!}
+... | ⟨ _ , eq {- ƛ N ≡ ϵV -} , ϵ-fun-ƛ {pc′} {A} {N} ⟩ =
+  ⇓ₑ-app ϵL⇓ƛN ϵM⇓ϵW {!!}
+  where
+  ϵL⇓ϵV : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ erase V ∣ erase-μ μ₁
+  ϵL⇓ϵV = sim ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
+  ϵL⇓ƛN : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ ƛ[ pc′ ] A ˙ N of low ∣ erase-μ μ₁
+  ϵL⇓ƛN rewrite eq = ϵL⇓ϵV
+  ϵM⇓ϵW : erase-μ μ₁ ∣ pc ⊢ erase M ⇓ₑ erase W ∣ erase-μ μ₂
+  ϵM⇓ϵW = sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓W
 ... | ⟨ _ , eq {- ● ≡ ϵV -} , ϵ-fun-● ⟩ =
   subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym ϵV′≡●) ϵL·ϵM⇓●
   where

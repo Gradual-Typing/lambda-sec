@@ -23,7 +23,7 @@ data ErasedFun : Term → Set where
 
   ϵ-fun-● : ErasedFun ●
 
-  ϵ-fun-ƛ : ∀ {pc A N ℓ} → ErasedFun (ƛ[ pc ] A ˙ N of ℓ)
+  ϵ-fun-ƛ : ∀ {pc A N} → ErasedFun (ƛ[ pc ] A ˙ N of low)
 
 canonical-fun-erase : ∀ {Σ gc gc′ pc A B g V}
   → [] ; Σ ; gc ; pc ⊢ V ⦂ [ gc′ ] A ⇒ B of g
