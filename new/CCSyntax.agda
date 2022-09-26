@@ -81,16 +81,3 @@ pattern cast-pc g M              = (op-cast-pc g) ⦅ cons (ast M) nil ⦆
 pattern error e                  = (op-error e) ⦅ nil ⦆                  {- blame / nsu error -}
 -- pattern discard M                = op-discard ⦅ cons (ast M) nil ⦆       {- discarding value as ● -}
 pattern ●                        = op-opaque ⦅ nil ⦆                     {- opaque value -}
-
-
-{- There are 3 forms of reference creation: static, unchecked, and checked -}
-data RefCreation : (StaticLabel → Term → Term) → Set where
-  static    : RefCreation ref[_]_
-  unchecked : RefCreation ref?[_]_
-  checked   : RefCreation ref✓[_]_
-
-{- There are 3 forms of reference assignment: static, unchecked, and checked -}
-data RefAssign : (Term → Term → Term) → Set where
-  static    : RefAssign _:=_
-  unchecked : RefAssign _:=?_
-  checked   : RefAssign _:=✓_
