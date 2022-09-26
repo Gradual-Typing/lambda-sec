@@ -229,7 +229,7 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
 ... | ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢W , ⊢μ₂ ⟩
   with canonical-fun-erase ⊢V⟨c⟩ (⇓-value L⇓V⟨c⟩)
 ... | ⟨ _ , eq {- ƛ N ≡ ϵV -} , ϵ-fun-ƛ {pc′} {A} {N} ⟩ =
-  ⇓ₑ-app ϵL⇓ƛN ϵM⇓ϵW {!!}
+  ⇓ₑ-app ϵL⇓ƛN ϵM⇓ϵW (⇓ₑ-app-inv ƛN·ϵW⇓ϵV′ (erase-val-value w))
   where
   w = ⇓-value M⇓W
   ϵL⇓ϵV : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ erase V ∣ erase-μ μ₁
@@ -264,8 +264,8 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
   ϵV·ϵW⇓ϵV′ rewrite sym (elim-fun-proxy-erase V W i pc refl (error-not-⇓ elim⇓V′)) = ϵelim⇓ϵV′
   ●·ϵW⇓ϵV′ : erase-μ μ₂ ∣ pc ⊢ ● · erase W ⇓ₑ erase V′ ∣ erase-μ μ′
   ●·ϵW⇓ϵV′ = subst (λ □ → _ ∣ _ ⊢ □ · _ ⇓ₑ _ ∣ _) (sym eq) ϵV·ϵW⇓ϵV′
-  ϵV′≡●   = proj₁ (app-●-inv ●·ϵW⇓ϵV′ (erase-val-value w))
-  ϵμ₂≡ϵμ′ = proj₂ (app-●-inv ●·ϵW⇓ϵV′ (erase-val-value w))
+  ϵV′≡●   = proj₁ (⇓ₑ-app-●-inv ●·ϵW⇓ϵV′ (erase-val-value w))
+  ϵμ₂≡ϵμ′ = proj₂ (⇓ₑ-app-●-inv ●·ϵW⇓ϵV′ (erase-val-value w))
   ϵM⇓ϵW : erase-μ μ₁ ∣ pc ⊢ erase M ⇓ₑ erase W ∣ erase-μ μ₂
   ϵM⇓ϵW = sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓W
   ϵL·ϵM⇓● : erase-μ μ ∣ pc ⊢ erase L · erase M ⇓ₑ ● ∣ erase-μ μ′

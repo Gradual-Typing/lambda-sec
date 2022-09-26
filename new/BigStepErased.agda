@@ -158,11 +158,20 @@ V⇓ₑV (⇓ₑ-val _) v = ⟨ refl , refl ⟩
 ⇓ₑ-trans M⇓V V⇓W with V⇓ₑV V⇓W (⇓ₑ-value M⇓V)
 ... | ⟨ refl , refl ⟩ = M⇓V
 
-app-●-inv : ∀ {μ μ′ pc V W}
+⇓ₑ-app-●-inv : ∀ {μ μ′ pc V W}
   → μ ∣ pc ⊢ ● · V ⇓ₑ W ∣ μ′
   → Value V
     ---------------------------
   → W ≡ ● × μ ≡ μ′
-app-●-inv (⇓ₑ-app-● ●⇓● V⇓V) v
+⇓ₑ-app-●-inv (⇓ₑ-app-● ●⇓● V⇓V) v
   with V⇓ₑV ●⇓● V-● | V⇓ₑV V⇓V v
 ... | ⟨ refl , refl ⟩ | ⟨ refl , refl ⟩ = ⟨ refl , refl ⟩
+
+⇓ₑ-app-inv : ∀ {μ μ′ pc pc′ N V W A}
+  → μ ∣ pc ⊢ ƛ[ pc′ ] A ˙ N of low · V ⇓ₑ W ∣ μ′
+  → Value V
+    ------------------------------------------
+  → μ ∣ pc ⊢ N [ V ] ⇓ₑ W ∣ μ′
+⇓ₑ-app-inv (⇓ₑ-app ƛN⇓ƛN V⇓V N[V]⇓W) v
+  with V⇓ₑV ƛN⇓ƛN V-ƛ | V⇓ₑV V⇓V v
+... | ⟨ refl , refl ⟩ | ⟨ refl , refl ⟩ = N[V]⇓W
