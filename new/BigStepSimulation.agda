@@ -231,12 +231,22 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
 ... | ⟨ _ , eq {- ƛ N ≡ ϵV -} , ϵ-fun-ƛ {pc′} {A} {N} ⟩ =
   ⇓ₑ-app ϵL⇓ƛN ϵM⇓ϵW {!!}
   where
+  w = ⇓-value M⇓W
   ϵL⇓ϵV : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ erase V ∣ erase-μ μ₁
   ϵL⇓ϵV = sim ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
   ϵL⇓ƛN : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ ƛ[ pc′ ] A ˙ N of low ∣ erase-μ μ₁
   ϵL⇓ƛN rewrite eq = ϵL⇓ϵV
   ϵM⇓ϵW : erase-μ μ₁ ∣ pc ⊢ erase M ⇓ₑ erase W ∣ erase-μ μ₂
   ϵM⇓ϵW = sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓W
+  ϵelim⇓ϵV′ : erase-μ μ₂ ∣ pc ⊢ erase (elim-fun-proxy V W i pc) ⇓ₑ erase V′ ∣ erase-μ μ′
+  ϵelim⇓ϵV′ =
+    case ⇓-value L⇓V⟨c⟩ of λ where
+    (V-cast v _) →
+      sim (elim-fun-proxy-wt (⊢app (relax-Σ ⊢V⟨c⟩ Σ₂⊇Σ₁) ⊢W) v w i) ⊢μ₂ pc≾gc elim⇓V′
+  ϵV·ϵW⇓ϵV′ : erase-μ μ₂ ∣ pc ⊢ erase V · erase W ⇓ₑ erase V′ ∣ erase-μ μ′
+  ϵV·ϵW⇓ϵV′ rewrite sym (elim-fun-proxy-erase V W i pc refl (error-not-⇓ elim⇓V′)) = ϵelim⇓ϵV′
+  ƛN·ϵW⇓ϵV′ : erase-μ μ₂ ∣ pc ⊢ ƛ[ pc′ ] A ˙ N of low · erase W ⇓ₑ erase V′ ∣ erase-μ μ′
+  ƛN·ϵW⇓ϵV′ = subst (λ □ → _ ∣ _ ⊢ □ · _ ⇓ₑ _ ∣ _) (sym eq) ϵV·ϵW⇓ϵV′
 ... | ⟨ _ , eq {- ● ≡ ϵV -} , ϵ-fun-● ⟩ =
   subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym ϵV′≡●) ϵL·ϵM⇓●
   where
