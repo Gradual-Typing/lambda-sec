@@ -4,7 +4,7 @@ open import Data.Nat
 open import Data.Unit using (⊤; tt)
 open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.List hiding ([_])
-open import Data.Product renaming (_,_ to ⟨_,_⟩)
+open import Data.Product using (_×_; ∃-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
@@ -175,3 +175,11 @@ V⇓ₑV (⇓ₑ-val _) v = ⟨ refl , refl ⟩
 ⇓ₑ-app-inv (⇓ₑ-app ƛN⇓ƛN V⇓V N[V]⇓W) v
   with V⇓ₑV ƛN⇓ƛN V-ƛ | V⇓ₑV V⇓V v
 ... | ⟨ refl , refl ⟩ | ⟨ refl , refl ⟩ = N[V]⇓W
+
+⇓ₑ-assign-●-inv : ∀ {μ μ′ pc M V}
+  → μ ∣ pc ⊢ ● := M ⇓ₑ V ∣ μ′
+    ---------------------------
+  → V ≡ $ tt of low × ∃[ W ] (μ ∣ pc ⊢ M ⇓ₑ W ∣ μ′)
+⇓ₑ-assign-●-inv (⇓ₑ-assign-● ●⇓● M⇓W)
+  with V⇓ₑV ●⇓● V-●
+... | ⟨ refl , refl ⟩ = ⟨ refl , _ , M⇓W ⟩
