@@ -278,7 +278,7 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ pc�
 ... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢V⟨c⟩ , ⊢μ₁ ⟩
   with canonical-ref-erase ⊢V⟨c⟩ (⇓-value L⇓V⟨c⟩)
 ... | ⟨ _ , eq {- ● ≡ ϵV -} , ϵ-ref-● ⟩ =
-  {!!}
+  ϵL:=ϵM⇓ϵW
   where
   ϵL⇓ϵV : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ erase V ∣ erase-μ μ₁
   ϵL⇓ϵV = sim ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
@@ -297,6 +297,8 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ pc�
   ϵM⇓V′ = proj₂ (proj₂ (⇓ₑ-assign-●-inv ●:=ϵM⇓ϵW))
   ϵL:=ϵM⇓tt : erase-μ μ ∣ pc ⊢ erase L := erase M ⇓ₑ $ tt of low ∣ erase-μ μ′
   ϵL:=ϵM⇓tt = ⇓ₑ-assign-● (subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym eq) ϵL⇓ϵV) ϵM⇓V′
+  ϵL:=ϵM⇓ϵW : erase-μ μ ∣ pc ⊢ erase L := erase M ⇓ₑ erase W ∣ erase-μ μ′
+  ϵL:=ϵM⇓ϵW = subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym ϵW≡tt) ϵL:=ϵM⇓tt
 ... | ⟨ _ , eq , ϵ-ref-addr ⟩ = {!!}
 sim (⊢sub ⊢M A<:B) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ pc≾gc M⇓V
 sim (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ (≾-<: pc≾gc gc<:gc′) M⇓V
