@@ -272,7 +272,25 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
   ϵL·ϵM⇓● rewrite sym ϵμ₂≡ϵμ′ = ⇓ₑ-app-● ϵL⇓● ϵM⇓ϵW
 sim ⊢M ⊢μ pc≾gc (⇓-deref-cast i M⇓V M⇓V₁) = {!!}
 sim ⊢M ⊢μ pc≾gc (⇓-assign?-cast i M⇓V M⇓V₁) = {!!}
-sim ⊢M ⊢μ pc≾gc (⇓-assign-cast i M⇓V M⇓V₁) = {!!}
+sim {gc = gc} {pc} {μ = μ} {μ′} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ pc≾gc
+    (⇓-assign-cast {μ₁ = μ₁} {L = L} {M} {V} {W} i L⇓V⟨c⟩ elim⇓W)
+  with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
+... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢V⟨c⟩ , ⊢μ₁ ⟩
+  with canonical-ref-erase ⊢V⟨c⟩ (⇓-value L⇓V⟨c⟩)
+... | ⟨ _ , eq {- ● ≡ ϵV -} , ϵ-ref-● ⟩ =
+  {!!}
+  where
+  ϵelim⇓ϵW : erase-μ μ₁ ∣ pc ⊢ erase (elim-ref-proxy V M i _:=_) ⇓ₑ erase W ∣ erase-μ μ′
+  ϵelim⇓ϵW =
+    case ⇓-value L⇓V⟨c⟩ of λ where
+    (V-cast v _) →
+      sim (elim-ref-proxy-wt (⊢assign ⊢V⟨c⟩ (relax-Σ ⊢M Σ₁⊇Σ) pc′≼ℓ) v i static) ⊢μ₁ pc≾gc elim⇓W
+  ϵV:=ϵM⇓ϵW : erase-μ μ₁ ∣ pc ⊢ erase V := erase M ⇓ₑ erase W ∣ erase-μ μ′
+  ϵV:=ϵM⇓ϵW rewrite sym (elim-ref-proxy-erase V M i static refl (error-not-⇓ elim⇓W)) =
+    ϵelim⇓ϵW
+  ●:=ϵM⇓ϵW : erase-μ μ₁ ∣ pc ⊢ ● := erase M ⇓ₑ erase W ∣ erase-μ μ′
+  ●:=ϵM⇓ϵW = subst (λ □ → _ ∣ _ ⊢ □ := _ ⇓ₑ _ ∣ _) (sym eq) ϵV:=ϵM⇓ϵW
+... | ⟨ _ , eq , ϵ-ref-addr ⟩ = {!!}
 sim (⊢sub ⊢M A<:B) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ pc≾gc M⇓V
 sim (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ (≾-<: pc≾gc gc<:gc′) M⇓V
 
