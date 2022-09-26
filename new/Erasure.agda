@@ -36,10 +36,10 @@ open import Utils
 
 {- **** Term erasure **** -}
 erase : Term → Term
-erase (addr (a[ ℓ₁ ] n) of ℓ) =
+erase (addr a[ ℓ₁ ] n of ℓ) =
   case ⟨ ℓ , ℓ₁ ⟩ of λ where
   ⟨ low , low ⟩ → addr (a[ ℓ₁ ] n) of low
-  _ → ●
+  _             → ●
 erase ($ k of ℓ) =
   case ℓ of λ where
   low  → $ k of low
