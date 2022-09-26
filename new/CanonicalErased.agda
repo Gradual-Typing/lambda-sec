@@ -14,6 +14,7 @@ open import Function using (case_of_)
 open import Utils
 open import Types
 open import TypeBasedCast
+open import Heap
 open import CC
 open import WellTyped
 
@@ -37,3 +38,24 @@ canonical-fun-erase {gc = gc} {pc = pc} ⊢V v =
     case v of λ where
     (V-cast w _) →
       canonical-fun-erase {gc = gc} {pc = pc} (fun-wt fun) w
+
+data ErasedRef : Term → Set where
+
+  ϵ-ref-● : ErasedRef ●
+
+  ϵ-ref-addr : ∀ {n} → ErasedRef (addr a[ low ] n of low)
+
+canonical-ref-erase : ∀ {Σ gc pc A g V}
+  → [] ; Σ ; gc ; pc ⊢ V ⦂ Ref A of g
+  → Value V
+  → ∃[ V′ ] V′ ≡ erase V × ErasedRef V′
+canonical-ref-erase {gc = gc} {pc} ⊢V v =
+  case canonical-ref ⊢V v of λ where
+  (Ref-addr {ℓ = low}  {low}  _ _) → ⟨ _ , refl , ϵ-ref-addr ⟩
+  (Ref-addr {ℓ = low}  {high} _ _) → ⟨ _ , refl , ϵ-ref-● ⟩
+  (Ref-addr {ℓ = high} {low}  _ _) → ⟨ _ , refl , ϵ-ref-● ⟩
+  (Ref-addr {ℓ = high} {high} _ _) → ⟨ _ , refl , ϵ-ref-● ⟩
+  (Ref-proxy ref i sub) →
+    case v of λ where
+    (V-cast w _) →
+      canonical-ref-erase {gc = gc} {pc} (ref-wt ref) w

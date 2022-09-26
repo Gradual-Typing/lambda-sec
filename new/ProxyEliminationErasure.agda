@@ -32,3 +32,30 @@ elim-fun-proxy-erase V W (I-fun c I-label I-label) pc refl ¬err with c
   with pc ⋎ ℓ₁ ≼? pc₁
 ...   | yes _ = refl
 ...   | no  _ = contradiction E-error ¬err
+
+elim-ref-proxy-erase : ∀ {A B g₁ g₂} {N} {_≔_}
+  → ∀ {c : Cast Ref A of g₁ ⇒ Ref B of g₂}
+  → ∀ V M (i : Inert c)
+  → RefAssign _≔_
+  → N ≡ elim-ref-proxy V M i _≔_
+  → ¬ Err N
+    ----------------------------------------------------
+  → erase N ≡ erase (V ≔ M)
+elim-ref-proxy-erase V M (I-ref c I-label I-label) static refl ¬err with c
+... | cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of l ℓ₂) of g) p _ = refl
+... | cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of ⋆   ) of g) p _
+  with ℓ ≼? ℓ₁
+...   | yes _ = refl
+...   | no  _ = contradiction E-error ¬err
+elim-ref-proxy-erase V M (I-ref c I-label I-label) checked refl ¬err with c
+... | cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of l ℓ₂) of g) p _ = refl
+... | cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of ⋆   ) of g) p _
+  with ℓ ≼? ℓ₁
+...   | yes _ = refl
+...   | no  _ = contradiction E-error ¬err
+elim-ref-proxy-erase V M (I-ref c I-label I-label) unchecked refl ¬err with c
+... | cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of l ℓ₂) of g) p _ = refl
+... | cast (Ref (S of l ℓ₁) of l ℓ) (Ref (T of ⋆   ) of g) p _
+  with ℓ ≼? ℓ₁
+...   | yes _ = refl
+...   | no  _ = contradiction E-error ¬err
