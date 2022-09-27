@@ -183,3 +183,11 @@ V⇓ₑV (⇓ₑ-val _) v = ⟨ refl , refl ⟩
 ⇓ₑ-assign-●-inv (⇓ₑ-assign-● ●⇓● M⇓W)
   with V⇓ₑV ●⇓● V-●
 ... | ⟨ refl , refl ⟩ = ⟨ refl , _ , M⇓W ⟩
+
+⇓ₑ-assign-inv : ∀ {μ μ′ pc M V n}
+  → μ ∣ pc ⊢ (addr a[ low ] n of low) := M ⇓ₑ V ∣ μ′
+    -----------------------------------------------------------
+  → V ≡ $ tt of low × ∃[ W ] ∃[ w ] ∃[ μ″ ] (μ ∣ pc ⊢ M ⇓ₑ W ∣ μ″) × (μ′ ≡ ⟨ n , W & w ⟩ ∷ μ″)
+⇓ₑ-assign-inv (⇓ₑ-assign a⇓a M⇓W)
+  with V⇓ₑV a⇓a V-addr
+... | ⟨ refl , refl ⟩ = ⟨ refl , _ , ⇓ₑ-value M⇓W , _ , M⇓W , refl ⟩

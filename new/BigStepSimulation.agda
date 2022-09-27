@@ -277,8 +277,7 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ pc�
   with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
 ... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢V⟨c⟩ , ⊢μ₁ ⟩
   with canonical-ref-erase ⊢V⟨c⟩ (⇓-value L⇓V⟨c⟩)
-... | ⟨ _ , eq {- ● ≡ ϵV -} , ϵ-ref-● ⟩ =
-  ϵL:=ϵM⇓ϵW
+... | ⟨ _ , eq {- ● ≡ ϵV -} , ϵ-ref-● ⟩ = ϵL:=ϵM⇓ϵW
   where
   ϵL⇓ϵV : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ erase V ∣ erase-μ μ₁
   ϵL⇓ϵV = sim ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
@@ -293,13 +292,34 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ pc�
   ●:=ϵM⇓ϵW : erase-μ μ₁ ∣ pc ⊢ ● := erase M ⇓ₑ erase W ∣ erase-μ μ′
   ●:=ϵM⇓ϵW = subst (λ □ → _ ∣ _ ⊢ □ := _ ⇓ₑ _ ∣ _) (sym eq) ϵV:=ϵM⇓ϵW
   ϵW≡tt : erase W ≡ $ tt of low
-  ϵW≡tt = proj₁ (⇓ₑ-assign-●-inv ●:=ϵM⇓ϵW)
+  ϵW≡tt  = proj₁ (⇓ₑ-assign-●-inv ●:=ϵM⇓ϵW)
   ϵM⇓V′ = proj₂ (proj₂ (⇓ₑ-assign-●-inv ●:=ϵM⇓ϵW))
   ϵL:=ϵM⇓tt : erase-μ μ ∣ pc ⊢ erase L := erase M ⇓ₑ $ tt of low ∣ erase-μ μ′
   ϵL:=ϵM⇓tt = ⇓ₑ-assign-● (subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym eq) ϵL⇓ϵV) ϵM⇓V′
   ϵL:=ϵM⇓ϵW : erase-μ μ ∣ pc ⊢ erase L := erase M ⇓ₑ erase W ∣ erase-μ μ′
   ϵL:=ϵM⇓ϵW = subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym ϵW≡tt) ϵL:=ϵM⇓tt
-... | ⟨ _ , eq , ϵ-ref-addr ⟩ = {!!}
+... | ⟨ _ , eq {- a[ low ] n of low ≡ ϵV -} , ϵ-ref-addr {n} ⟩ = ϵL:=ϵM⇓ϵW
+  where
+  ϵL⇓ϵV : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ erase V ∣ erase-μ μ₁
+  ϵL⇓ϵV = sim ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
+  ϵelim⇓ϵW : erase-μ μ₁ ∣ pc ⊢ erase (elim-ref-proxy V M i _:=_) ⇓ₑ erase W ∣ erase-μ μ′
+  ϵelim⇓ϵW =
+    case ⇓-value L⇓V⟨c⟩ of λ where
+    (V-cast v _) →
+      sim (elim-ref-proxy-wt (⊢assign ⊢V⟨c⟩ (relax-Σ ⊢M Σ₁⊇Σ) pc′≼ℓ) v i static) ⊢μ₁ pc≾gc elim⇓W
+  ϵV:=ϵM⇓ϵW : erase-μ μ₁ ∣ pc ⊢ erase V := erase M ⇓ₑ erase W ∣ erase-μ μ′
+  ϵV:=ϵM⇓ϵW rewrite sym (elim-ref-proxy-erase V M i static refl (error-not-⇓ elim⇓W)) =
+    ϵelim⇓ϵW
+  a:=ϵM⇓ϵW : erase-μ μ₁ ∣ pc ⊢ (addr a[ low ] n of low) := erase M ⇓ₑ erase W ∣ erase-μ μ′
+  a:=ϵM⇓ϵW = subst (λ □ → _ ∣ _ ⊢ □ := _ ⇓ₑ _ ∣ _) (sym eq) ϵV:=ϵM⇓ϵW
+  ϵW≡tt : erase W ≡ $ tt of low
+  ϵW≡tt = proj₁ (⇓ₑ-assign-inv a:=ϵM⇓ϵW)
+  ϵM⇓V′   = let ⟨ _ , W , w , μ″ , M⇓W , _ ⟩ = ⇓ₑ-assign-inv a:=ϵM⇓ϵW in M⇓W
+  ϵμ′≡a∷μ″ = let ⟨ _ , W , w , μ″ , _ , μ′≡a∷μ″ ⟩ = ⇓ₑ-assign-inv a:=ϵM⇓ϵW in μ′≡a∷μ″
+  ϵL:=ϵM⇓tt : erase-μ μ ∣ pc ⊢ erase L := erase M ⇓ₑ $ tt of low ∣ erase-μ μ′
+  ϵL:=ϵM⇓tt rewrite ϵμ′≡a∷μ″ = ⇓ₑ-assign (subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym eq) ϵL⇓ϵV) ϵM⇓V′
+  ϵL:=ϵM⇓ϵW : erase-μ μ ∣ pc ⊢ erase L := erase M ⇓ₑ erase W ∣ erase-μ μ′
+  ϵL:=ϵM⇓ϵW = subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym ϵW≡tt) ϵL:=ϵM⇓tt
 sim (⊢sub ⊢M A<:B) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ pc≾gc M⇓V
 sim (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ (≾-<: pc≾gc gc<:gc′) M⇓V
 
