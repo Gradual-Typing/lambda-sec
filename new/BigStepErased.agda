@@ -142,12 +142,14 @@ data _∣_⊢_⇓ₑ_∣_ where
 ⇓ₑ-value (⇓ₑ-assign        _ _) = V-const
 ⇓ₑ-value (⇓ₑ-assign-●     _ _) = V-const
 
+
 V⇓ₑV : ∀ {μ μ′ pc V W}
   → μ ∣ pc ⊢ V ⇓ₑ W ∣ μ′
   → Value V
     ---------------------------
   → V ≡ W × μ ≡ μ′
 V⇓ₑV (⇓ₑ-val _) v = ⟨ refl , refl ⟩
+
 
 {- ⇓ₑ is transitive -}
 ⇓ₑ-trans : ∀ {μ μ₁ μ₂ pc M V W}
@@ -158,6 +160,8 @@ V⇓ₑV (⇓ₑ-val _) v = ⟨ refl , refl ⟩
 ⇓ₑ-trans M⇓V V⇓W with V⇓ₑV V⇓W (⇓ₑ-value M⇓V)
 ... | ⟨ refl , refl ⟩ = M⇓V
 
+
+{- a few inversion lemmas about ⇓ₑ -}
 ⇓ₑ-app-●-inv : ∀ {μ μ′ pc V W}
   → μ ∣ pc ⊢ ● · V ⇓ₑ W ∣ μ′
   → Value V
