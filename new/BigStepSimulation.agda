@@ -72,8 +72,48 @@ sim {pc = pc} {μ′ = μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
   ϵM⇓ϵV : _ ∣ pc ⊢ erase M ⇓ₑ erase V ∣ erase-μ μ′
   ϵM⇓ϵV = subst (λ □ → _ ∣ pc ⊢ erase M ⇓ₑ erase V ∣ □)
              ϵμ₂≡ϵμ′ (sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V)
-sim ⊢M ⊢μ pc≾gc (⇓-if-true M⇓V M⇓V₁) = {!!}
-sim ⊢M ⊢μ pc≾gc (⇓-if-false M⇓V M⇓V₁) = {!!}
+sim {gc = gc} {pc} {μ = μ} {μ′} (⊢if {g = g} ⊢L ⊢M ⊢N) ⊢μ pc≾gc
+    (⇓-if-true  {μ₁ = μ₁} {L = L} {M} {N} {V} {ℓ = ℓ} L⇓true  M⇓V)
+  with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓true
+... | ⟨ Σ₁ , Σ₁⊇Σ  , ⊢true , ⊢μ₁ ⟩
+  with ℓ
+... | low  rewrite stamp-val-low (⇓-value M⇓V) | ℓ⋎low≡ℓ {pc} =
+  ⇓ₑ-if-true (sim ⊢L ⊢μ pc≾gc L⇓true) (sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc⋎g M⇓V)
+  where
+  pc⋎low≾gc⋎g : (l pc) ⋎̃ (l low) ≾ gc ⋎̃ g
+  pc⋎low≾gc⋎g = consis-join-≾ pc≾gc (low≾ g)
+  pc≾gc⋎g : l pc ≾ gc ⋎̃ g
+  pc≾gc⋎g = subst (λ □ → □ ≾ gc ⋎̃ g) (g⋎̃low≡g {l pc}) pc⋎low≾gc⋎g
+... | high rewrite erase-stamp-high (⇓-value M⇓V) | ℓ⋎high≡high {pc} =
+  ⇓ₑ-if-● ϵL⇓●
+  where
+  ϵμ₁≡ϵμ′ : erase-μ μ₁ ≡ erase-μ μ′
+  ϵμ₁≡ϵμ′ =
+    case canonical-const ⊢true V-const of λ where
+    (Const-base h≼h) → heap-relate (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ (consis-join-≾ (low≾ gc) (≾-l h≼h)) M⇓V
+  ϵL⇓● : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ ● ∣ erase-μ μ′
+  ϵL⇓● rewrite sym ϵμ₁≡ϵμ′ = sim ⊢L ⊢μ pc≾gc L⇓true
+sim {gc = gc} {pc} {μ = μ} {μ′} (⊢if {g = g} ⊢L ⊢M ⊢N) ⊢μ pc≾gc
+    (⇓-if-false {μ₁ = μ₁} {L = L} {M} {N} {V} {ℓ = ℓ} L⇓false  N⇓V)
+  with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓false
+... | ⟨ Σ₁ , Σ₁⊇Σ  , ⊢false , ⊢μ₁ ⟩
+  with ℓ
+... | low  rewrite stamp-val-low (⇓-value N⇓V) | ℓ⋎low≡ℓ {pc} =
+  ⇓ₑ-if-false (sim ⊢L ⊢μ pc≾gc L⇓false) (sim (relax-Σ ⊢N Σ₁⊇Σ) ⊢μ₁ pc≾gc⋎g N⇓V)
+  where
+  pc⋎low≾gc⋎g : (l pc) ⋎̃ (l low) ≾ gc ⋎̃ g
+  pc⋎low≾gc⋎g = consis-join-≾ pc≾gc (low≾ g)
+  pc≾gc⋎g : l pc ≾ gc ⋎̃ g
+  pc≾gc⋎g = subst (λ □ → □ ≾ gc ⋎̃ g) (g⋎̃low≡g {l pc}) pc⋎low≾gc⋎g
+... | high rewrite erase-stamp-high (⇓-value N⇓V) | ℓ⋎high≡high {pc} =
+  ⇓ₑ-if-● ϵL⇓●
+  where
+  ϵμ₁≡ϵμ′ : erase-μ μ₁ ≡ erase-μ μ′
+  ϵμ₁≡ϵμ′ =
+    case canonical-const ⊢false V-const of λ where
+    (Const-base h≼h) → heap-relate (relax-Σ ⊢N Σ₁⊇Σ) ⊢μ₁ (consis-join-≾ (low≾ gc) (≾-l h≼h)) N⇓V
+  ϵL⇓● : erase-μ μ ∣ pc ⊢ erase L ⇓ₑ ● ∣ erase-μ μ′
+  ϵL⇓● rewrite sym ϵμ₁≡ϵμ′ = sim ⊢L ⊢μ pc≾gc L⇓false
 sim {pc = pc} (⊢let ⊢M ⊢N) ⊢μ pc≾gc (⇓-let {M = M} {N} {V} {W} M⇓V N[V]⇓W)
   with ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V
 ... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢V , ⊢μ₁ ⟩ =
