@@ -17,111 +17,111 @@ open import CC
 
 open import BigStepErased
 
-determinism : ∀ {M μ μ₁ μ₂ pc} {V₁ V₂}
+⇓ₑ-deterministic : ∀ {M μ μ₁ μ₂ pc} {V₁ V₂}
   → μ ∣ pc ⊢ M ⇓ₑ V₁ ∣ μ₁
   → μ ∣ pc ⊢ M ⇓ₑ V₂ ∣ μ₂
     -------------------------------------
   → V₁ ≡ V₂ × μ₁ ≡ μ₂
-determinism (⇓ₑ-val _) (⇓ₑ-val _) = ⟨ refl , refl ⟩
-determinism (⇓ₑ-app L⇓ƛN M⇓V N[V]⇓W) (⇓ₑ-app L⇓ƛN† M⇓V† N[V]⇓W†) =
-  case determinism L⇓ƛN L⇓ƛN† of λ where
+⇓ₑ-deterministic (⇓ₑ-val _) (⇓ₑ-val _) = ⟨ refl , refl ⟩
+⇓ₑ-deterministic (⇓ₑ-app L⇓ƛN M⇓V N[V]⇓W) (⇓ₑ-app L⇓ƛN† M⇓V† N[V]⇓W†) =
+  case ⇓ₑ-deterministic L⇓ƛN L⇓ƛN† of λ where
   ⟨ refl , refl ⟩ →
-    case determinism M⇓V M⇓V† of λ where
+    case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
     ⟨ refl , refl ⟩ →
-      case determinism N[V]⇓W N[V]⇓W† of λ where
+      case ⇓ₑ-deterministic N[V]⇓W N[V]⇓W† of λ where
       ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-app L⇓ƛN _ _) (⇓ₑ-app-● L⇓● _) =
-  contradiction (determinism L⇓ƛN L⇓●) (λ ())
-determinism (⇓ₑ-app-● L⇓● _) (⇓ₑ-app L⇓ƛN _ _) =
-  contradiction (determinism L⇓● L⇓ƛN) (λ ())
-determinism (⇓ₑ-app-● L⇓● M⇓V) (⇓ₑ-app-● L⇓●† M⇓V†) =
-  case determinism L⇓● L⇓●† of λ where
+⇓ₑ-deterministic (⇓ₑ-app L⇓ƛN _ _) (⇓ₑ-app-● L⇓● _) =
+  contradiction (⇓ₑ-deterministic L⇓ƛN L⇓●) (λ ())
+⇓ₑ-deterministic (⇓ₑ-app-● L⇓● _) (⇓ₑ-app L⇓ƛN _ _) =
+  contradiction (⇓ₑ-deterministic L⇓● L⇓ƛN) (λ ())
+⇓ₑ-deterministic (⇓ₑ-app-● L⇓● M⇓V) (⇓ₑ-app-● L⇓●† M⇓V†) =
+  case ⇓ₑ-deterministic L⇓● L⇓●† of λ where
   ⟨ refl , refl ⟩ →
-    case determinism M⇓V M⇓V† of λ where
+    case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
     ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-if-true L⇓true M⇓V) (⇓ₑ-if-true L⇓true† M⇓V†) =
-  case determinism L⇓true L⇓true† of λ where
+⇓ₑ-deterministic (⇓ₑ-if-true L⇓true M⇓V) (⇓ₑ-if-true L⇓true† M⇓V†) =
+  case ⇓ₑ-deterministic L⇓true L⇓true† of λ where
   ⟨ refl , refl ⟩ →
-    case determinism M⇓V M⇓V† of λ where
+    case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
     ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-if-true L⇓true _) (⇓ₑ-if-false L⇓false _) =
-  contradiction (determinism L⇓true L⇓false) (λ ())
-determinism (⇓ₑ-if-true L⇓true _) (⇓ₑ-if-● L⇓●) =
-  contradiction (determinism L⇓true L⇓●) (λ ())
-determinism (⇓ₑ-if-false L⇓false N⇓V) (⇓ₑ-if-false L⇓false† N⇓V†) =
-  case determinism L⇓false L⇓false† of λ where
+⇓ₑ-deterministic (⇓ₑ-if-true L⇓true _) (⇓ₑ-if-false L⇓false _) =
+  contradiction (⇓ₑ-deterministic L⇓true L⇓false) (λ ())
+⇓ₑ-deterministic (⇓ₑ-if-true L⇓true _) (⇓ₑ-if-● L⇓●) =
+  contradiction (⇓ₑ-deterministic L⇓true L⇓●) (λ ())
+⇓ₑ-deterministic (⇓ₑ-if-false L⇓false N⇓V) (⇓ₑ-if-false L⇓false† N⇓V†) =
+  case ⇓ₑ-deterministic L⇓false L⇓false† of λ where
   ⟨ refl , refl ⟩ →
-    case determinism N⇓V N⇓V† of λ where
+    case ⇓ₑ-deterministic N⇓V N⇓V† of λ where
     ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-if-false L⇓false _) (⇓ₑ-if-true L⇓true _) =
-  contradiction (determinism L⇓false L⇓true) (λ ())
-determinism (⇓ₑ-if-false L⇓false _) (⇓ₑ-if-● L⇓●) =
-  contradiction (determinism L⇓false L⇓●) (λ ())
-determinism (⇓ₑ-if-● L⇓●) (⇓ₑ-if-true L⇓true _) =
-  contradiction (determinism L⇓● L⇓true ) (λ ())
-determinism (⇓ₑ-if-● L⇓●) (⇓ₑ-if-false L⇓false _) =
-  contradiction (determinism L⇓● L⇓false) (λ ())
-determinism (⇓ₑ-if-● L⇓●) (⇓ₑ-if-● L⇓●†) =
-  case determinism L⇓● L⇓●† of λ where
+⇓ₑ-deterministic (⇓ₑ-if-false L⇓false _) (⇓ₑ-if-true L⇓true _) =
+  contradiction (⇓ₑ-deterministic L⇓false L⇓true) (λ ())
+⇓ₑ-deterministic (⇓ₑ-if-false L⇓false _) (⇓ₑ-if-● L⇓●) =
+  contradiction (⇓ₑ-deterministic L⇓false L⇓●) (λ ())
+⇓ₑ-deterministic (⇓ₑ-if-● L⇓●) (⇓ₑ-if-true L⇓true _) =
+  contradiction (⇓ₑ-deterministic L⇓● L⇓true ) (λ ())
+⇓ₑ-deterministic (⇓ₑ-if-● L⇓●) (⇓ₑ-if-false L⇓false _) =
+  contradiction (⇓ₑ-deterministic L⇓● L⇓false) (λ ())
+⇓ₑ-deterministic (⇓ₑ-if-● L⇓●) (⇓ₑ-if-● L⇓●†) =
+  case ⇓ₑ-deterministic L⇓● L⇓●† of λ where
   ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-let M⇓V N[V]⇓W) (⇓ₑ-let M⇓V† N[V]⇓W†) =
-  case determinism M⇓V M⇓V† of λ where
+⇓ₑ-deterministic (⇓ₑ-let M⇓V N[V]⇓W) (⇓ₑ-let M⇓V† N[V]⇓W†) =
+  case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
   ⟨ refl , refl ⟩ →
-    case determinism N[V]⇓W N[V]⇓W† of λ where
+    case ⇓ₑ-deterministic N[V]⇓W N[V]⇓W† of λ where
     ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-ref? M⇓V fresh _) (⇓ₑ-ref? M⇓V† fresh† _) =
-  case determinism M⇓V M⇓V† of λ where
+⇓ₑ-deterministic (⇓ₑ-ref? M⇓V fresh _) (⇓ₑ-ref? M⇓V† fresh† _) =
+  case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
   ⟨ refl , refl ⟩ →
     case trans fresh (sym fresh†) of λ where
       refl → ⟨ refl , refl ⟩
-determinism (⇓ₑ-ref?-● M⇓V) (⇓ₑ-ref?-● M⇓V†) =
-  case determinism M⇓V M⇓V† of λ where
+⇓ₑ-deterministic (⇓ₑ-ref?-● M⇓V) (⇓ₑ-ref?-● M⇓V†) =
+  case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
   ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-ref M⇓V fresh) (⇓ₑ-ref M⇓V† fresh†) =
-  case determinism M⇓V M⇓V† of λ where
+⇓ₑ-deterministic (⇓ₑ-ref M⇓V fresh) (⇓ₑ-ref M⇓V† fresh†) =
+  case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
   ⟨ refl , refl ⟩ →
     case trans fresh (sym fresh†) of λ where
       refl → ⟨ refl , refl ⟩
-determinism (⇓ₑ-ref-● M⇓V) (⇓ₑ-ref-● M⇓V†) =
-  case determinism M⇓V M⇓V† of λ where
+⇓ₑ-deterministic (⇓ₑ-ref-● M⇓V) (⇓ₑ-ref-● M⇓V†) =
+  case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
   ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-deref M⇓a eq) (⇓ₑ-deref M⇓a† eq†) =
-  case determinism M⇓a M⇓a† of λ where
+⇓ₑ-deterministic (⇓ₑ-deref M⇓a eq) (⇓ₑ-deref M⇓a† eq†) =
+  case ⇓ₑ-deterministic M⇓a M⇓a† of λ where
   ⟨ refl , refl ⟩ →
     case trans (sym eq) eq† of λ where
     refl → ⟨ refl , refl ⟩
-determinism (⇓ₑ-deref M⇓a _) (⇓ₑ-deref-● M⇓●) =
-  contradiction (determinism M⇓a M⇓●) (λ ())
-determinism (⇓ₑ-deref-● M⇓●) (⇓ₑ-deref M⇓a _) =
-  contradiction (determinism M⇓● M⇓a) (λ ())
-determinism (⇓ₑ-deref-● M⇓●) (⇓ₑ-deref-● M⇓●†) =
-  case determinism M⇓● M⇓●† of λ where
+⇓ₑ-deterministic (⇓ₑ-deref M⇓a _) (⇓ₑ-deref-● M⇓●) =
+  contradiction (⇓ₑ-deterministic M⇓a M⇓●) (λ ())
+⇓ₑ-deterministic (⇓ₑ-deref-● M⇓●) (⇓ₑ-deref M⇓a _) =
+  contradiction (⇓ₑ-deterministic M⇓● M⇓a) (λ ())
+⇓ₑ-deterministic (⇓ₑ-deref-● M⇓●) (⇓ₑ-deref-● M⇓●†) =
+  case ⇓ₑ-deterministic M⇓● M⇓●† of λ where
   ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-assign? L⇓a M⇓V _) (⇓ₑ-assign? L⇓a† M⇓V† _) =
-  case determinism L⇓a L⇓a† of λ where
+⇓ₑ-deterministic (⇓ₑ-assign? L⇓a M⇓V _) (⇓ₑ-assign? L⇓a† M⇓V† _) =
+  case ⇓ₑ-deterministic L⇓a L⇓a† of λ where
   ⟨ refl , refl ⟩ →
-    case determinism M⇓V M⇓V† of λ where
+    case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
     ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-assign? L⇓a _ _) (⇓ₑ-assign?-● L⇓● _) =
-  contradiction (determinism L⇓a L⇓●) (λ ())
-determinism (⇓ₑ-assign?-● L⇓● _) (⇓ₑ-assign? L⇓a _ _) =
-  contradiction (determinism L⇓● L⇓a) (λ ())
-determinism (⇓ₑ-assign?-● L⇓● M⇓V) (⇓ₑ-assign?-● L⇓●† M⇓V†) =
-  case determinism L⇓● L⇓●† of λ where
+⇓ₑ-deterministic (⇓ₑ-assign? L⇓a _ _) (⇓ₑ-assign?-● L⇓● _) =
+  contradiction (⇓ₑ-deterministic L⇓a L⇓●) (λ ())
+⇓ₑ-deterministic (⇓ₑ-assign?-● L⇓● _) (⇓ₑ-assign? L⇓a _ _) =
+  contradiction (⇓ₑ-deterministic L⇓● L⇓a) (λ ())
+⇓ₑ-deterministic (⇓ₑ-assign?-● L⇓● M⇓V) (⇓ₑ-assign?-● L⇓●† M⇓V†) =
+  case ⇓ₑ-deterministic L⇓● L⇓●† of λ where
   ⟨ refl , refl ⟩ →
-    case determinism M⇓V M⇓V† of λ where
+    case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
     ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-assign L⇓a M⇓V) (⇓ₑ-assign L⇓a† M⇓V†) =
-  case determinism L⇓a L⇓a† of λ where
+⇓ₑ-deterministic (⇓ₑ-assign L⇓a M⇓V) (⇓ₑ-assign L⇓a† M⇓V†) =
+  case ⇓ₑ-deterministic L⇓a L⇓a† of λ where
   ⟨ refl , refl ⟩ →
-    case determinism M⇓V M⇓V† of λ where
+    case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
     ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
-determinism (⇓ₑ-assign L⇓a _) (⇓ₑ-assign-● L⇓● _) =
-  contradiction (determinism L⇓a L⇓●) (λ ())
-determinism (⇓ₑ-assign-● L⇓● _) (⇓ₑ-assign L⇓a _) =
-  contradiction (determinism L⇓● L⇓a) (λ ())
-determinism (⇓ₑ-assign-● L⇓● M⇓V) (⇓ₑ-assign-● L⇓●† M⇓V†) =
-  case determinism L⇓● L⇓●† of λ where
+⇓ₑ-deterministic (⇓ₑ-assign L⇓a _) (⇓ₑ-assign-● L⇓● _) =
+  contradiction (⇓ₑ-deterministic L⇓a L⇓●) (λ ())
+⇓ₑ-deterministic (⇓ₑ-assign-● L⇓● _) (⇓ₑ-assign L⇓a _) =
+  contradiction (⇓ₑ-deterministic L⇓● L⇓a) (λ ())
+⇓ₑ-deterministic (⇓ₑ-assign-● L⇓● M⇓V) (⇓ₑ-assign-● L⇓●† M⇓V†) =
+  case ⇓ₑ-deterministic L⇓● L⇓●† of λ where
   ⟨ refl , refl ⟩ →
-    case determinism M⇓V M⇓V† of λ where
+    case ⇓ₑ-deterministic M⇓V M⇓V† of λ where
     ⟨ refl , refl ⟩ → ⟨ refl , refl ⟩
