@@ -207,3 +207,17 @@ V⇓ₑV (⇓ₑ-val _) v = ⟨ refl , refl ⟩
 ⇓ₑ-assign?-inv (⇓ₑ-assign? a⇓a M⇓W pc≼low)
   with V⇓ₑV a⇓a V-addr
 ... | ⟨ refl , refl ⟩ = ⟨ refl , pc≼low , _ , ⇓ₑ-value M⇓W , _ , M⇓W , refl ⟩
+
+⇓ₑ-deref-●-inv : ∀ {μ μ′ pc V}
+  → μ ∣ pc ⊢ ! ● ⇓ₑ V ∣ μ′
+    ---------------------------
+  → V ≡ ● × μ ≡ μ′
+⇓ₑ-deref-●-inv (⇓ₑ-deref-● ●⇓●) with V⇓ₑV ●⇓● V-●
+... | ⟨ refl , refl ⟩ = ⟨ refl , refl ⟩
+
+⇓ₑ-deref-inv : ∀ {μ μ′ pc V n}
+  → μ ∣ pc ⊢ ! (addr a[ low ] n of low) ⇓ₑ V ∣ μ′
+    --------------------------------------------------
+  → (∃[ v ] find _≟_ μ n ≡ just (V & v)) × μ ≡ μ′
+⇓ₑ-deref-inv (⇓ₑ-deref {v = v} a⇓a eq) with V⇓ₑV a⇓a V-addr
+... | ⟨ refl , refl ⟩ = ⟨ ⟨ v , eq ⟩ , refl ⟩

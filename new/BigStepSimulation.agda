@@ -270,7 +270,6 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
   ϵM⇓ϵW = sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓W
   ϵL·ϵM⇓● : erase-μ μ ∣ pc ⊢ erase L · erase M ⇓ₑ ● ∣ erase-μ μ′
   ϵL·ϵM⇓● rewrite sym ϵμ₂≡ϵμ′ = ⇓ₑ-app-● ϵL⇓● ϵM⇓ϵW
-sim ⊢M ⊢μ pc≾gc (⇓-deref-cast i M⇓V M⇓V₁) = {!!}
 sim {gc = gc} {pc} {μ = μ} {μ′} (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc
     (⇓-assign?-cast {μ₁ = μ₁} {L = L} {M} {V} {W} i L⇓V⟨c⟩ elim⇓W)
   with ⇓-preserve ⊢L ⊢μ pc≾gc L⇓V⟨c⟩
@@ -368,6 +367,44 @@ sim {gc = gc} {pc} {μ = μ} {μ′} (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ pc�
   ϵL:=ϵM⇓tt rewrite ϵμ′≡a∷μ″ = ⇓ₑ-assign (subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym eq) ϵL⇓ϵV) ϵM⇓V′
   ϵL:=ϵM⇓ϵW : erase-μ μ ∣ pc ⊢ erase L := erase M ⇓ₑ erase W ∣ erase-μ μ′
   ϵL:=ϵM⇓ϵW = subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym ϵW≡tt) ϵL:=ϵM⇓tt
+sim {gc = gc} {pc} {μ = μ} {μ′} (⊢deref ⊢M) ⊢μ pc≾gc
+    (⇓-deref-cast {μ₁ = μ₁} {M = M} {V} {W} i M⇓V⟨c⟩ !V⟨oc⟩⇓W)
+  with ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V⟨c⟩
+... | ⟨ Σ₁ , Σ₁⊇Σ , ⊢V⟨c⟩ , ⊢μ₁ ⟩
+  with canonical-ref-erase ⊢V⟨c⟩ (⇓-value M⇓V⟨c⟩)
+... | ⟨ _ , eq {- ● ≡ ϵV -} , ϵ-ref-● ⟩ = !ϵM⇓ϵW
+  where
+  ϵM⇓● : erase-μ μ ∣ pc ⊢ erase M ⇓ₑ ● ∣ erase-μ μ₁
+  ϵM⇓● = subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym eq) (sim ⊢M ⊢μ pc≾gc M⇓V⟨c⟩)
+  !ϵV⇓ϵW : erase-μ μ₁ ∣ pc ⊢ ! (erase V) ⇓ₑ erase W ∣ erase-μ μ′
+  !ϵV⇓ϵW =
+    case canonical-ref ⊢V⟨c⟩ (⇓-value M⇓V⟨c⟩) of λ where
+    (Ref-proxy ref i sub) → sim (⊢cast (⊢deref (ref-wt ref))) ⊢μ₁ pc≾gc !V⟨oc⟩⇓W
+  !●⇓ϵW : erase-μ μ₁ ∣ pc ⊢ ! ● ⇓ₑ erase W ∣ erase-μ μ′
+  !●⇓ϵW = subst (λ □ → _ ∣ _ ⊢ ! □ ⇓ₑ _ ∣ _) (sym eq) !ϵV⇓ϵW
+  ϵW≡● : erase W ≡ ●
+  ϵW≡●  = proj₁ (⇓ₑ-deref-●-inv !●⇓ϵW)
+  ϵμ₁≡ϵμ′ : erase-μ μ₁ ≡ erase-μ μ′
+  ϵμ₁≡ϵμ′ = proj₂ (⇓ₑ-deref-●-inv !●⇓ϵW)
+  !ϵM⇓● : erase-μ μ ∣ pc ⊢ ! (erase M) ⇓ₑ ● ∣ erase-μ μ′
+  !ϵM⇓● rewrite sym ϵμ₁≡ϵμ′ = ⇓ₑ-deref-● ϵM⇓●
+  !ϵM⇓ϵW : erase-μ μ ∣ pc ⊢ ! (erase M) ⇓ₑ erase W ∣ erase-μ μ′
+  !ϵM⇓ϵW = subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym ϵW≡●) !ϵM⇓●
+... | ⟨ _ , eq {- a ≡ ϵV -} , ϵ-ref-addr {n} ⟩ = !ϵM⇓ϵW
+  where
+  w = ⇓-value !V⟨oc⟩⇓W
+  ϵM⇓a : erase-μ μ ∣ pc ⊢ erase M ⇓ₑ addr a[ low ] n of low ∣ erase-μ μ₁
+  ϵM⇓a = subst (λ □ → _ ∣ _ ⊢ _ ⇓ₑ □ ∣ _) (sym eq) (sim ⊢M ⊢μ pc≾gc M⇓V⟨c⟩)
+  !ϵV⇓ϵW : erase-μ μ₁ ∣ pc ⊢ ! (erase V) ⇓ₑ erase W ∣ erase-μ μ′
+  !ϵV⇓ϵW =
+    case canonical-ref ⊢V⟨c⟩ (⇓-value M⇓V⟨c⟩) of λ where
+    (Ref-proxy ref i sub) → sim (⊢cast (⊢deref (ref-wt ref))) ⊢μ₁ pc≾gc !V⟨oc⟩⇓W
+  !a⇓ϵW : erase-μ μ₁ ∣ pc ⊢ ! (addr a[ low ] n of low) ⇓ₑ erase W ∣ erase-μ μ′
+  !a⇓ϵW = subst (λ □ → _ ∣ _ ⊢ ! □ ⇓ₑ _ ∣ _) (sym eq) !ϵV⇓ϵW
+  hit = let ⟨ _ , eq ⟩ = proj₁ (⇓ₑ-deref-inv !a⇓ϵW) in eq
+  ϵμ₁≡ϵμ′ = proj₂ (⇓ₑ-deref-inv !a⇓ϵW)
+  !ϵM⇓ϵW : erase-μ μ ∣ pc ⊢ ! (erase M) ⇓ₑ erase W ∣ erase-μ μ′
+  !ϵM⇓ϵW rewrite sym ϵμ₁≡ϵμ′ = ⇓ₑ-deref {v = erase-val-value w} ϵM⇓a hit
 sim (⊢sub ⊢M A<:B) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ pc≾gc M⇓V
 sim (⊢sub-pc ⊢M gc<:gc′) ⊢μ pc≾gc M⇓V = sim ⊢M ⊢μ (≾-<: pc≾gc gc<:gc′) M⇓V
 
