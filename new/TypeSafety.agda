@@ -15,14 +15,14 @@ open import Heap
 open import Types
 open import TypeBasedCast
 open import CC
-open import HeapTyping
 open import Reduction
-
-open import WellTyped
-open import Preservation
 
 
 module TypeSafety where
+
+open import HeapTyping   public
+open import WellTyped    public
+open import Preservation public
 
 data Progress (M : Term) (μ : Heap) (pc : StaticLabel) : Set where
   step : ∀ {N μ′}
