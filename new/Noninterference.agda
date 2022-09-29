@@ -46,9 +46,9 @@ noninterference : ∀ {μ₁ μ₂ M V₁ V₂} {b₁ b₂ : rep Bool}
     ---------------------------------------------
   → V₁ ≡ V₂
 noninterference {M = M} {V₁} {V₂} {b₁} {b₂} ⊢M M[b₁]⇓V₁ M[b₂]⇓V₂ =
-  let ϵM[●]⇓ϵV₁ = subst (λ □ → _ ∣ _ ⊢ □ ⇓ₑ _ ∣ _) (erase-substitution M ($ b₁ of high))
+  let ϵM[●]⇓ϵV₁ = subst (λ □ → _ ∣ _ ⊢ □ ⇓ₑ _ ∣ _) (substitution-erase M ($ b₁ of high))
                           (sim (substitution-pres ⊢M ⊢const) ⊢μ-nil ≾-refl M[b₁]⇓V₁)
-      ϵM[●]⇓ϵV₂ = subst (λ □ → _ ∣ _ ⊢ □ ⇓ₑ _ ∣ _) (erase-substitution M ($ b₂ of high))
+      ϵM[●]⇓ϵV₂ = subst (λ □ → _ ∣ _ ⊢ □ ⇓ₑ _ ∣ _) (substitution-erase M ($ b₂ of high))
                           (sim (substitution-pres ⊢M ⊢const) ⊢μ-nil ≾-refl M[b₂]⇓V₂)
       ⟨ ϵV₁≡ϵV₂ , ϵμ₁≡ϵμ₂ ⟩ = ⇓ₑ-deterministic ϵM[●]⇓ϵV₁ ϵM[●]⇓ϵV₂ in
   let ⟨ _ , _ , ⊢V₁ , _ ⟩ = ⇓-preserve (substitution-pres ⊢M ⊢const) ⊢μ-nil ≾-refl M[b₁]⇓V₁ in

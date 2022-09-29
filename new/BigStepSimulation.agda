@@ -27,8 +27,8 @@ open import ApplyCastErasure
 open import ProxyEliminationErasure
 open import CanonicalErased
 
-postulate
-  erase-substitution : ∀ N M → erase (N [ M ]) ≡ erase N [ erase M ]
+open import ErasureSubstitution public
+
 
 sim : ∀ {Σ gc pc A M V μ μ′}
   → [] ; Σ ; gc ; pc ⊢ M ⦂ A
@@ -50,7 +50,7 @@ sim {pc = pc} {μ′ = μ′} (⊢app ⊢L ⊢M) ⊢μ pc≾gc
   ⇓ₑ-app (sim ⊢L ⊢μ pc≾gc L⇓ƛN) (sim (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V) ϵN[ϵV]⇓ϵW
   where
   ϵN[ϵV]⇓ϵW : _ ∣ pc ⊢ erase N [ erase V ] ⇓ₑ erase W ∣ _
-  ϵN[ϵV]⇓ϵW rewrite sym (erase-substitution N V) =
+  ϵN[ϵV]⇓ϵW rewrite sym (substitution-erase N V) =
     case canonical-fun ⊢ƛN V-ƛ of λ where
     (Fun-ƛ ⊢N (<:-ty _ (<:-fun gc⋎g<:pc′ A₁<:A _))) →
       case ⟨ pc≾gc , consis-join-<:ₗ-inv gc⋎g<:pc′ ⟩ of λ where
@@ -120,7 +120,7 @@ sim {pc = pc} (⊢let ⊢M ⊢N) ⊢μ pc≾gc (⇓-let {M = M} {N} {V} {W} M⇓
   ⇓ₑ-let (sim ⊢M ⊢μ pc≾gc M⇓V) ϵN[ϵV]⇓ϵW
   where
   ϵN[ϵV]⇓ϵW : _ ∣ pc ⊢ erase N [ erase V ] ⇓ₑ erase W ∣ _
-  ϵN[ϵV]⇓ϵW rewrite sym (erase-substitution N V) =
+  ϵN[ϵV]⇓ϵW rewrite sym (substitution-erase N V) =
     let v = ⇓-value M⇓V in
     sim (substitution-pres (relax-Σ ⊢N Σ₁⊇Σ) (⊢value-pc ⊢V v)) ⊢μ₁ pc≾gc N[V]⇓W
 sim (⊢ref? ⊢M) ⊢μ pc≾gc (⇓-ref? {μ} {μ₁} {ℓ = low} M⇓V fresh pc≼ℓ)
