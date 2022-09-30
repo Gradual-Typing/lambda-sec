@@ -15,6 +15,7 @@ open import Syntax
 
 open import Utils
 open import Types
+open import Addr
 open import TypeBasedCast
 open import CC
 open import Erasure
@@ -22,12 +23,49 @@ open import Erasure
 erase-σ : Subst → Subst
 erase-σ σ = λ x → erase (σ x)
 
--- ext-erase : ∀ σ x → (ext (erase-σ σ)) x ≡ (erase-σ (ext σ)) x
--- ext-erase σ zero = refl
--- ext-erase σ (suc x) = sym goal
---   where
---   goal : erase (rename (↑ 1) (σ x)) ≡ rename (↑ 1) ((erase-σ σ) x)
---   goal = {!!}
+rename-erase : ∀ ρ M → erase (rename ρ M) ≡ rename ρ (erase M)
+rename-erase ρ (` x) = refl
+{- values -}
+rename-erase ρ (addr a[ low ] n of low) = refl
+rename-erase ρ (addr a[ low ] n of high) = refl
+rename-erase ρ (addr a[ high ] n of low) = refl
+rename-erase ρ (addr a[ high ] n of high) = refl
+rename-erase ρ (ƛ[ pc ] A ˙ N of low)
+  rewrite rename-erase (ext ρ) N = refl
+rename-erase ρ (ƛ[ pc ] A ˙ N of high) = refl
+rename-erase ρ ($ k of low) = refl
+rename-erase ρ ($ k of high) = refl
+{- -- -}
+rename-erase ρ (M · N)
+  rewrite rename-erase ρ M | rename-erase ρ N = refl
+rename-erase ρ (`let M N)
+  rewrite rename-erase ρ M | rename-erase (ext ρ) N = refl
+rename-erase ρ (if L A M N)
+  rewrite rename-erase ρ L | rename-erase ρ M | rename-erase ρ N =
+  refl
+rename-erase ρ (ref[ ℓ ] M) rewrite rename-erase ρ M = refl
+rename-erase ρ (ref?[ ℓ ] M) rewrite rename-erase ρ M = refl
+rename-erase ρ (ref✓[ ℓ ] M) rewrite rename-erase ρ M = refl
+rename-erase ρ (! M) rewrite rename-erase ρ M = refl
+rename-erase ρ (L := M)
+  rewrite rename-erase ρ L | rename-erase ρ M = refl
+rename-erase ρ (L :=? M)
+  rewrite rename-erase ρ L | rename-erase ρ M = refl
+rename-erase ρ (L :=✓ M)
+  rewrite rename-erase ρ L | rename-erase ρ M = refl
+rename-erase ρ (M ⟨ c ⟩) rewrite rename-erase ρ M = refl
+rename-erase ρ (cast-pc g M) rewrite rename-erase ρ M = refl
+rename-erase ρ (prot low M) rewrite rename-erase ρ M = refl
+rename-erase ρ (prot high M) = refl
+rename-erase ρ (error e) = refl
+rename-erase ρ ● = refl
+
+ext-erase : ∀ σ x → (ext (erase-σ σ)) x ≡ (erase-σ (ext σ)) x
+ext-erase σ zero = refl
+ext-erase σ (suc x) = sym goal
+  where
+  goal : erase (rename (↑ 1) (σ x)) ≡ rename (↑ 1) ((erase-σ σ) x)
+  goal rewrite rename-erase (↑ 1) (σ x) = refl
 
 -- subst-erase : ∀ σ M → erase (⟪ σ ⟫ M) ≡ ⟪ erase-σ σ ⟫ (erase M)
 -- subst-erase σ (` x) = refl
