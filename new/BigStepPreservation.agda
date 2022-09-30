@@ -10,7 +10,7 @@ open import Data.List hiding ([_])
 open import Data.Product using (_×_; ∃-syntax; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 open import Data.Maybe
 open import Relation.Nullary using (¬_; Dec; yes; no)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; subst; subst₂)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; subst; subst₂; trans)
 open import Function using (case_of_)
 
 open import Utils
@@ -83,9 +83,38 @@ open import Preservation public
   let ⟨ Σ₁ , Σ₁⊇Σ , ⊢V , ⊢μ₁ ⟩ = ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V in
   ⟨ cons-Σ (a[ ℓ ] n) T Σ₁ , ⊇-trans (⊇-fresh (a[ ℓ ] n) T ⊢μ₁ fresh) Σ₁⊇Σ ,
     ⊢addr (lookup-Σ-cons (a[ ℓ ] n) Σ₁) , ⊢μ-new (⊢value-pc ⊢V v) v ⊢μ₁ fresh ⟩
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-deref M⇓V x) = {!!}
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-assign? M⇓V M⇓V₁ x) = {!!}
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-assign M⇓V M⇓V₁) = {!!}
+⇓-preserve (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref {v = v†} {ℓ = ℓ} {ℓ₁} M⇓a eq) =
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢a , ⊢μ₁ ⟩ = ⇓-preserve ⊢M ⊢μ pc≾gc M⇓a in
+  case canonical-ref ⊢a V-addr of λ where
+  (Ref-addr {n = n} {g = l ℓ′} eq₁ (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
+    case <:-antisym A′<:A A<:A′ of λ where
+    refl →
+      let ⟨ wf , V , v , eq′ , ⊢V ⟩ = ⊢μ₁ n ℓ₁ eq₁ in
+      case trans (sym eq) eq′ of λ where
+      refl →
+        let leq : ℓ₁ ⋎ (ℓ₁ ⋎ ℓ) ≼ ℓ₁ ⋎ ℓ′
+            leq = subst (λ □ → □ ≼ _) (sym ℓ₁⋎[ℓ₁⋎ℓ]≡ℓ₁⋎ℓ) (join-≼′ ≼-refl ℓ≼ℓ′) in
+        ⟨ Σ₁ , Σ₁⊇Σ , ⊢sub (stamp-val-wt (⊢value-pc ⊢V v) v†) (<:-ty (<:-l leq) <:ᵣ-refl) , ⊢μ₁ ⟩
+⇓-preserve (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (⇓-assign? {n = n} {ℓ} {ℓ₁} L⇓a M⇓V pc≼ℓ₁) =
+  let v = ⇓-value M⇓V in
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢a , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓a in
+  let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢V , ⊢μ₂ ⟩ = ⇓-preserve (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V in
+  case canonical-ref ⊢a V-addr of λ where
+  (Ref-addr eq (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
+    case <:-antisym A′<:A A<:A′ of λ where
+    refl →
+      let eq′ = Σ₂⊇Σ₁ (a[ ℓ₁ ] n) eq in
+      ⟨ Σ₂ , ⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ , ⊢const , ⊢μ-update (⊢value-pc ⊢V v) v ⊢μ₂ eq′ ⟩
+⇓-preserve (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-assign {n = n} {ℓ} {ℓ₁} L⇓a M⇓V) =
+  let v = ⇓-value M⇓V in
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢a , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓a in
+  let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢V , ⊢μ₂ ⟩ = ⇓-preserve (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓V in
+  case canonical-ref ⊢a V-addr of λ where
+  (Ref-addr eq (<:-ty (<:-l ℓ≼ℓ′) (<:-ref A′<:A A<:A′))) →
+    case <:-antisym A′<:A A<:A′ of λ where
+    refl →
+      let eq′ = Σ₂⊇Σ₁ (a[ ℓ₁ ] n) eq in
+      ⟨ Σ₂ , ⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ , ⊢const , ⊢μ-update (⊢value-pc ⊢V v) v ⊢μ₂ eq′ ⟩
 ⇓-preserve ⊢M ⊢μ pc≾gc (⇓-cast x M⇓V x₁ M⇓V₁) = {!!}
 ⇓-preserve {gc = gc} {pc} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (⇓-if-cast-true {ℓ = ℓ} i L⇓true⟨c⟩ M⇓V V⋎ℓ⟨bc⟩⇓W) =
   let v = ⇓-value M⇓V in
