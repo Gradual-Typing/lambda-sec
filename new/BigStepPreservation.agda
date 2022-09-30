@@ -47,8 +47,26 @@ open import Preservation public
     let ⟨ Σ₃ , Σ₃⊇Σ₂ , ⊢W , ⊢μ₃ ⟩ = ⇓-preserve ⊢N[V] ⊢μ₂ pc⋎ℓ≾gc′ N[V]⇓W in
     ⟨ Σ₃ , ⊇-trans Σ₃⊇Σ₂ (⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ) ,
       (⊢sub (stamp-val-wt (⊢value-pc ⊢W w) w) (stamp-<: B′<:B ℓ<:g)) , ⊢μ₃ ⟩
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-if-true M⇓V M⇓V₁) = {!!}
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-if-false M⇓V M⇓V₁) = {!!}
+⇓-preserve (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (⇓-if-true L⇓true M⇓V) =
+  let v = ⇓-value M⇓V in
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢true , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓true in
+  case const-label-≼ ⊢true of λ where
+  ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ →
+    let pc⋎ℓ≾gc⋎ℓ′ = consis-join-≾ pc≾gc (≾-l ℓ≼ℓ′) in
+    let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢V , ⊢μ₂ ⟩ = ⇓-preserve (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc⋎ℓ≾gc⋎ℓ′ M⇓V in
+    let A⋎ℓ<:A⋎ℓ′ = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
+    ⟨ Σ₂ , ⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ ,
+      ⊢sub (stamp-val-wt (⊢value-pc ⊢V v) v) A⋎ℓ<:A⋎ℓ′ , ⊢μ₂ ⟩
+⇓-preserve (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (⇓-if-false L⇓false N⇓V) =
+  let v = ⇓-value N⇓V in
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢false , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓false in
+  case const-label-≼ ⊢false of λ where
+  ⟨ ℓ′ , refl , ℓ≼ℓ′ ⟩ →
+    let pc⋎ℓ≾gc⋎ℓ′ = consis-join-≾ pc≾gc (≾-l ℓ≼ℓ′) in
+    let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢V , ⊢μ₂ ⟩ = ⇓-preserve (relax-Σ ⊢N Σ₁⊇Σ) ⊢μ₁ pc⋎ℓ≾gc⋎ℓ′ N⇓V in
+    let A⋎ℓ<:A⋎ℓ′ = stamp-<: <:-refl (<:-l ℓ≼ℓ′) in
+    ⟨ Σ₂ , ⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ ,
+      ⊢sub (stamp-val-wt (⊢value-pc ⊢V v) v) A⋎ℓ<:A⋎ℓ′ , ⊢μ₂ ⟩
 ⇓-preserve (⊢let ⊢M ⊢N) ⊢μ pc≾gc (⇓-let M⇓V N[V]⇓W) =
   let v = ⇓-value M⇓V in
   let ⟨ Σ₁ , Σ₁⊇Σ , ⊢V , ⊢μ₁ ⟩ = ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V in
@@ -72,7 +90,17 @@ open import Preservation public
     let ⊢V⋎ℓ⟨bc⟩ = ⊢cast (stamp-val-wt (⊢value-pc ⊢V v) v) in
     let ⟨ Σ₃ , Σ₃⊇Σ₂ , ⊢W , ⊢μ₃ ⟩ = ⇓-preserve ⊢V⋎ℓ⟨bc⟩ ⊢μ₂ pc≾gc V⋎ℓ⟨bc⟩⇓W in
     ⟨ Σ₃ , ⊇-trans Σ₃⊇Σ₂ (⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ) , ⊢W , ⊢μ₃ ⟩
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-if-cast-false x M⇓V M⇓V₁ M⇓V₂) = {!!}
+⇓-preserve {gc = gc} {pc} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (⇓-if-cast-false {ℓ = ℓ} i L⇓false⟨c⟩ N⇓V V⋎ℓ⟨bc⟩⇓W) =
+  let v = ⇓-value N⇓V in
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢false⟨c⟩ , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓false⟨c⟩ in
+  case canonical-const ⊢false⟨c⟩ (⇓-value L⇓false⟨c⟩) of λ where
+  (Const-inj _) →  {- g = ⋆ -}
+    let pc⋎ℓ≾gc⋎g : l (pc ⋎ ℓ) ≾ (gc ⋎̃ ⋆)
+        pc⋎ℓ≾gc⋎g = subst (λ □ → _ ≾ □) (sym (g⋎̃⋆≡⋆ {gc})) ≾-⋆r in
+    let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢V , ⊢μ₂ ⟩ = ⇓-preserve (relax-Σ ⊢N Σ₁⊇Σ) ⊢μ₁ pc⋎ℓ≾gc⋎g N⇓V in
+    let ⊢V⋎ℓ⟨bc⟩ = ⊢cast (stamp-val-wt (⊢value-pc ⊢V v) v) in
+    let ⟨ Σ₃ , Σ₃⊇Σ₂ , ⊢W , ⊢μ₃ ⟩ = ⇓-preserve ⊢V⋎ℓ⟨bc⟩ ⊢μ₂ pc≾gc V⋎ℓ⟨bc⟩⇓W in
+    ⟨ Σ₃ , ⊇-trans Σ₃⊇Σ₂ (⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ) , ⊢W , ⊢μ₃ ⟩
 ⇓-preserve ⊢M ⊢μ pc≾gc (⇓-fun-cast i M⇓V M⇓V₁ M⇓V₂) = {!!}
 ⇓-preserve ⊢M ⊢μ pc≾gc (⇓-deref-cast x M⇓V M⇓V₁) = {!!}
 ⇓-preserve ⊢M ⊢μ pc≾gc (⇓-assign?-cast i M⇓V M⇓V₁) = {!!}
