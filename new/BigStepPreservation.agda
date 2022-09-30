@@ -1,6 +1,3 @@
-{- TODO -}
-{-# OPTIONS --allow-unsolved-metas #-}
-
 module BigStepPreservation where
 
 open import Data.Nat
@@ -142,10 +139,32 @@ open import Preservation public
     let ⊢V⋎ℓ⟨bc⟩ = ⊢cast (stamp-val-wt (⊢value-pc ⊢V v) v) in
     let ⟨ Σ₃ , Σ₃⊇Σ₂ , ⊢W , ⊢μ₃ ⟩ = ⇓-preserve ⊢V⋎ℓ⟨bc⟩ ⊢μ₂ pc≾gc V⋎ℓ⟨bc⟩⇓W in
     ⟨ Σ₃ , ⊇-trans Σ₃⊇Σ₂ (⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ) , ⊢W , ⊢μ₃ ⟩
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-fun-cast i M⇓V M⇓V₁ M⇓V₂) = {!!}
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-deref-cast x M⇓V M⇓V₁) = {!!}
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-assign?-cast i M⇓V M⇓V₁) = {!!}
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-assign-cast i M⇓V M⇓V₁) = {!!}
+⇓-preserve (⊢app ⊢L ⊢M) ⊢μ pc≾gc (⇓-fun-cast i L⇓V⟨c⟩ M⇓W elim⇓V′) =
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢V⟨c⟩ , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓V⟨c⟩ in
+  let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢W , ⊢μ₂ ⟩ = ⇓-preserve (relax-Σ ⊢M Σ₁⊇Σ) ⊢μ₁ pc≾gc M⇓W in
+  let w = ⇓-value M⇓W in
+  case ⇓-value L⇓V⟨c⟩ of λ where
+  (V-cast v _) →
+    let ⟨ Σ₃ , Σ₃⊇Σ₂ , ⊢V′ , ⊢μ₃ ⟩ = ⇓-preserve (elim-fun-proxy-wt (⊢app (relax-Σ ⊢V⟨c⟩ Σ₂⊇Σ₁) ⊢W) v w i) ⊢μ₂ pc≾gc elim⇓V′ in
+    ⟨ Σ₃ , ⊇-trans Σ₃⊇Σ₂ (⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ) , ⊢V′ , ⊢μ₃ ⟩
+⇓-preserve (⊢deref ⊢M) ⊢μ pc≾gc (⇓-deref-cast i M⇓V⟨c⟩ !V⟨oc⟩⇓W) =
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢V⟨c⟩ , ⊢μ₁ ⟩ = ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V⟨c⟩ in
+  case canonical-ref ⊢V⟨c⟩ (⇓-value M⇓V⟨c⟩) of λ where
+  (Ref-proxy ref i (<:-ty g₂<:g (<:-ref B<:A A<:B))) →
+    let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢W , ⊢μ₂ ⟩ = ⇓-preserve (⊢cast (⊢deref (ref-wt ref))) ⊢μ₁ pc≾gc !V⟨oc⟩⇓W in
+    ⟨ Σ₂ , ⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ , ⊢sub ⊢W (stamp-<: B<:A g₂<:g) , ⊢μ₂ ⟩
+⇓-preserve (⊢assign? ⊢L ⊢M) ⊢μ pc≾gc (⇓-assign?-cast i L⇓V⟨c⟩ elim⇓W) =
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢V⟨c⟩ , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓V⟨c⟩ in
+  case ⇓-value L⇓V⟨c⟩ of λ where
+  (V-cast v _) →
+    let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢W , ⊢μ₂ ⟩ = ⇓-preserve (elim-ref-proxy-wt (⊢assign? ⊢V⟨c⟩ (relax-Σ ⊢M Σ₁⊇Σ)) v i unchecked) ⊢μ₁ pc≾gc elim⇓W in
+    ⟨ Σ₂ , ⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ , ⊢W , ⊢μ₂ ⟩
+⇓-preserve (⊢assign ⊢L ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-assign-cast i L⇓V⟨c⟩ elim⇓W) =
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢V⟨c⟩ , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓V⟨c⟩ in
+  case ⇓-value L⇓V⟨c⟩ of λ where
+  (V-cast v _) →
+    let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢W , ⊢μ₂ ⟩ = ⇓-preserve (elim-ref-proxy-wt (⊢assign ⊢V⟨c⟩ (relax-Σ ⊢M Σ₁⊇Σ) pc′≼ℓ) v i static) ⊢μ₁ pc≾gc elim⇓W in
+    ⟨ Σ₂ , ⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ , ⊢W , ⊢μ₂ ⟩
 ⇓-preserve (⊢sub ⊢M A<:B) ⊢μ pc≾gc M⇓V =
   let ⟨ Σ′ , Σ′⊇Σ , ⊢V , ⊢μ′ ⟩ = ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V in
   ⟨ Σ′ , Σ′⊇Σ , ⊢sub ⊢V A<:B , ⊢μ′ ⟩
