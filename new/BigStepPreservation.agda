@@ -73,8 +73,16 @@ open import Preservation public
   let ⊢N[V] = substitution-pres (relax-Σ ⊢N Σ₁⊇Σ) (⊢value-pc ⊢V v) in
   let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢W , ⊢μ₂ ⟩ = ⇓-preserve ⊢N[V] ⊢μ₁ pc≾gc N[V]⇓W in
   ⟨ Σ₂ , ⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ , ⊢W , ⊢μ₂ ⟩
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-ref? M⇓V x x₁) = {!!}
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-ref M⇓V x) = {!!}
+⇓-preserve (⊢ref? {T = T} ⊢M) ⊢μ pc≾gc (⇓-ref? {n = n} {ℓ} M⇓V fresh pc≼ℓ) =
+  let v = ⇓-value M⇓V in
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢V , ⊢μ₁ ⟩ = ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V in
+  ⟨ cons-Σ (a[ ℓ ] n) T Σ₁ , ⊇-trans (⊇-fresh (a[ ℓ ] n) T ⊢μ₁ fresh) Σ₁⊇Σ ,
+    ⊢addr (lookup-Σ-cons (a[ ℓ ] n) Σ₁) , ⊢μ-new (⊢value-pc ⊢V v) v ⊢μ₁ fresh ⟩
+⇓-preserve (⊢ref {T = T} ⊢M pc′≼ℓ) ⊢μ pc≾gc (⇓-ref {n = n} {ℓ} M⇓V fresh) =
+  let v = ⇓-value M⇓V in
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢V , ⊢μ₁ ⟩ = ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V in
+  ⟨ cons-Σ (a[ ℓ ] n) T Σ₁ , ⊇-trans (⊇-fresh (a[ ℓ ] n) T ⊢μ₁ fresh) Σ₁⊇Σ ,
+    ⊢addr (lookup-Σ-cons (a[ ℓ ] n) Σ₁) , ⊢μ-new (⊢value-pc ⊢V v) v ⊢μ₁ fresh ⟩
 ⇓-preserve ⊢M ⊢μ pc≾gc (⇓-deref M⇓V x) = {!!}
 ⇓-preserve ⊢M ⊢μ pc≾gc (⇓-assign? M⇓V M⇓V₁ x) = {!!}
 ⇓-preserve ⊢M ⊢μ pc≾gc (⇓-assign M⇓V M⇓V₁) = {!!}
