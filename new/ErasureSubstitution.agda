@@ -60,17 +60,20 @@ rename-erase ρ (prot high M) = refl
 rename-erase ρ (error e) = refl
 rename-erase ρ ● = refl
 
-ext-erase : ∀ σ x → (ext (erase-σ σ)) x ≡ (erase-σ (ext σ)) x
-ext-erase σ zero = refl
-ext-erase σ (suc x) = sym goal
+ext-erase : ∀ σ → ext (erase-σ σ) ≡ erase-σ (ext σ)
+ext-erase σ = extensionality (ext-erase-x σ)
   where
-  goal : erase (rename (↑ 1) (σ x)) ≡ rename (↑ 1) ((erase-σ σ) x)
-  goal rewrite rename-erase (↑ 1) (σ x) = refl
+  ext-erase-x : ∀ σ x → (ext (erase-σ σ)) x ≡ (erase-σ (ext σ)) x
+  ext-erase-x σ zero = refl
+  ext-erase-x σ (suc x) = sym goal
+    where
+    goal : erase (rename (↑ 1) (σ x)) ≡ rename (↑ 1) ((erase-σ σ) x)
+    goal rewrite rename-erase (↑ 1) (σ x) = refl
 
--- subst-erase : ∀ σ M → erase (⟪ σ ⟫ M) ≡ ⟪ erase-σ σ ⟫ (erase M)
--- subst-erase σ (` x) = refl
--- subst-erase σ (`let M N) =
---   cong₂ (λ □₁ □₂ → `let □₁ □₂) (subst-erase σ M) {!!}
+subst-erase : ∀ σ M → erase (⟪ σ ⟫ M) ≡ ⟪ erase-σ σ ⟫ (erase M)
+subst-erase σ (` x) = refl
+subst-erase σ (`let M N)
+  rewrite subst-erase σ M | subst-erase (ext σ) N | ext-erase σ = refl
 
 postulate
   substitution-erase : ∀ N M → erase (N [ M ]) ≡ erase N [ erase M ]
