@@ -28,6 +28,9 @@ _⊇_ : ∀ (Σ′ Σ : HeapContext) → Set
 ⊇-refl : ∀ Σ → Σ ⊇ Σ
 ⊇-refl Σ a eq = eq
 
+⊇-trans : ∀ {Σ₁ Σ₂ Σ₃} → Σ₁ ⊇ Σ₂ → Σ₂ ⊇ Σ₃ → Σ₁ ⊇ Σ₃
+⊇-trans Σ₁⊇Σ₂ Σ₂⊇Σ₃ a eq = Σ₁⊇Σ₂ a (Σ₂⊇Σ₃ a eq)
+
 cons-Σ : Addr → RawType → HeapContext → HeapContext
 cons-Σ (a[ low  ] n) T ⟨ Σᴸ , Σᴴ ⟩ = ⟨ ⟨ n , T ⟩ ∷ Σᴸ , Σᴴ ⟩
 cons-Σ (a[ high ] n) T ⟨ Σᴸ , Σᴴ ⟩ = ⟨ Σᴸ , ⟨ n , T ⟩ ∷ Σᴴ ⟩
