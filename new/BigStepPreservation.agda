@@ -115,7 +115,11 @@ open import Preservation public
     refl →
       let eq′ = Σ₂⊇Σ₁ (a[ ℓ₁ ] n) eq in
       ⟨ Σ₂ , ⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ , ⊢const , ⊢μ-update (⊢value-pc ⊢V v) v ⊢μ₂ eq′ ⟩
-⇓-preserve ⊢M ⊢μ pc≾gc (⇓-cast x M⇓V x₁ M⇓V₁) = {!!}
+⇓-preserve (⊢cast ⊢M) ⊢μ pc≾gc (⇓-cast a M⇓V V⟨c⟩↝N N⇓W) =
+  let v = ⇓-value M⇓V in
+  let ⟨ Σ₁ , Σ₁⊇Σ , ⊢V , ⊢μ₁ ⟩ = ⇓-preserve ⊢M ⊢μ pc≾gc M⇓V in
+  let ⟨ Σ₂ , Σ₂⊇Σ₁ , ⊢W , ⊢μ₂ ⟩ = ⇓-preserve (applycast-pres (⊢value-pc ⊢V v) v a V⟨c⟩↝N) ⊢μ₁ pc≾gc N⇓W in
+  ⟨ Σ₂ , ⊇-trans Σ₂⊇Σ₁ Σ₁⊇Σ , ⊢W , ⊢μ₂ ⟩
 ⇓-preserve {gc = gc} {pc} (⊢if ⊢L ⊢M ⊢N) ⊢μ pc≾gc (⇓-if-cast-true {ℓ = ℓ} i L⇓true⟨c⟩ M⇓V V⋎ℓ⟨bc⟩⇓W) =
   let v = ⇓-value M⇓V in
   let ⟨ Σ₁ , Σ₁⊇Σ , ⊢true⟨c⟩ , ⊢μ₁ ⟩ = ⇓-preserve ⊢L ⊢μ pc≾gc L⇓true⟨c⟩ in
