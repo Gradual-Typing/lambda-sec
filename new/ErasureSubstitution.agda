@@ -72,8 +72,48 @@ ext-erase σ = extensionality (ext-erase-x σ)
 
 subst-erase : ∀ σ M → erase (⟪ σ ⟫ M) ≡ ⟪ erase-σ σ ⟫ (erase M)
 subst-erase σ (` x) = refl
+{- values -}
+subst-erase σ (addr a[ low ] n of low) = refl
+subst-erase σ (addr a[ low ] n of high) = refl
+subst-erase σ (addr a[ high ] n of low) = refl
+subst-erase σ (addr a[ high ] n of high) = refl
+subst-erase σ (ƛ[ pc ] A ˙ N of low)
+  rewrite subst-erase (ext σ) N | ext-erase σ = refl
+subst-erase σ (ƛ[ pc ] A ˙ N of high) = refl
+subst-erase σ ($ k of low) = refl
+subst-erase σ ($ k of high) = refl
+{- -- -}
+subst-erase σ (M · N)
+  rewrite subst-erase σ M | subst-erase σ N = refl
 subst-erase σ (`let M N)
   rewrite subst-erase σ M | subst-erase (ext σ) N | ext-erase σ = refl
+subst-erase σ (if L A M N)
+  rewrite subst-erase σ L | subst-erase σ M | subst-erase σ N =
+  refl
+subst-erase σ (ref[ ℓ ] M) rewrite subst-erase σ M = refl
+subst-erase σ (ref?[ ℓ ] M) rewrite subst-erase σ M = refl
+subst-erase σ (ref✓[ ℓ ] M) rewrite subst-erase σ M = refl
+subst-erase σ (! M) rewrite subst-erase σ M = refl
+subst-erase σ (L := M)
+  rewrite subst-erase σ L | subst-erase σ M = refl
+subst-erase σ (L :=? M)
+  rewrite subst-erase σ L | subst-erase σ M = refl
+subst-erase σ (L :=✓ M)
+  rewrite subst-erase σ L | subst-erase σ M = refl
+subst-erase σ (M ⟨ c ⟩) rewrite subst-erase σ M = refl
+subst-erase σ (cast-pc g M) rewrite subst-erase σ M = refl
+subst-erase σ (prot low M) rewrite subst-erase σ M = refl
+subst-erase σ (prot high M) = refl
+subst-erase σ (error e) = refl
+subst-erase σ ● = refl
 
-postulate
-  substitution-erase : ∀ N M → erase (N [ M ]) ≡ erase N [ erase M ]
+
+subst-zero-erase : ∀ M → subst-zero (erase M) ≡ erase-σ (subst-zero M)
+subst-zero-erase M = extensionality (subst-zero-erase-x M)
+  where
+  subst-zero-erase-x : ∀ M x → (subst-zero (erase M)) x ≡ (erase-σ (subst-zero M)) x
+  subst-zero-erase-x M 0 = refl
+  subst-zero-erase-x M (suc x) = refl
+
+substitution-erase : ∀ N M → erase (N [ M ]) ≡ erase N [ erase M ]
+substitution-erase N M rewrite subst-zero-erase M = subst-erase (subst-zero M) N
